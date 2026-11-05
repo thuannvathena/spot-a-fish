@@ -1,0 +1,15 @@
+node_modules
+dist
+.DS_Store
+*.log
+_site
+docs/.vitepress/dist
+docs/.vitepress/cache
+.pages
+
+# Three.js game build output
+game/node_modules/
+game/index.html
+game/src/fishimg.js
+game/editor/index.html
+/index.html

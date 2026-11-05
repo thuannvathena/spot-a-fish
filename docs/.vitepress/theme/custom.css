@@ -1,0 +1,31 @@
+/* Phone screenshots in the GDD: a wrapping row of portrait captures. */
+.shots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 16px 0;
+}
+.shots figure {
+    margin: 0;
+    width: 220px;
+}
+.shots img {
+    width: 100%;
+    border-radius: 18px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+}
+.shots figcaption {
+    font-size: 13px;
+    color: var(--vp-c-text-2);
+    margin-top: 6px;
+    text-align: center;
+}
+.swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    vertical-align: -2px;
+    margin-right: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}

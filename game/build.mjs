@@ -1,0 +1,11 @@
+import { build } from 'esbuild';
+import fs from 'fs';
+const FISHDIR = fs.existsSync('Fish_img/img/fishes') ? 'Fish_img/img/fishes' : 'assets/fishes';
+const imgs = fs.readdirSync(FISHDIR).filter(f => /\.png$/.test(f) && !['fish_20.png'].includes(f)).sort((a, b) => parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0]));
+fs.writeFileSync('src/fishimg.js', 'export const FISH_IMG = [\n' + imgs.map(f => "'data:image/png;base64," + fs.readFileSync(FISHDIR + '/' + f).toString('base64') + "'").join(',\n') + '\n];\nexport const FISH_NUM = ' + JSON.stringify(imgs.map(f => parseInt(f.match(/\d+/)[0]))) + ';\n');
+const r = await build({ entryPoints: ['src/main.js'], bundle: true, minify: true, format: 'iife', write: false, target: 'es2020' });
+const js = r.outputFiles[0].text.replace(/<\/script/g, '<\\/script');
+const tpl = fs.readFileSync('src/template.html', 'utf8');
+const font = '@font-face{font-family:"Lilita One";font-weight:400;font-display:block;src:url(data:font/woff2;base64,' + fs.readFileSync('node_modules/@fontsource/lilita-one/files/lilita-one-latin-400-normal.woff2').toString('base64') + ') format("woff2")}';
+fs.writeFileSync('index.html', tpl.replace('/*FONT*/', () => font).replace('/*BUNDLE*/', () => js));
+console.log('built', (fs.statSync('index.html').size / 1024).toFixed(0) + ' KB');

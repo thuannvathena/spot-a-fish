@@ -1,0 +1,749 @@
+[
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L01",
+    "name": "First catch",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Tutorial",
+    "refLevel": 1,
+    "goal": 4,
+    "per": 1,
+    "bounty": [],
+    "species": 8,
+    "decoyFish": 8,
+    "look": 0,
+    "sizeK": 1.7,
+    "speedK": 0.72,
+    "urchin": 1,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": false,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": false,
+    "hint": false,
+    "clear": false,
+    "eventGap": [
+      6,
+      10
+    ],
+    "feed": false,
+    "feedGap": [
+      24,
+      34
+    ],
+    "swarmGap": [
+      28,
+      40
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L02",
+    "name": "Backup",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 2,
+    "goal": 5,
+    "per": 1,
+    "bounty": [],
+    "species": 10,
+    "decoyFish": 12,
+    "look": 0,
+    "sizeK": 1.7,
+    "speedK": 0.72,
+    "urchin": 1,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": false,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": false,
+    "clear": false,
+    "eventGap": [
+      6,
+      10
+    ],
+    "feed": false,
+    "feedGap": [
+      24,
+      34
+    ],
+    "swarmGap": [
+      28,
+      40
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L03",
+    "name": "Squid",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 3,
+    "goal": 4,
+    "per": 2,
+    "bounty": [],
+    "species": 8,
+    "decoyFish": 14,
+    "look": 1,
+    "sizeK": 1.7,
+    "speedK": 0.72,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": false,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": false,
+    "clear": false,
+    "eventGap": [
+      6,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "swarmGap": [
+      28,
+      40
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L04",
+    "name": "Hint",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 4,
+    "goal": 4,
+    "per": 2,
+    "bounty": [],
+    "species": 8,
+    "decoyFish": 18,
+    "look": 1,
+    "sizeK": 1.5,
+    "speedK": 0.82,
+    "urchin": 1,
+    "jelly": 1,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": false,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "clear": false,
+    "eventGap": [
+      6,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "swarmGap": [
+      28,
+      40
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L05",
+    "name": "Clear Backup",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Normal",
+    "refLevel": 5,
+    "goal": 5,
+    "per": 3,
+    "bounty": [],
+    "species": 10,
+    "decoyFish": 24,
+    "look": 1,
+    "sizeK": 1.5,
+    "speedK": 0.82,
+    "urchin": 2,
+    "jelly": 1,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": false,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "clear": true,
+    "eventGap": [
+      6,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "swarmGap": [
+      28,
+      40
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L06",
+    "name": "Clam",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Bounty",
+    "refLevel": 6,
+    "goal": 6,
+    "per": 3,
+    "bounty": [
+      "tiny"
+    ],
+    "species": 12,
+    "decoyFish": 30,
+    "look": 1,
+    "sizeK": 1.5,
+    "speedK": 0.82,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": false,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "clear": true,
+    "eventGap": [
+      6,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "swarmGap": [
+      28,
+      40
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L07",
+    "name": "Pump tube",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Normal",
+    "refLevel": 7,
+    "goal": 6,
+    "per": 3,
+    "bounty": [],
+    "species": 12,
+    "decoyFish": 36,
+    "look": 1,
+    "sizeK": 1.35,
+    "speedK": 0.9,
+    "urchin": 2,
+    "jelly": 2,
+    "squid": 1,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "clear": true,
+    "eventGap": [
+      5,
+      8
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "swarmGap": [
+      28,
+      40
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L08",
+    "name": "Camo bounty",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Bounty",
+    "refLevel": 8,
+    "goal": 7,
+    "per": 3,
+    "bounty": [
+      "camo"
+    ],
+    "species": 14,
+    "decoyFish": 42,
+    "look": 2,
+    "sizeK": 1.35,
+    "speedK": 0.9,
+    "urchin": 2,
+    "jelly": 2,
+    "squid": 1,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "clear": true,
+    "eventGap": [
+      5,
+      8
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "swarmGap": [
+      28,
+      40
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L09",
+    "name": "Swarm",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Normal",
+    "refLevel": 9,
+    "goal": 7,
+    "per": 3,
+    "bounty": [],
+    "species": 14,
+    "decoyFish": 48,
+    "look": 2,
+    "sizeK": 1.35,
+    "speedK": 0.9,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "clear": true,
+    "eventGap": [
+      5,
+      8
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "swarmGap": [
+      28,
+      40
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L10",
+    "name": "Fast bounty",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Bounty",
+    "refLevel": 10,
+    "goal": 8,
+    "per": 3,
+    "bounty": [
+      "fast"
+    ],
+    "species": 16,
+    "decoyFish": 54,
+    "look": 2,
+    "sizeK": 1.25,
+    "speedK": 1,
+    "urchin": 3,
+    "jelly": 2,
+    "squid": 1,
+    "clam": 1,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "clear": true,
+    "eventGap": [
+      5,
+      8
+    ],
+    "feed": true,
+    "feedGap": [
+      18,
+      26
+    ],
+    "swarmGap": [
+      28,
+      40
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L11",
+    "name": "Level 11",
+    "status": "Ready",
+    "difficulty": "Hard",
+    "category": "Normal",
+    "refLevel": 11,
+    "goal": 8,
+    "per": 3,
+    "bounty": [],
+    "species": 16,
+    "decoyFish": 58,
+    "look": 2,
+    "sizeK": 1.25,
+    "speedK": 1,
+    "urchin": 3,
+    "jelly": 3,
+    "squid": 1,
+    "clam": 1,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "clear": true,
+    "eventGap": [
+      5,
+      8
+    ],
+    "feed": true,
+    "feedGap": [
+      18,
+      26
+    ],
+    "swarmGap": [
+      28,
+      40
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L12",
+    "name": "Level 12",
+    "status": "Ready",
+    "difficulty": "Hard",
+    "category": "Bounty",
+    "refLevel": 12,
+    "goal": 9,
+    "per": 3,
+    "bounty": [
+      "tiny"
+    ],
+    "species": 18,
+    "decoyFish": 62,
+    "look": 2,
+    "sizeK": 1.25,
+    "speedK": 1,
+    "urchin": 3,
+    "jelly": 3,
+    "squid": 2,
+    "clam": 2,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "clear": true,
+    "eventGap": [
+      5,
+      8
+    ],
+    "feed": true,
+    "feedGap": [
+      18,
+      26
+    ],
+    "swarmGap": [
+      20,
+      30
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L13",
+    "name": "Level 13",
+    "status": "Ready",
+    "difficulty": "Hard",
+    "category": "Normal",
+    "refLevel": 13,
+    "goal": 9,
+    "per": 3,
+    "bounty": [],
+    "species": 18,
+    "decoyFish": 66,
+    "look": 2,
+    "sizeK": 1.25,
+    "speedK": 1,
+    "urchin": 4,
+    "jelly": 3,
+    "squid": 2,
+    "clam": 2,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "clear": true,
+    "eventGap": [
+      5,
+      8
+    ],
+    "feed": true,
+    "feedGap": [
+      18,
+      26
+    ],
+    "swarmGap": [
+      20,
+      30
+    ],
+    "startle": true,
+    "startleGap": [
+      18,
+      28
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L14",
+    "name": "Level 14",
+    "status": "Ready",
+    "difficulty": "Hard",
+    "category": "Bounty",
+    "refLevel": 14,
+    "goal": 10,
+    "per": 3,
+    "bounty": [
+      "camo"
+    ],
+    "species": 20,
+    "decoyFish": 70,
+    "look": 2,
+    "sizeK": 1.25,
+    "speedK": 1,
+    "urchin": 4,
+    "jelly": 3,
+    "squid": 2,
+    "clam": 2,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "clear": true,
+    "eventGap": [
+      5,
+      8
+    ],
+    "feed": true,
+    "feedGap": [
+      18,
+      26
+    ],
+    "swarmGap": [
+      20,
+      30
+    ],
+    "startle": true,
+    "startleGap": [
+      18,
+      28
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 1,
+    "id": "L15",
+    "name": "Level 15",
+    "status": "Ready",
+    "difficulty": "Hard",
+    "category": "Bounty",
+    "refLevel": 15,
+    "goal": 10,
+    "per": 3,
+    "bounty": [
+      "fast"
+    ],
+    "species": 20,
+    "decoyFish": 74,
+    "look": 2,
+    "sizeK": 1.25,
+    "speedK": 1,
+    "urchin": 4,
+    "jelly": 4,
+    "squid": 2,
+    "clam": 2,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "clear": true,
+    "eventGap": [
+      5,
+      8
+    ],
+    "feed": true,
+    "feedGap": [
+      18,
+      26
+    ],
+    "swarmGap": [
+      20,
+      30
+    ],
+    "startle": true,
+    "startleGap": [
+      18,
+      28
+    ]
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "title": "Spot A Fish",
+  "tagline": "A 3D aquarium puzzle: find and tap the fish your target tanks need.",
+  "repo": "thuannvathena/spot-a-fish",
+  "pagesUrl": "https://thuannvathena.github.io/spot-a-fish",
+  "basePath": "/spot-a-fish",
+  "devPort": 8080
+}

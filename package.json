@@ -1,0 +1,30 @@
+{
+  "name": "spot-a-fish",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npm run spike:prepare && vite",
+    "build": "cd game && npm ci && node build.mjs && node editor/build.mjs",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "build:site": "bash scripts/build-site.sh",
+    "release": "bash scripts/release.sh",
+    "release:latest": "bash scripts/release.sh latest",
+    "spike:prepare": "cd game && node build.mjs && cd .. && node scripts/make-phaser-index.mjs",
+    "build:phaser": "npm run spike:prepare && vite build"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^5.4.21",
+    "vitepress": "^1.6.4"
+  },
+  "dependencies": {
+    "@fontsource/lilita-one": "^5.3.0",
+    "phaser": "^4.2.1",
+    "three": "^0.187.0"
+  }
+}
