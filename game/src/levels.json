@@ -745,55 +745,5 @@
       18,
       28
     ]
-  },
-  {
-    "schema": "spot-a-fish-level",
-    "version": 1,
-    "id": "L16",
-    "name": "3D fish test (Blue white babe, colour variants)",
-    "status": "Draft",
-    "difficulty": "Easy",
-    "category": "Tutorial",
-    "refLevel": 5,
-    "goal": 5,
-    "per": 1,
-    "bounty": [],
-    "species": 8,
-    "decoyFish": 25,
-    "look": 1,
-    "sizeK": 1.3,
-    "speedK": 0.8,
-    "urchin": 0,
-    "jelly": 0,
-    "squid": 0,
-    "clam": 0,
-    "swarm": false,
-    "tube": {
-      "enabled": false,
-      "autoPumpWhenStuck": true,
-      "stuckDelaySec": 2.5
-    },
-    "backup": true,
-    "hint": true,
-    "clear": true,
-    "eventGap": [
-      7,
-      11
-    ],
-    "feed": false,
-    "feedGap": [
-      24,
-      34
-    ],
-    "swarmGap": [
-      28,
-      40
-    ],
-    "startle": false,
-    "startleGap": [
-      26,
-      38
-    ],
-    "onlyFish": "blue_white_babe"
   }
 ]

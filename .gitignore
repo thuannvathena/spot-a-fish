@@ -10,7 +10,6 @@ docs/.vitepress/cache
 # Three.js game build output
 game/node_modules/
 game/index.html
-game/src/fishimg.js
 game/editor/index.html
 /index.html
 
@@ -18,3 +17,5 @@ game/editor/index.html
 SpotAFish_PrimaryContent/
 SpotAFish_UnityProject/
 Lose Anim.mov
+__pycache__/
+game/src/fishicons.js

@@ -49,7 +49,7 @@ Defaults for every field come from the game's current `levelConfig()`. A level f
 The editor shows a warning for each of these:
 
 - Total fish in the tank at start is more than `FISH_CAP` (40), or more than `TUBE_INIT` (40) when the tube is on.
-- `species` is less than `2 × goal`, or more than the 29 species available.
+- `species` is less than `2 × goal`, or more than the 23 species available.
 - Fish needed (`goal × per` plus bounty tanks) is more than the fish available (tank plus tube).
 - A tube wave has `afterTanks` larger than the number of target tanks.
 - A bounty tank is set but fewer than 2 normal tanks exist.

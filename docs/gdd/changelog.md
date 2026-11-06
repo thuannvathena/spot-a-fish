@@ -4,7 +4,17 @@ Every published version stays playable at its own URL. The [landing page](https:
 
 ## latest (main) <Badge type="tip" text="Live" />
 
-- No changes since v0.1.0. [Play the latest build](https://thuannvathena.github.io/spot-a-fish/demo/).
+- **All fish are now 3D models (levels 1-15):** the 2D fish pictures, the whale and the shark are gone. The species are the 22 Unity fish plus `blue_white_babe`, with colour variants for look-alikes; levels 16 and 17 (the test levels) were removed. The Unity fish and their eye data are loaded at start (about 5.6 MB). Octopus and an arm-creature in the Unity set (Fish_21, Fish_23) were left out.
+- **Unity fish set:** 22 rigged 3D fish (crabs, turtle, dolphin, seahorse and hermit crab left out) load on demand for Level 17, where every species is a different model; they are posed by code (body wave, fin flaps) on their own skeleton. Converted with `scripts/unity-fish-to-glb.py`, which also halves the triangles (about 2,900 down to 1,600 per fish) without tearing the texture. They are posed by code (body wave, turns, fin flaps, fright); the swim clip of `blue_white_babe` was tried on them but made the tails jitter, so it is not used. Their eyes blink: the eye picture on the texture turns into the body colour next to it (`scripts/unity-fish-eyes.py` finds the eyes).
+- **Level start animation:** the old "Find N fish!" label is gone. "LEVEL N" floats on the water like the camera tutorial words, swirls and melts into a soap bubble (`bubble.png`), which flies along a weaving path with a sparkle trail into the level badge. The badge stays empty until the bubble arrives; then the number pops in with ripples and small bubbles. The animation waits while a pop-up (a new obstacle) is open.
+- **Softer blink:** the Unity fish close their eyes more slowly, with an eased close and a slower open.
+- **Clear Backup:** the "Backup cleared!" label is gone.
+- **Boosters fade while the camera moves:** the Hint and Clear buttons fade out quickly while the player drags, pinches, zooms or moves the view up / down, and are back as soon as the finger lifts.
+- **Clear Backup jump:** the fish crouches in its slot, jumps up and falls in a parabola with its nose following the path (droplets, not bubbles, fall off it) into the tank. The angry 😠 face is gone; 💢 stays.
+- **Emoji removed:** all emoji are gone except the angry 💢 / 😠, the pointing hand 👆 and the question mark ❓; their places now use fish pictures and drawn icons.
+- **Camera tutorial:** the words float on the water without a frame, and they only mention phone gestures.
+- **Fixes:** the spotlight tip stays inside the game column and the lit hole has round corners; an emptied target tank leaves no plate behind; the clearing tank keeps its colours; the level editor lists all 16 (now 17) built-in levels.
+- Everything above is after v0.1.0. [Play the latest build](https://thuannvathena.github.io/spot-a-fish/demo/).
 
 ## v0.1.0
 

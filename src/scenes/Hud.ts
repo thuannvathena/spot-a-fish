@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { BR, DPR, Layer, R, Zones, T, hexCss, inRect, porthole, rectOf } from '../ui/kit';
-import { Ctx, GameState, paintMessages, paintOverlay, paintSpot, paintTargets, paintTools } from '../ui/panels';
+import { Ctx, GameState, levelPop, paintLevelIntro, paintMessages, paintOverlay, paintSpot, paintTargets, paintTools } from '../ui/panels';
 
 // The whole game UI, drawn by Phaser. The Three.js game keeps writing its state into hidden HTML elements
 // (layout, classes, text); every frame this scene mirrors them (see src/ui/panels.ts) and forwards taps to them.
@@ -55,7 +55,7 @@ export class Hud extends Phaser.Scene {
             paintOverlay(this.ovl, c);
             paintSpot(this.spot, c);
         }
-        paintMessages(this.msg, c);
+        paintMessages(this.msg, c); paintLevelIntro(this.msg, c);
         for (const l of [this.base, this.ovl, this.spot, this.msg]) l.end();
         for (const z of [this.zBase, this.zOv, this.zSpot]) z.end();
         this.hits = c.hits; this.modal = c.modal;
@@ -75,8 +75,12 @@ export class Hud extends Phaser.Scene {
         // level: a porthole
         const lr = Math.min(lvl.h / 2 + 3, 26), lx = lvl.x + lvl.w / 2, ly = lvl.y + lvl.h / 2;
         porthole(g, lx, ly, lr);
-        L.text('lvS', lx, ly - lr * 0.46, 'LEVEL', { size: 8, color: hexCss(T.amberL), stroke: hexCss(T.deeper), sw: 2 });
-        L.text('lvN', lx, ly + lr * 0.18, String(G.level), { size: 21, stroke: hexCss(T.deeper), sw: 4 });
+        if ((window as unknown as { __lvShown?: boolean }).__lvShown !== false) {   // at the start of a level the badge stays empty until the bubble with the level number flies in
+            const pp = levelPop(), back = (k: number) => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2), part = (d: number) => { const k = Math.max(0, Math.min(1, (pp - d) / (1 - d))); return pp >= 1 ? 1 : k <= 0 ? 0.001 : Math.max(0.001, back(k)); };
+            const wob = (d: number) => (pp >= 1 ? 0 : Math.sin(Math.max(0, pp - d) * 16) * 0.16 * Math.pow(1 - pp, 1.5)), hop = (d: number) => (pp >= 1 ? 0 : -9 * Math.sin(Math.min(1, Math.max(0, (pp - d) / 0.5)) * Math.PI) * (1 - pp));   // each part springs out of the burst: a little hop, a wobble, then it settles (the word first, the number just after)
+            L.text('lvS', lx, ly - lr * 0.46 + hop(0), 'LEVEL', { size: 8, color: hexCss(T.amberL), stroke: hexCss(T.deeper), sw: 2, alpha: pp >= 1 ? 1 : Math.min(1, pp * 6) }).setScale(part(0)).setRotation(wob(0));
+            L.text('lvN', lx, ly + lr * 0.18 + hop(0.1), String(G.level), { size: 21, stroke: hexCss(T.deeper), sw: 4, alpha: pp >= 1 ? 1 : Math.min(1, Math.max(0, pp - 0.08) * 6) }).setScale(part(0.1)).setRotation(wob(0.1));
+        }
         // progress: a glass water gauge. Starfish mark each target tank; the water rises as they are filled
         const done = G.goalShown ?? G.completed, target = Math.min(1, done / Math.max(1, G.cfg.goal));   // the gauge fills when the bubble from the finished tank arrives
         this.prog += (target - this.prog) * Math.min(1, dt / 120);

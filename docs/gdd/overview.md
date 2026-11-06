@@ -18,10 +18,9 @@ _TBD_
 
 ## 1.3 What the prototype is built from <Badge type="tip" text="Live" />
 
-- Fish are **2D PNG images inflated into pillow-shaped meshes** (they have thickness). They are not rigged 3D models. 29 species ship in the build.
+- Fish are **rigged 3D models**: 22 from the Unity set (converted with `scripts/unity-fish-to-glb.py`) and the `blue_white_babe` model. Each species is one model; look-alike decoys are the same model with the colours turned.
 - Every other object (sea urchin, jellyfish, squid, clam, tank decorations, pump tube, food bucket, pearl) is a **mesh built in code**, used as a placeholder.
-- The whale and shark (`fish_22`, `fish_30`) are code-built models, too big to catch.
-- Fish wobble and flick their tails with a shader (tail bends by vertex position, no skeleton). Eyes are detected from the image, with a code-built blink lid.
+- Fish swim with a body wave on their skeleton, turn, flap their fins and react when scared. The Unity fish blink by turning the eye picture on their texture into the colour of the body next to it.
 - Fish get a soft dark outline taken from their own colour.
 - The tank sits in an "aquarium hall" 3D scene. Glass and water bend the view through a post-process lens; the water surface reflects the sky and ripples on impact.
 - All sounds are synthesized in code (WebAudio). There are no audio files and no music.

@@ -121,7 +121,7 @@ export function paintTargets(L: Layer, c: Ctx) {
             const sig = el.querySelector('.sig') as HTMLImageElement | null, bEl = el.querySelector('.board b'), bodyH = bR.h * 0.8, cy = bR.y + bodyH * 0.5 + 1;
             if (bEl) {
                 const tx = L.text(`tg${i}n`, 0, cy + 1, lerpTxt(bEl), { size: 23, color: '#ffffff', stroke: '#0c5b8e', sw: 4, alpha: a });
-                const im = sig && sig.getAttribute('src') ? L.image(`tg${i}sig`, sig.getAttribute('src')!, { x: 0, y: 0, w: 400, h: bodyH * 0.9 }, { alpha: a }) : false;
+                const im = sig && sig.getAttribute('src') ? L.image(`tg${i}sig`, sig.getAttribute('src')!, { x: 0, y: 0, w: 400, h: bodyH * 1.06 }, { alpha: a }) : false;
                 const iw = im ? im.displayWidth : 0, gap = im ? 6 : 0, x0 = bR.x + (bR.w - (iw + gap + tx.width)) / 2;
                 if (im) im.setPosition(x0 + iw / 2, cy);
                 tx.setPosition(x0 + iw + gap + tx.width / 2, cy + 1);
@@ -138,7 +138,9 @@ const ICONS: Record<string, Icon> = {
     bClear: (g, x, y) => { line(g, 2.6, A, [[x, y + 4], [x, y - 7]]); line(g, 2.6, A, [[x - 5, y - 2], [x, y - 7], [x + 5, y - 2]]); line(g, 2.6, 0xffe27a, [[x - 8, y + 8], [x + 8, y + 8]]); }
 };
 export function paintTools(L: Layer, c: Ctx) {
-    const g = L.g, t = c.scene.time.now / 1000;
+    const g = L.gt, t = c.scene.time.now / 1000, fade = (window as unknown as { __toolA?: number }).__toolA ?? 1;   // the boosters fade away while the camera is being moved and come back when it stops
+    g.setAlpha(fade);
+    if (fade < 0.02) return;
     for (const id of ['bHint', 'bClear']) {   // (the camera up / down buttons are gone: two-finger drag moves the view)
         const el = document.getElementById(id); if (!el) continue;
         const r = rectOf(el, c.o); if (!r || r.w < 4 || !shown(el)) continue;
@@ -152,8 +154,9 @@ export function paintTools(L: Layer, c: Ctx) {
         const cnt = el.querySelector('.cnt'), cr = rectOf(cnt, c.o);
         if (cnt && cr && id === 'bClear') {
             plate(g, cr, 9, T.coral, { border: T.foam, bw: 2, gloss: T.coralL });
-            L.text('cnt' + id, cr.x + cr.w / 2, cr.y + cr.h / 2 + 0.5, lerpTxt(cnt), { size: 12, color: '#ffffff', stroke: hexCss(T.coralD), sw: 2 });
+            L.text('cnt' + id, cr.x + cr.w / 2, cr.y + cr.h / 2 + 0.5, lerpTxt(cnt), { size: 12, color: '#ffffff', stroke: hexCss(T.coralD), sw: 2, alpha: fade });
         }
+        if (fade < 0.5) continue;   // hidden: not tappable either
         c.hits.push(r);
         c.zones.add(id, r, { click: click(el) });
     }
@@ -196,7 +199,11 @@ export function paintOverlay(L: Layer, c: Ctx) {
             const red = e.getAttribute('style')?.includes('ff8095'), st = red ? { f: 0xe0384c, g: 0xff8a96, b: 0x7a1424 } : { f: T.coral, g: T.coralL, b: T.coralD };
             plate(g, r, 14, st.f, { border: BR.hi, bw: 2, edge: BR.lo, edgeH: 4, gloss: st.g });
             L.text(key, r.x + r.w / 2, r.y + r.h / 2, lerpTxt(e), { size: fontPx(e, 20), stroke: hexCss(st.b), sw: 4 });
-        } else if (e.classList.contains('fishy')) L.text(key, r.x + r.w / 2, r.y + r.h / 2, lerpTxt(e), { size: fontPx(e, 54) });
+        } else if (e.classList.contains('fishy')) {
+            const im = e.querySelector('img') as HTMLImageElement | null, cx0 = r.x + r.w / 2, cy0 = r.y + r.h / 2;
+            if (e.dataset.ic === 'bubbles') { for (const [dx, dy, rr] of [[-18, 8, 9], [8, -6, 14], [24, 14, 7]]) { g.fillStyle(0xffffff, 0.22).fillCircle(cx0 + dx, cy0 + dy, rr); g.lineStyle(2.5, 0xffffff, 0.95).strokeCircle(cx0 + dx, cy0 + dy, rr); g.fillStyle(0xffffff, 0.8).fillCircle(cx0 + dx - rr * 0.3, cy0 + dy - rr * 0.3, rr * 0.22); } }
+            else if (im && im.getAttribute('src')) { const ih = Math.min(r.h, 54); const ii = L.image(key + 'f', im.getAttribute('src')!, { x: cx0 - 200, y: cy0 - ih / 2, w: 400, h: ih }); if (ii) ii.setPosition(cx0, cy0); }
+        }
         else if (e.classList.contains('stars')) e.querySelectorAll('span').forEach((s, k) => { const sr = rectOf(s, c.o); if (sr) starfish(g, sr.x + sr.w / 2, sr.y + sr.h / 2, Math.min(sr.w, sr.h) * 0.56, { hollow: s.classList.contains('off'), rot: (k - 1) * 0.28, alpha: opacityOf(s) }); });
         else if (e.tagName === 'P') L.text(key, r.x + r.w / 2, r.y + r.h / 2, multiline(e), { size: fontPx(e, 16), color: '#dff4ff', stroke: hexCss(T.deeper), sw: 2, wrap: r.w + 4 });
         else if (e.classList.contains('btn')) button(L, c, z, key, e);
@@ -220,7 +227,7 @@ export function paintOverlay(L: Layer, c: Ctx) {
             for (const { b, k, br } of cells) {
                 const lock = b.classList.contains('lock'), cur = b.classList.contains('cur'), kk = `${key}b${k}`, pr = z.pressed === kk, cx = br.x + br.w / 2, cy = br.y + br.h * 0.44 + (pr ? 2 : 0), rad = Math.min(br.w, br.h) * 0.36;
                 const small = b.querySelector('small'), num = (b.firstChild?.textContent ?? '').trim(), earned = ((small?.textContent ?? '').match(/★/g) || []).length;
-                if (lock) { g.fillStyle(0x8a9bb0, 1).fillRoundedRect(cx - rad, cy - rad * 0.6, rad * 2, rad * 1.5, 6); g.lineStyle(1.5, 0x5d7088, 1).strokeRoundedRect(cx - rad, cy - rad * 0.6, rad * 2, rad * 1.5, 6); L.text(kk + 'n', cx, cy + 2, '🔒', { size: 16 }); }
+                if (lock) { g.fillStyle(0x8a9bb0, 1).fillRoundedRect(cx - rad, cy - rad * 0.6, rad * 2, rad * 1.5, 6); g.lineStyle(1.5, 0x5d7088, 1).strokeRoundedRect(cx - rad, cy - rad * 0.6, rad * 2, rad * 1.5, 6); g.lineStyle(3, 0x4a5d75, 1); g.beginPath(); g.arc(cx, cy - rad * 0.02, rad * 0.3, Math.PI, 0, false); g.strokePath(); g.fillStyle(0x4a5d75, 1).fillRoundedRect(cx - rad * 0.38, cy - rad * 0.02, rad * 0.76, rad * 0.62, 4); g.fillStyle(0xdbe6f2, 1).fillCircle(cx, cy + rad * 0.26, rad * 0.1); }   // a drawn padlock
                 else { pearl(g, cx, cy, rad, { glow: cur ? T.amber : undefined }); L.text(kk + 'n', cx, cy + 1, num, { size: fontPx(b, 23) * 0.9, color: hexCss(T.deep) }); }
                 if (!lock) for (let st2 = 0; st2 < 3; st2++) starfish(g, cx + (st2 - 1) * rad * 0.78, br.y + br.h - rad * 0.28, rad * 0.3, { hollow: st2 >= earned, rot: (st2 - 1) * 0.3 });
                 z.add(kk, br, { click: click(b) });
@@ -241,6 +248,9 @@ export function paintSpot(L: Layer, c: Ctx) {
         const rad = parseFloat((document.getElementById('spotBox') as HTMLElement).style.borderRadius) || 16, k = 0.5 + 0.5 * Math.sin(t * 5.7);
         g.fillStyle(T.deeper, 0.78);
         g.fillRect(0, 0, c.w, Math.max(0, box.y)).fillRect(0, box.y + box.h, c.w, Math.max(0, c.h - box.y - box.h)).fillRect(0, box.y, Math.max(0, box.x), box.h).fillRect(box.x + box.w, box.y, Math.max(0, c.w - box.x - box.w), box.h);
+        { const rr = Math.min(rad, box.w / 2, box.h / 2);   // the corners of the hole are round too, so the lit control does not sit in a bright square
+          for (const [cx0, cy0, ox, oy, a0, a1] of [[box.x + rr, box.y + rr, box.x, box.y, -Math.PI / 2, -Math.PI], [box.x + box.w - rr, box.y + rr, box.x + box.w, box.y, 0, -Math.PI / 2], [box.x + box.w - rr, box.y + box.h - rr, box.x + box.w, box.y + box.h, Math.PI / 2, 0], [box.x + rr, box.y + box.h - rr, box.x, box.y + box.h, Math.PI, Math.PI / 2]] as [number, number, number, number, number, number][]) {
+              g.beginPath(); g.moveTo(ox, oy); g.lineTo(cx0 + Math.cos(a0) * rr, cy0 + Math.sin(a0) * rr); g.arc(cx0, cy0, rr, a0, a1, true); g.closePath(); g.fillPath(); } }
         g.lineStyle(10 + 6 * k, T.aqua, 0.16 + 0.12 * k).strokeRoundedRect(box.x - 4, box.y - 4, box.w + 8, box.h + 8, rad + 4);
         g.lineStyle(3 + 2 * k, k > 0.5 ? T.foam : T.aqua, 1).strokeRoundedRect(box.x, box.y, box.w, box.h, rad);
     } else g.fillStyle(T.deeper, 0.78).fillRect(0, 0, c.w, c.h);
@@ -256,6 +266,42 @@ export function paintSpot(L: Layer, c: Ctx) {
         if (ok && okr) L.text('spK', okr.x + okr.w / 2, okr.y + okr.h / 2, lerpTxt(ok), { size: 13, alpha: 0.8 });
     }
     c.spotZones.add('spot', { x: 0, y: 0, w: c.w, h: c.h }, { click: click(sp) });
+}
+
+
+/* ---------- level start: "LEVEL N" floats on the water, swirls and squeezes into a water bubble (the 3D orb, drawn in game/src/main.js), which flies into the level badge; the number then appears in the badge with a glint of ripples and bubbles ---------- */
+export const LV_T = { float: 1.5, squeeze: 2.15, arrive: 3.1 };   // seconds: the words float / swirl into the bubble / the bubble arrives (main.js uses the same times)
+const clamp01 = (u: number) => Math.max(0, Math.min(1, u)), easeOutBack = (k: number) => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2);
+export function levelPop(): number { const t = (window as unknown as { __lvPop?: number }).__lvPop; return t ? clamp01((performance.now() - t) / 760) : 1; }   // 0..1 since the bubble arrived (1 = settled)
+export function paintLevelIntro(L: Layer, c: Ctx) {
+    const w = window as unknown as { __lvIntro?: { t0: number; n: number }; __lvPop?: number; __lvShown?: boolean }, now = performance.now(), g = L.g;
+    const lvl = rectOf(document.querySelector('.topbar .lvl'), c.o);
+    const I = w.__lvIntro;
+    if (I) {
+        const open = document.querySelector('.overlay.show, #spotOv.show');
+        if (open) { I.t0 += 16; }   // a pop-up (a new obstacle, the pause menu) is open: wait until it closes
+        else {
+            const t = (now - I.t0) / 1000, sx0 = c.w / 2, sy0 = c.h * 0.36;
+            if (t > LV_T.arrive + 1.4) { w.__lvIntro = undefined; w.__lvShown = true; }
+            else if (t < LV_T.squeeze) {
+                const fade = clamp01(t / 0.35), pop = t < 0.45 ? easeOutBack(clamp01(t / 0.45)) : 1;
+                let x = sx0 + Math.sin(t * 1.05) * 4, y = sy0 + Math.sin(t * 1.7) * 5, sx = pop, sy = pop, alpha = fade, rot = 0;   // the words drift like something floating on the water
+                if (t > LV_T.float) {   // they swirl faster and faster, shrink toward the middle and melt into the bubble
+                    const p = clamp01((t - LV_T.float) / (LV_T.squeeze - LV_T.float)), e = p * p * (3 - 2 * p), e2 = p * p;
+                    rot = e2 * Math.PI * 3.2; sx = sy = Math.max(0.02, (1 - e) * (1 + 0.12 * Math.sin(p * Math.PI))); alpha = 1 - clamp01((p - 0.55) / 0.45); y -= Math.sin(p * Math.PI) * 14;
+                }
+                const tx = L.text('lvIntro', x, y, `LEVEL ${I.n}`, { size: 46, color: '#ffffff', stroke: '#0a3c6e', sw: 8, alpha });
+                tx.setScale(sx, sy).setRotation(rot);
+            }
+        }
+    }
+    const pk = w.__lvPop ? (now - w.__lvPop) / 1000 : 9;
+    if (lvl && pk < 1.2) {   // the number settles into the badge: a soft glow, two ripples spreading and a few bubbles floating up
+        const bx = lvl.x + lvl.w / 2, by = lvl.y + lvl.h / 2, br = Math.min(lvl.h / 2 + 3, 26), a = 1 - pk / 1.2, e = 1 - Math.pow(1 - clamp01(pk / 1.2), 2.2);
+        g.fillStyle(0xbff4ff, 0.3 * a * a).fillCircle(bx, by, br * (1.05 + 0.5 * e)); g.fillStyle(0xffffff, 0.3 * a * a * a).fillCircle(bx, by, br * 0.95);
+        for (let k = 0; k < 2; k++) { const q = clamp01((pk - k * 0.16) / 0.9); if (q > 0 && q < 1) g.lineStyle(2.4 - k * 0.8, 0xe6fbff, 0.85 * (1 - q)).strokeCircle(bx, by, br * (1 + 1.5 * (1 - Math.pow(1 - q, 2.2)))); }
+        for (let k = 0; k < 7; k++) { const q = clamp01((pk - 0.04 * k) / 0.95); if (q <= 0 || q >= 1) continue; const ang = k * 0.9 + 0.5, d = br * (0.7 + 1.2 * q), r = (2 + (k % 3)) * (1 - 0.3 * q), px = bx + Math.cos(ang) * d, py = by + Math.sin(ang) * d - q * 14, al = (1 - q) * 0.95; g.fillStyle(0xbff4ff, 0.22 * al).fillCircle(px, py, r); g.lineStyle(1.4, 0xffffff, al).strokeCircle(px, py, r); g.fillStyle(0xffffff, al).fillCircle(px - r * 0.3, py - r * 0.3, Math.max(0.6, r * 0.25)); }
+    }
 }
 
 /* ---------- messages: toast, goal message, hints, camera tutorial, pointing hand ---------- */
@@ -276,8 +322,8 @@ export function paintMessages(L: Layer, c: Ctx) {
     if (hint && hr && opacityOf(hint) > 0.02) L.text('hint', hr.x + hr.w / 2, hr.y + hr.h / 2, lerpTxt(hint), { size: 13, color: '#e6f7ff', stroke: '#001e46', sw: 3, alpha: opacityOf(hint) });
     const ct = document.getElementById('camTut'), cm = document.getElementById('camMsg'), cmr = rectOf(cm, c.o);
     if (ct && cm && cmr && ct.classList.contains('show')) {
-        glass(g, cmr, cmr.h / 2, { tint: T.deeper, alpha: 0.8, rim: BR.hi, rimA: 0.85, hi: 0.12 });
-        L.text('camMsg', cmr.x + cmr.w / 2, cmr.y + cmr.h / 2, lerpTxt(cm), { size: fontPx(cm, 18), stroke: '#001428', sw: 3, wrap: cmr.w });
+        const tt = c.scene.time.now / 1000, bob = Math.sin(tt * 1.7) * 5, sway = Math.sin(tt * 1.05) * 4, fl = 0.86 + 0.14 * Math.sin(tt * 2.3);   // the words drift like something floating on the water, with no frame
+        L.text('camMsg', cmr.x + cmr.w / 2 + sway, cmr.y + cmr.h / 2 + bob, lerpTxt(cm), { size: fontPx(cm, 22), stroke: '#0a3c6e', sw: 6, wrap: cmr.w + 40, alpha: fl });
         ct.querySelectorAll('.cg i').forEach((d, k) => { const r = rectOf(d, c.o); if (r) { g.fillStyle(0xffffff, 0.55).fillCircle(r.x + r.w / 2, r.y + r.h / 2, r.w / 2); g.lineStyle(3, 0xffffff, 1).strokeCircle(r.x + r.w / 2, r.y + r.h / 2, r.w / 2); void k; } });
         const arr = ct.querySelector('.cg .arr'), ar = rectOf(arr, c.o); if (arr && ar) L.text('camArr', ar.x + ar.w / 2, ar.y + ar.h / 2, lerpTxt(arr), { size: fontPx(arr, 38) });
     }

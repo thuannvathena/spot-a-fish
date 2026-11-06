@@ -2,7 +2,7 @@
 
 ## 4.1 What exists today <Badge type="tip" text="Live" />
 
-- 15 playable levels, 5 themes, 29 fish species, 3D tank with glass and water lens.
+- 15 playable levels, 5 themes, 23 3D fish models, 3D tank with glass and water lens.
 - Backup, Hint, Clear Backup, combo, stars, bounty tanks.
 - Obstacles (urchin, jellyfish, squid, clam, swarm), random events, feeding bucket, pump tube.
 - Collision between fish, obstacles, decorations and tube.

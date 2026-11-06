@@ -14,9 +14,8 @@
 
 ## 3.2 Fish <Badge type="tip" text="Live" />
 
-- 29 species in the build (30 PNG files; `fish_20.png` is excluded by `build.mjs`, reason unknown, see [open questions](./roadmap#open-questions)).
+- 23 species (3D models) in the build; the colour variants used for look-alikes come on top of that. No whale or shark any more.
 - **Look-alikes** from L3: some decoy species are hue-rotated copies of a target species to fool the eye. Similarity rises at L3 and L8 (`look` 0, 1, 2).
-- **Whale and shark** cannot be caught. Tapping them only startles them and scatters small fish.
 - **Size and speed by level:** fish are big and slow early, small and faster later (`sizeK` 1.7 → 1.25, `speedK` 0.72 → 1).
 - Per level, the tank holds `2 × goal` species: `goal` target species (exactly `per` fish each) and `goal` decoy species, of which 1–2 are look-alikes.
 

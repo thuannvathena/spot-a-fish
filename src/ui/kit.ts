@@ -37,15 +37,17 @@ export interface TextOpts { size?: number; color?: string; stroke?: string; sw?:
 /** One drawing layer: a Graphics object plus pools of texts and images, all at the same depth band. */
 export class Layer {
     readonly g: Phaser.GameObjects.Graphics;
+    readonly gt: Phaser.GameObjects.Graphics;   // a second graphics for the booster buttons, so they can fade as a whole
     private texts = new Map<string, { t: Phaser.GameObjects.Text; sig: string }>();
     private imgs = new Map<string, Phaser.GameObjects.Image>();
     private used = new Set<string>();
 
     constructor(private scene: Phaser.Scene, private depth: number) {
         this.g = scene.add.graphics().setDepth(depth);
+        this.gt = scene.add.graphics().setDepth(depth + 0.05);
     }
 
-    begin() { this.g.clear(); this.used.clear(); }
+    begin() { this.g.clear(); this.gt.clear(); this.used.clear(); }
 
     end() {
         this.texts.forEach((v, k) => { if (!this.used.has('t' + k)) v.t.setVisible(false); });

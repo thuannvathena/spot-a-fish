@@ -1,9 +1,10 @@
 import { LEVEL_SCHEMA, defaultsFor } from '../src/levelcfg.js';
 import DEFAULTS from '../src/levels.json';
-import { FISH_IMG, FISH_NUM } from '../src/fishimg.js';
+import { FISH_ICONS } from '../src/fishicons.js';
+import UNITY_LIST from '../../public/models/unity/list.json';
 
 /* ---------- constants and helpers ---------- */
-const FISH_CAP = 40, TUBE_INIT = 40, SPECIES_MAX = 29, CATCHABLE = 27, HISTORY_KEEP = 10;
+const FISH_CAP = 40, TUBE_INIT = 40, SPECIES_MAX = 23, CATCHABLE = 23, HISTORY_KEEP = 10;
 const $ = id => document.getElementById(id);
 const clone = o => JSON.parse(JSON.stringify(o));
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -120,7 +121,7 @@ function renderLeft() {
   if (!S.store) { el.innerHTML = '<h3>Levels</h3><p class="mu">Choose where levels are stored.</p>'; return; }
   if (S.tab === 'ed') {
     h += '<h3>Levels</h3>';
-    if (!S.levels.length) h += '<p class="mu">No levels yet.</p><button class="pr" id="bBuiltin">Add the 15 built-in levels</button>';
+    if (!S.levels.length) h += `<p class="mu">No levels yet.</p><button class="pr" id="bBuiltin">Add the ${DEFAULTS.length} built-in levels</button>`;
     h += S.levels.map(l => `<div class="row ${l.id === S.cur ? 'on' : ''}" data-id="${esc(l.id)}"><b>${esc(l.id)}</b> ${esc(l.name)}${l.id === S.cur && S.dirty ? ' *' : ''}<br><span class="mu sm">${l.goal} x ${l.per} · ${esc(l.difficulty || '')} · ${esc(l.status || '')}</span></div>`).join('');
     h += '<div class="bar"><button id="bNew">New</button><button id="bDup">Duplicate</button><button id="bImp">Import</button><button id="bDel">Delete</button></div><input type="file" id="fImp" accept=".json,application/json" multiple class="hide">';
     if (S.levels.length) h += '<div class="bar"><button id="bBuiltin2" class="sm">Add missing built-in levels</button></div>';
@@ -142,7 +143,7 @@ function renderCenter() {
   if (!lv) { el.innerHTML = '<p class="mu">Select or create a level.</p>'; return; }
   const st = stats(lv);
   el.innerHTML = `<div class="sec"><h3 class="t">Level details</h3><div class="grid">
-    ${txt('Name', 'name', lv)}${txt('Id', 'id', lv)}${sel('Status', 'status', lv, STATUS)}${sel('Difficulty', 'difficulty', lv, DIFF)}${sel('Category', 'category', lv, CATS)}${num('Reference level (1-15)', 'refLevel', lv, { min: 1, max: 15 })}</div></div>
+    ${txt('Name', 'name', lv)}${txt('Id', 'id', lv)}${sel('Status', 'status', lv, STATUS)}${sel('Difficulty', 'difficulty', lv, DIFF)}${sel('Category', 'category', lv, CATS)}${num(`Reference level (1-${DEFAULTS.length})`, 'refLevel', lv, { min: 1, max: DEFAULTS.length })}</div></div>
    <div class="sec"><h3 class="t">Generator</h3><div class="grid">
     ${num('Target tanks', 'goal', lv, { min: 1, max: 30 })}${sel('Fish per tank', 'per', lv, [[1, '1 fish'], [2, '2 fish'], [3, '3 fish']], { t: 'num' })}
     <label class="f"><small>Seed for Play (optional)</small><input type="text" id="seed" placeholder="empty = random" value="${esc(S.seed)}"></label>
@@ -152,8 +153,8 @@ function renderCenter() {
     ${num('Fish size', 'sizeK', lv, { min: 0.5, max: 3, step: 0.05 })}${num('Fish speed', 'speedK', lv, { min: 0.3, max: 3, step: 0.05 })}
     <div class="f"><small>Bounty tanks (x1)</small>${(lv.bounty || []).map((b, i) => `<span>${esc(b)} <a href="#" data-rmb="${i}" class="mu">remove</a></span>`).join(', ') || '<span class="mu">none</span>'}
      <select id="addB"><option value="">+ add bounty</option>${BOUNTY.map(b => `<option>${b}</option>`).join('')}</select></div></div></div>
-   <details class="sec"><summary>Fish in the game (${FISH_IMG.length} species, plus 3D models)</summary><div class="fishgrid">${FISH_IMG.map((src, i) => `<div title="species ${i + 1}${FISH_NUM[i] > CATCHABLE ? ' (not catchable)' : ''}"><img src="${src}" alt=""><span>#${i + 1}</span></div>`).join('')}</div>
-    <p class="mu sm">A level picks its species from this list at random; the game builds each one as a 3D fish. The tank on the right is the real game, so you see exactly what the player sees.</p></details>`;
+   <details class="sec"><summary>Fish in the game (${UNITY_LIST.length + 1} 3D models)</summary><div class="fishgrid">${UNITY_LIST.map(fn => { const n = parseInt(fn.match(/\d+/)[0]), ic = FISH_ICONS.find(f => f.n === n); return `<div title="Unity fish ${n}">${ic ? `<img src="${ic.src}" alt="">` : '<span style="display:block;height:46px;line-height:46px">3D</span>'}<span>#${n}</span></div>`; }).join('')}<div title="blue_white_babe"><span style="display:block;height:46px;line-height:46px">3D</span><span>babe</span></div></div>
+    <p class="mu sm">Every fish in the game is a 3D model; a level picks its species from this list at random, and look-alike decoys are the same model in other colours. The tank on the right is the real game, so you see exactly what the player sees.</p></details>`;
 }
 function renderRight() {
   const el = $('cR'), lv = level(); if (!S.store || !lv) { el.innerHTML = ''; return; }

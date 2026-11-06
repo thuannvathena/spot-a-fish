@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { FISH_IMG, FISH_NUM } from './fishimg.js';
 import { cfgFromLevel } from './levelcfg.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import LV from './levels.json';
@@ -81,9 +81,7 @@ const Snd = (() => {
 
 /* ============================== species ============================== */
 // body = [length, height, width] multipliers, pat = pattern on body texture
-const FISH_LEN = { 22: 1.5, 30: 1.25, 17: .7, 8: .62, 10: .6, 24: .4, 29: .56, 6: .5 };   // by source file number: whale / shark / long-snouted fish are bigger, the puffer smaller
-const FISH_BODY = { 22: { model: 'whale' }, 30: { model: 'shark' } };   // whale / shark: deeper, rounder bellies
-const SPECIES = FISH_IMG.map((src, i) => ({ id: 'f' + (i + 1), src, len: FISH_LEN[FISH_NUM[i]], ...(FISH_BODY[FISH_NUM[i]] || {}) })), BASE_N = FISH_IMG.length;
+const SPECIES = []; let BASE_N = 0;   // the species are the 3D models (blue_white_babe and the Unity set), added by loadModels / loadUnity; BASE_N counts them once they are all in (colour variants are added after that)
 const FISHART = {};   // id -> { tex, geo, hx, hy, hz }
 /* Fish are the supplied illustrations, "inflated" into real 3D: the alpha silhouette is turned into a puffy volume (thick in the middle,
    thin at fins and tail), the painting is mapped on both faces, and it is lit like any 3D model. */
@@ -246,7 +244,10 @@ function hoverRimTex(id) {   // a gold glowing silhouette of the fish, slightly 
   for (let k = 0; k < 28; k++) { const an = k / 28 * 6.2832, r = pad * .26; g.drawImage(t2, pad + Math.cos(an) * r, pad + Math.sin(an) * r); }
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4; return (a.rimTex = tex);
 }
-function loadFish() { return Promise.all(SPECIES.map(sp => new Promise(res => { const im = new Image(); im.onload = () => { sp.img = im; prepFish(sp, im); res(); }; im.src = sp.src; }))); }
+function prepModelArt() {   // flat pictures of the models (their thumbnails) for the few things that still use a picture of a fish: the swarm of small fish and the tube
+  BASE_N = SPECIES.length;
+  return Promise.all(SPECIES.map(sp => new Promise(res => { const im = new Image(); im.onload = () => { sp.img = im; try { prepFish(sp, im); } catch (e) { console.warn('no flat art for ' + sp.id, e); } res(); }; im.onerror = () => res(); im.src = THUMB[sp.id]; })));
+}
 function variantOf(typeIdx, deg) {   // a look-alike of a species with shifted colours (created on demand)
   if (SPECIES[typeIdx].model3d) return modelVariant(typeIdx, deg);
   const base = SPECIES[typeIdx], id = base.id + '_h' + Math.round(deg), k = SPECIES.findIndex(s => s.id === id); if (k >= 0) return k;
@@ -254,46 +255,6 @@ function variantOf(typeIdx, deg) {   // a look-alike of a species with shifted c
 }
 
 
-/* ---- hand-built 3D bodies for the two big species (whale, shark): real volume, belly, flukes and fins instead of an inflated flat picture ---- */
-function buildBig(kind) {
-  const W = kind === 'whale', L = W ? 1.7 : 1.45, Rm = W ? .27 : .17, sy = 1, sz = W ? .9 : .84, ux = W ? .55 : .6, tail0 = W ? .14 : .1;
-  const back = new THREE.Color(W ? 0x1d4d94 : 0x3d9df2), belly = new THREE.Color(W ? 0xf1f6ff : 0xffffff), dark = new THREE.Color(W ? 0x163a74 : 0x2b7fd0);
-  const prof = u => { if (u < ux) return tail0 + (1 - tail0) * Math.pow(Math.sin(u / ux * Math.PI / 2), W ? 1.3 : 1.2); const t = (u - ux) / (1 - ux); return W ? Math.sqrt(Math.max(0, 1 - Math.pow(t, 2.2))) : Math.pow(Math.max(0, 1 - Math.pow(t, 1.7)), .62); };
-  const mat = new THREE.MeshPhongMaterial({ vertexColors: true, emissive: 0xffffff, emissiveIntensity: .58, shininess: 55, specular: 0x445566, fog: false, side: THREE.DoubleSide });
-  mat.onBeforeCompile = s => { s.fragmentShader = s.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance *= vColor.rgb;'); };
-  const paint = (geo, c) => { const n = geo.attributes.position.count, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) { a[i * 3] = c.r; a[i * 3 + 1] = c.g; a[i * 3 + 2] = c.b; } geo.setAttribute('color', new THREE.BufferAttribute(a, 3)); return geo; };
-  // hull: a lathe along X, head at +x, white belly blending into the coloured back
-  const NX = 32, NR = 24, pos = [], col = [], idx = [], tc = new THREE.Color();
-  for (let i = 0; i <= NX; i++) { const u = i / NX, r = Rm * prof(u), x = (u - .5) * L;
-    for (let j = 0; j < NR; j++) { const th = j / NR * Math.PI * 2, c = Math.cos(th), s = Math.sin(th); pos.push(x, r * c * sy, r * s * sz);
-      const k = THREE.MathUtils.smoothstep(c, -.42, .12); tc.copy(belly).lerp(back, k); col.push(tc.r, tc.g, tc.b); } }
-  for (let i = 0; i < NX; i++) for (let j = 0; j < NR; j++) { const a = i * NR + j, b = i * NR + (j + 1) % NR, c2 = (i + 1) * NR + j, d = (i + 1) * NR + (j + 1) % NR; idx.push(a, c2, b, b, c2, d); }
-  const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); hg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); hg.setIndex(idx); hg.computeVertexNormals();
-  const SC = W ? 1.12 : 1.3, body = new THREE.Group(); body.material = mat; body.scale.setScalar(SC); body.add(new THREE.Mesh(hg, mat));
-  const part = (geo, c, x, y, z, rx, ry, rz, sx = 1, sy2 = 1, sz2 = 1, parent = body) => { const m = new THREE.Mesh(paint(geo, c), mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.scale.set(sx, sy2, sz2); parent.add(m); return m; };
-  const ell = () => new THREE.SphereGeometry(1, 16, 12), cone = (r, h) => new THREE.ConeGeometry(r, h, 14);
-  const pivot = new THREE.Group(); pivot.position.set(-L / 2 + .03, 0, 0); body.add(pivot);
-  const tailPos = { rotation: { get y() { return W ? pivot.rotation.z * 2.8 : pivot.rotation.y / .9; }, set y(v) { if (W) pivot.rotation.z = v * .36; else pivot.rotation.y = v * .9; } } };
-  part(ell(), dark, -.05, 0, 0, 0, 0, 0, .13, Rm * .3, Rm * .3 * sz, pivot);   // tail stalk
-  if (W) { for (const s of [1, -1]) part(ell(), dark, -.17, 0, s * .12, 0, -s * .5, 0, .24, .035, .14, pivot); part(cone(.07, .17), dark, -.02, Rm + .03, 0, 0, 0, .55, 1, 1, .3); }   // flukes + small dorsal
-  else {
-    part(cone(.075, .34), dark, -.1, .14, 0, 0, 0, .55, 1, 1, .28, pivot); part(cone(.05, .2), dark, -.08, -.08, 0, 0, 0, Math.PI - .5, 1, 1, .28, pivot);   // caudal: long upper lobe, short lower lobe
-    part(cone(.1, .3), dark, .02, Rm + .06, 0, 0, 0, .38, 1, 1, .26);   // tall dorsal
-  }
-  for (const s of [1, -1]) part(ell(), dark, .13, -Rm * .35, s * Rm * sz * .95, s * .25, -s * .5, -.5, W ? .17 : .15, .03, W ? .08 : .07);   // pectoral fins
-  // face
-  const eyeW = new THREE.MeshPhongMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: .6, shininess: 80, fog: false }), eyeK = new THREE.MeshPhongMaterial({ color: 0x1a1030, emissive: 0x3a2850, shininess: 90, specular: 0xffffff, fog: false });
-  const xe = L * (W ? .27 : .25), re = Rm * prof(xe / L + .5), th = 1.2, ey = re * Math.cos(th) * sy, ez = re * Math.sin(th) * sz, er = W ? .074 : .066, eyes = [];
-  for (const s of [1, -1]) { const g = new THREE.Group(); g.position.set(xe, ey, s * ez * .97);
-    const w = new THREE.Mesh(new THREE.SphereGeometry(er, 16, 12), eyeW); w.scale.z = .55; g.add(w);
-    const p = new THREE.Mesh(new THREE.SphereGeometry(er * .62, 14, 10), eyeK); p.position.set(er * .22, -er * .05, s * er * .26); p.scale.z = .55; g.add(p);
-    const h = new THREE.Mesh(new THREE.SphereGeometry(er * .2, 8, 6), eyeW); h.position.set(er * .38, er * .3, s * er * .5); g.add(h); body.add(g); eyes.push(g); }
-  const mouthM = new THREE.MeshPhongMaterial({ color: 0x20102a, emissive: 0x30203c, fog: false }), xm = L * (W ? .36 : .34), ym = -Rm * (W ? .28 : .24), rm = Rm * prof(xm / L + .5), zs = sz * Math.sqrt(Math.max(0, rm * rm - (ym / sy) * (ym / sy)));
-  for (const s of [1, -1]) { const t = new THREE.Mesh(new THREE.TorusGeometry(W ? .075 : .09, .008, 6, 16, Math.PI * .62), mouthM); t.rotation.z = Math.PI + Math.PI * .19; t.position.set(xm, ym + (W ? .075 : .09) * .7, s * (zs - .006)); body.add(t); }
-  if (!W) for (const s of [1, -1]) for (let k = 0; k < 4; k++) { const a = Math.PI * 1.19 + k * Math.PI * .62 / 3, t = new THREE.Mesh(new THREE.ConeGeometry(.012, .028, 6), eyeW); t.position.set(xm + Math.cos(a) * .09, ym + .09 * .7 + Math.sin(a) * .09 + .012, s * (zs - .004)); t.rotation.z = Math.PI; body.add(t); }
-  const g = new THREE.Group(); g.add(body);
-  return { group: g, body, tail: tailPos, big: true, hx: (L / 2 + .12) * SC, hy: (Rm + .1) * SC, hz: Rm * sz * SC, blink: k => { for (const e of eyes) e.scale.y = Math.max(.06, 1 - k); } };
-}
 
 /* ---- real 3D fish models: FBX with a skeleton and a swim clip. They are extra species ('m_<key>'), kept out of the random pool; a level picks one with `onlyFish`. ---- */
 const MODEL_DEFS = [{ key: 'blue_white_babe', fbx: 'models/blue_white_babe/model.fbx', png: 'models/blue_white_babe/Full.png', len: .62 }];
@@ -323,10 +284,33 @@ async function loadModels() {
       const sil = new THREE.CanvasTexture(sc); sil.channel = 1;
       const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3()), k = d.len / size.z;   // it faces +Z and is modelled in centimetres
       slimModel(obj); const vt = {}; MODEL3D[d.key] = { img, vt, hueTex(hue) {   // the atlas with its colours turned (a look-alike colour variant), made on demand
-          if (!hue) return this.tex; if (!vt[hue]) { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').drawImage(img, 0, 0); hueRotate(c, hue); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.channel = 1; t.anisotropy = 4; vt[hue] = t; } return vt[hue]; }, obj, tex, sil, clip: obj.animations[0], k, ctr, hx: d.len / 2, hy: size.y * k / 2, hz: size.x * k / 2, len: d.len };
+          if (!hue) return this.tex; if (!vt[hue]) { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').drawImage(img, 0, 0); hueRotate(c, hue); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.channel = 1; t.anisotropy = 4; vt[hue] = t; } return vt[hue]; }, obj, tex, sil, clip: obj.animations[0], k, ctr, hx: d.len / 2, hy: size.y * k / 2, hz: size.x * k / 2, len: d.len, cut: .4 };
       const sp = { id: 'm_' + d.key, model3d: d.key, len: d.len }; SPECIES.push(sp); MODEL_IDX[d.key] = SPECIES.length - 1; makeModelThumb(sp);
     } catch (e) { console.warn('3D fish model "' + d.key + '" not loaded', e); }
   }
+}
+/* ---- the Unity fish set (27 rigged models, one skinned mesh each, texture in the first UV set, no clip: they are posed by code). Loaded on demand by a level that asks for `onlyFish: "unity"`. ---- */
+const UNITY = { p: null, keys: [], ready: false, eyes: {} };
+function registerUnity(key, gltf) {
+  const obj = gltf.scene; obj.updateMatrixWorld(true);
+  let map = null; obj.traverse(n => { if (n.isMesh && !map) map = n.material.map; }); if (!map) throw new Error('no texture');
+  map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 4; const img = map.image;
+  const wrap = new THREE.Group(); wrap.add(obj); wrap.rotation.y = Math.PI; wrap.updateMatrixWorld(true);   // the models face -Z after the conversion; the game wants +Z
+  const sc = document.createElement('canvas'); sc.width = img.width; sc.height = img.height; { const g = sc.getContext('2d'); g.drawImage(img, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#fff'; g.fillRect(0, 0, sc.width, sc.height); }
+  const sil = new THREE.CanvasTexture(sc), box = new THREE.Box3().setFromObject(wrap), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3()), len = THREE.MathUtils.clamp(size.z * .24, .4, .74), k = len / size.z, vt = {};
+  MODEL3D[key] = { img, vt, hueTex(hue) { if (!hue) return this.tex; if (!vt[hue]) { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').drawImage(img, 0, 0); hueRotate(c, hue); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; vt[hue] = t; } return vt[hue]; },
+    obj: wrap, tex: map, sil, clip: null, k, ctr, hx: len / 2, hy: size.y * k / 2, hz: size.x * k / 2, len, cut: 0, eye: UNITY.eyes['fish_' + key.replace(/\D/g, '').padStart(2, '0')] || null };
+  const sp = { id: 'm_' + key, model3d: key, len }; SPECIES.push(sp); MODEL_IDX[key] = SPECIES.length - 1; UNITY.keys.push(key); makeModelThumb(sp);
+}
+function loadUnity() {
+  if (UNITY.p) return UNITY.p;
+  UNITY.p = (async () => {
+    const base = document.baseURI, list = await (await fetch(new URL('models/unity/list.json', base))).json(), ld = new GLTFLoader();
+    try { UNITY.eyes = await (await fetch(new URL('models/unity/eyes.json', base))).json(); } catch (e) { console.warn('no eye data: the Unity fish will not blink', e); }
+    await Promise.all(list.map(async f => { try { registerUnity('unity_' + f.replace(/\D+/g, ''), await ld.loadAsync(new URL('models/unity/' + f, base).href)); } catch (e) { console.warn('Unity fish ' + f + ' not loaded', e); } }));
+    UNITY.keys.sort(); UNITY.ready = true;
+  })();
+  return UNITY.p;
 }
 function modelVariant(baseIdx, deg) {   // the same 3D model with its colours turned by `deg` degrees: a species of its own, created on demand
   const b = SPECIES[baseIdx], key = b.model3d, hue = (((Math.round((b.hue || 0) + deg)) % 360) + 360) % 360, id = 'm_' + key + (hue ? '_h' + hue : ''), k = SPECIES.findIndex(q => q.id === id); if (k >= 0) return k;
@@ -335,15 +319,19 @@ function modelVariant(baseIdx, deg) {   // the same 3D model with its colours tu
 function buildModelFish(sp) {
   const M = MODEL3D[sp.model3d], tex = sp.hue ? M.hueTex(sp.hue) : M.tex, g = new THREE.Group(), holder = new THREE.Group(), root = SkeletonUtils.clone(M.obj), mats = [], skinned = [];
   holder.add(root); holder.rotation.y = Math.PI / 2; holder.scale.set(M.k * .88, M.k, M.k); holder.position.set(-M.ctr.z * M.k, -M.ctr.y * M.k, M.ctr.x * M.k); g.add(holder);   // +Z -> +X (the game's forward), centred on the origin
-  root.traverse(m => { if (m.isMesh) { m.frustumCulled = false; m.material = new THREE.MeshLambertMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: .46, alphaTest: .4, side: THREE.DoubleSide, fog: false }); mats.push(m.material); if (m.isSkinnedMesh) skinned.push(m); } });
+  const eyeU = M.eye ? { uBlink: { value: 0 }, uEye: { value: new THREE.Vector3(M.eye.u, M.eye.v, M.eye.r) }, uLid: { value: new THREE.Color().setRGB(M.eye.lid[0], M.eye.lid[1], M.eye.lid[2], THREE.SRGBColorSpace) } } : null;   // the Unity fish blink by turning their eye picture into the colour of the body next to it
+  root.traverse(m => { if (m.isMesh) { m.frustumCulled = false; m.material = new THREE.MeshLambertMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: .46, alphaTest: M.cut, side: THREE.DoubleSide, fog: false }); mats.push(m.material); if (m.isSkinnedMesh) skinned.push(m);
+    if (eyeU) m.material.onBeforeCompile = sh => { Object.assign(sh.uniforms, eyeU);
+      sh.fragmentShader = 'uniform float uBlink; uniform vec3 uEye; uniform vec3 uLid;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n vec2 eD = vMapUv - uEye.xy; float eyeM = smoothstep(uEye.z, uEye.z * .8, length(eD)) * uBlink; float eyeL = smoothstep(uEye.z * .13, 0., abs(eD.y + uEye.z * .05)) * smoothstep(uEye.z, uEye.z * .6, abs(eD.x)) * 0. + smoothstep(uEye.z * .12, 0., abs(eD.y + uEye.z * .08)) * smoothstep(uEye.z * .95, uEye.z * .5, abs(eD.x)) * uBlink;\n diffuseColor.rgb = mix(diffuseColor.rgb, uLid, eyeM); diffuseColor.rgb = mix(diffuseColor.rgb, uLid * .55, eyeL * .8);').replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance = mix(totalEmissiveRadiance, uLid * emissive, eyeM);'); }; } });
   // bones we pose by code on top of the swim clip (same-name nodes are FBX helper nodes: the first one per name is the real bone)
   const B = {}; root.traverse(n => { if (n.isBone && !B[n.name]) B[n.name] = n; });
-  const SP = ['Bone001', 'Bone002', 'Bone003', 'Bone004', 'Bone006'].map(n => B[n]).filter(Boolean), EYE = ['L_eye1', 'R_eye1'].map(n => B[n]).filter(Boolean);
-  const FIN = [['L_Fin_Bottom', 1, 0], ['R_Fin_Bottom', -1, 0], ['L_Fin_Top', 1, 1], ['R_Fin_Top', -1, 1]].filter(f => B[f[0]]).map(([n, s, top]) => ({ b: B[n], s, top }));
+  const uni = !!B.Spine_1;   // the Unity rig: Spine_1..3 and Tail_1..2 swing sideways about their local z; fins are named Fin_1_*
+  const SP = (uni ? ['Spine_1', 'Spine_2', 'Spine_3', 'Tail_1', 'Tail_2'] : ['Bone001', 'Bone002', 'Bone003', 'Bone004', 'Bone006']).map(n => B[n]).filter(Boolean), EYE = (uni ? [] : ['L_eye1', 'R_eye1']).map(n => B[n]).filter(Boolean);
+  const FIN = (uni ? [['Fin_1_B_L', 1, 0], ['Fin_1_B_R', -1, 0], ['Fin_1_M_L', 1, 0], ['Fin_1_M_R', -1, 0], ['Fin_1_T_F', 1, 1], ['Fin_1_T_B', 1, 1], ['Fin_1_B', 1, 1]] : [['L_Fin_Bottom', 1, 0], ['R_Fin_Bottom', -1, 0], ['L_Fin_Top', 1, 1], ['R_Fin_Top', -1, 1]]).filter(f => B[f[0]]).map(([n, s, top]) => ({ b: B[n], s, top }));
   const rest = [...SP, ...EYE, ...FIN.map(f => f.b)].map(b => [b, b.quaternion.clone(), b.scale.clone()]);
   const ex = { wide: 0, sleepy: 0, flare: 0, bend: 0, blinkT: rand(1, 4), bp: -1 }, qa = new THREE.Quaternion(), ea = new THREE.Euler();
   const addRot = (b, x, y, z) => { ea.set(x, y, z); qa.setFromEuler(ea); b.quaternion.multiply(qa); };
-  const mixer = new THREE.AnimationMixer(root), act = mixer.clipAction(M.clip); act.play(); act.time = Math.random() * M.clip.duration; mixer.update(0);
+  const mixer = new THREE.AnimationMixer(root); if (M.clip) { const act = mixer.clipAction(M.clip); act.play(); act.time = Math.random() * M.clip.duration; } mixer.update(0);
   const pose = (dt, o) => {   // swim clip + a travelling body wave + bend into turns + fins + eyes (blink, wide, sleepy)
     for (const [b, q, s] of rest) { b.quaternion.copy(q); b.scale.copy(s); }
     mixer.update(dt);
@@ -353,11 +341,12 @@ function buildModelFish(sp) {
     ex.wide += (wide - ex.wide) * k; ex.sleepy += (sleepy - ex.sleepy) * k; ex.flare += (((hv > .1 || scared) ? 1 : 0) - ex.flare) * k;
     ex.bend += (clamp(o.turnV || 0, -2.6, 2.6) * .3 - ex.bend) * (1 - Math.exp(-dt * 5));
     ex.blinkT -= dt; if (ex.blinkT < 0) { ex.bp = 0; ex.blinkT = rand(2.2, 5.5); }
-    let bl = 0; if (ex.bp >= 0) { ex.bp += dt; bl = Math.sin(Math.min(1, ex.bp / .18) * Math.PI); if (ex.bp > .18) ex.bp = -1; }
+    let bl = 0; if (ex.bp >= 0) { ex.bp += dt; const p = Math.min(1, ex.bp / .46), sm = x => x * x * (3 - 2 * x); bl = p < .36 ? sm(p / .36) : 1 - sm((p - .36) / .64); if (p >= 1) ex.bp = -1; }   // the lid comes down a little faster than it opens, both eased
     const amp = (.17 + .07 * boost) * (1 - .5 * ex.sleepy) * (scared ? 1.25 : 1);
     SP.forEach((b, i) => addRot(b, 0, 0, amp * (.55 + .45 * i) * Math.sin(ph - i * .9) + ex.bend * (i + 1) / 15));
     FIN.forEach((f, i) => { const fl = f.top ? .3 : .55; addRot(f.b, .22 * Math.sin(ph * .9 + i * 1.3), 0, f.s * (.2 * Math.sin(ph * .9 + .6) + fl * ex.flare)); });
     const sy = (1 + ex.wide) * (1 - .55 * ex.sleepy) * (1 - .93 * bl), sxz = 1 + ex.wide * .8; for (const b of EYE) b.scale.set(sxz, sy, sxz);
+    if (eyeU) eyeU.uBlink.value = window.__blink ?? Math.min(1, bl * 1.15 + ex.sleepy * .5);
   };
   const proxy = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); proxy.scale.set(M.hx * .95, M.hy * .9, M.hz * .9); proxy.userData.pickOnly = true; g.add(proxy);   // what a tap hits (the skinned meshes are not in the pick buffer)
   let glows = null;
@@ -373,16 +362,16 @@ function buildModelFish(sp) {
   const mat = { get emissiveIntensity() { return mats[0].emissiveIntensity; }, set emissiveIntensity(v) { for (const m of mats) m.emissiveIntensity = v; } };
   return { group: g, body: { rotation: { y: 0 }, material: mat }, tail: { rotation: { y: 0 } }, hx: M.hx, hy: M.hy, hz: M.hz, blink: null, model3d: true, update: pose, setGlow, bounds: new THREE.Box3(new THREE.Vector3(-M.hx, -M.hy, -M.hz), new THREE.Vector3(M.hx, M.hy, M.hz)) };
 }
+let thumbR = null;   // one renderer for all the thumbnails (a new one for each of 30 models would run out of WebGL contexts)
 function makeModelThumb(sp) {   // a small side-view picture for the UI (target boards, intro cards)
-  const M = MODEL3D[sp.model3d], r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); r.setPixelRatio(1); r.setSize(200, 160, false); r.setClearColor(0x000000, 0);
+  const M = MODEL3D[sp.model3d], r = thumbR || (thumbR = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })); r.setPixelRatio(1); r.setSize(200, 160, false); r.setClearColor(0x000000, 0);
   const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xdff4ff, 0x335577, 1.6)); const dl = new THREE.DirectionalLight(0xffffff, 2.4); dl.position.set(2, 3, 4); sc.add(dl);
   const b = buildModelFish(sp); sc.add(b.group); b.update(.45); b.group.rotation.y = -.25;
   const cam = new THREE.PerspectiveCamera(28, 200 / 160, .05, 20); cam.position.set(0, 0, M.len * 2.1); cam.lookAt(0, 0, 0); r.render(sc, cam);
-  THUMB[sp.id] = r.domElement.toDataURL('image/png'); r.dispose(); r.forceContextLoss();
+  THUMB[sp.id] = r.domElement.toDataURL('image/png');
 }
 function buildFish(sp) {
   if (sp.model3d) return buildModelFish(sp);
-  if (sp.model) return buildBig(sp.model);
   const art = FISHART[sp.id], g = new THREE.Group();
   const mat = new THREE.MeshPhongMaterial({ map: art.tex, alphaMap: art.mask, emissiveMap: art.tex, emissive: 0xffffff, emissiveIntensity: .46, alphaTest: .5, shininess: 24, specular: 0x1a2430, side: THREE.DoubleSide, fog: false });
   const uWag = { value: 0 };
@@ -1021,29 +1010,31 @@ canvas.addEventListener('pointerdown', e => {
   else { downInfo = null; setHover(null); const [a, b] = [...ptrs.values()]; pinch0 = { d: Math.hypot(a.x - b.x, a.y - b.y), dist: orbit.dist, my: (a.y + b.y) / 2 }; }
   orbit.azV = 0; orbit.elV = 0; $('hint').classList.add('gone');
 });
+let camAct = 0, camDrag = false;   // last time the player moved the camera (drag, pinch, wheel): the booster buttons fade while it is moving
 canvas.addEventListener('pointermove', e => {
   const p = ptrs.get(e.pointerId);
   if (!p && window.__uiHit && window.__uiHit(e.clientX, e.clientY)) { setHover(null); return; }
   if (!p) { if (e.pointerType === 'mouse' && !paused) setHover(pickAt(e.clientX, e.clientY, 160)); return; }
   const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
-  if (ptrs.size === 2 && pinch0) { const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y), my = (a.y + b.y) / 2; orbit.dist = clamp(pinch0.dist * pinch0.d / d, orbit.fit * .5, orbit.fit * 1.15); if (camTut.step === 'tilt') { camTut.panAcc = (camTut.panAcc || 0) + Math.abs(my - (pinch0.my ?? my)); if (camTut.panAcc > 70) camTut.pressed = 1; }   // tutorial: two fingers dragged up / down
+  if (ptrs.size === 2 && pinch0) { camAct = performance.now(); camDrag = true; const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y), my = (a.y + b.y) / 2; orbit.dist = clamp(pinch0.dist * pinch0.d / d, orbit.fit * .5, orbit.fit * 1.15); if (camTut.step === 'tilt') { camTut.panAcc = (camTut.panAcc || 0) + Math.abs(my - (pinch0.my ?? my)); if (camTut.panAcc > 70) camTut.pressed = 1; }   // tutorial: two fingers dragged up / down
     orbit.target.y += (my - (pinch0.my ?? my)) * .011 * orbit.dist / orbit.fit; pinch0.my = my; applyCam(); return; }
   if (downInfo) { downInfo.moved += Math.abs(dx) + Math.abs(dy); if (downInfo.moved > 10) setHover(null); }
-  if (e.shiftKey || (e.buttons & 2)) { if (camTut.step === 'tilt') { camTut.panAcc = (camTut.panAcc || 0) + Math.abs(dy); if (camTut.panAcc > 70) camTut.pressed = 1; } orbit.target.y += dy * .011 * orbit.dist / orbit.fit; applyCam(); return; }   // desktop: shift-drag or right-drag moves the camera up / down
+  if (e.shiftKey || (e.buttons & 2)) { camAct = performance.now(); camDrag = true; if (camTut.step === 'tilt') { camTut.panAcc = (camTut.panAcc || 0) + Math.abs(dy); if (camTut.panAcc > 70) camTut.pressed = 1; } orbit.target.y += dy * .011 * orbit.dist / orbit.fit; applyCam(); return; }   // desktop: shift-drag or right-drag moves the camera up / down
+  if (!downInfo || downInfo.moved > 10) { camAct = performance.now(); camDrag = true; }   // a real drag, not the wobble of a tap
   const dAz = -dx * .0075; orbit.az += dAz; if (camTut.step === 'rot') camTut.acc += Math.abs(dAz);
   const dEl = Math.abs(dy) > Math.abs(dx) * .35 ? dy * .0045 : 0;   // mostly-horizontal drags stay purely horizontal
   orbit.el = clamp(orbit.el + dEl, EL_MIN, EL_MAX);
   const now = performance.now(), dtm = Math.max(8, now - lastMove) / 1000; lastMove = now; orbit.azV = THREE.MathUtils.lerp(orbit.azV, dAz / dtm, .5); orbit.elV = THREE.MathUtils.lerp(orbit.elV, dEl / dtm, .5); applyCam();
 });
 const endPtr = e => {
-  const had = ptrs.delete(e.pointerId);
+  const had = ptrs.delete(e.pointerId); if (!ptrs.size) { camDrag = false; camAct = 0; }
   if (had && downInfo && ptrs.size === 0 && downInfo.moved < 10 && performance.now() - downInfo.t < 450) onTap(e.clientX, e.clientY);
   if (ptrs.size < 2) pinch0 = null; downInfo = null; if (e.pointerType !== 'mouse') setHover(null);
   if (performance.now() - lastMove > 90) { orbit.azV = 0; orbit.elV = 0; }
 };
 canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
 canvas.addEventListener('contextmenu', e => e.preventDefault());
-canvas.addEventListener('wheel', e => { e.preventDefault(); orbit.dist = clamp(orbit.dist * (1 + e.deltaY * .001), orbit.fit * .5, orbit.fit * 1.15); applyCam(); }, { passive: false });
+canvas.addEventListener('wheel', e => { e.preventDefault(); camAct = performance.now(); orbit.dist = clamp(orbit.dist * (1 + e.deltaY * .001), orbit.fit * .5, orbit.fit * 1.15); applyCam(); }, { passive: false });
 
 /* ============================== game state ============================== */
 let G = null; let gid = 0, frameN = 0;
@@ -1289,7 +1280,8 @@ function newLevel(L) {
   for (let i = 0; i < NT; i++) assignTarget(i, true);
   $('backup').style.visibility = cfg.backup ? '' : 'hidden'; $('bHint').style.display = cfg.hint ? '' : 'none'; $('bClear').style.display = cfg.clear ? '' : 'none';   // early levels: no Backup strip and no boosters yet
   const intro = [[cfg.backup, 'iBackup', 'backup'], [cfg.hint, 'iHint', 'hint'], [cfg.clear, 'iClear', 'clear'], [cfg.squid, 'iSquid', 'squid'], [cfg.swarm, 'iSwarm', 'swarm'], [cfg.clams, 'iClam', 'clam']].find(x => x[0] && !save[x[1]]);
-  introOn = false; paused = false; hideOverlays(); kick(-4); toast(cfg.per === 1 ? `Find ${cfg.goal} fish!` : `Find ${cfg.goal} sets!`); Snd.play('start'); save.last = L; persist(); refreshHintBtn();
+  introOn = false; paused = false; hideOverlays(); kick(-4); if (L >= 2) { window.__lvIntro = { t0: performance.now(), n: L }; window.__lvShown = false; window.__lvPop = 0; } else { window.__lvIntro = undefined; window.__lvShown = true; }   // (level 1 has none: the camera tutorial is enough) Snd.play('start');   // (painted by the Phaser UI: paintLevelIntro in src/ui/panels.ts)
+  save.last = L; persist(); refreshHintBtn();
   if (intro) { save[intro[1]] = 1; persist(); const gi = gid; setTimeout(() => { if (gi === gid && G.status === 'play' && !paused) showIntro(intro[2]); }, 1100); }
 }
 
@@ -1713,7 +1705,7 @@ function evEnd() { const e = EVT.cur; if (!e) return; for (const o of e.m) { o.e
 function dropUpdate(e, dt) {   // something is thrown in: the school bolts away, drifts back to look at it, the pearl floats up and a few fish head-butt it back and forth, then it pops and they scatter
   const st = e.st, me = evItem; e.m = e.m.filter(evOk); if (!me) { evEnd(); return; }
   if (st.ph === 0) { st.vy -= 13 * dt; me.position.y += st.vy * dt; me.rotation.y += dt * 4;
-    if (me.position.y <= WATER_Y) { st.ph = 1; st.t1 = e.t; surfaceSplash(me.position.x, me.position.z, 1.2); scatter(new THREE.Vector3(me.position.x, WATER_Y - 1.2, me.position.z), 2.4, true); Snd.play('splash'); kick(1.5); evBubble(me.position, '❗'); } return; }
+    if (me.position.y <= WATER_Y) { st.ph = 1; st.t1 = e.t; surfaceSplash(me.position.x, me.position.z, 1.2); scatter(new THREE.Vector3(me.position.x, WATER_Y - 1.2, me.position.z), 2.4, true); Snd.play('splash'); kick(1.5); } return; }
   const g = e.t - st.t1, J = st.j, SURF = WATER_Y - .02;
   if (!J) { me.position.y = g < .9 ? me.position.y - .6 * dt : Math.min(SURF, me.position.y + 1.3 * dt); } else me.rotation.y += dt;   // dips under, then bobs up to the surface
   me.rotation.y += dt;
@@ -1732,7 +1724,7 @@ function dropUpdate(e, dt) {   // something is thrown in: the school bolts away,
       if (j.cnt >= 8 || g > 17) { burstFx.emit(me.position, 0xfff1c8, 24, 1.5); surfaceSplash(me.position.x, me.position.z, .9); scatter(me.position.clone().setY(WATER_Y - 1), 1, true); for (const o of e.m) { o.evOn = false; o.evPin = null; } evEnd(); return; }
       j.h = j.n; j.part[j.h].hit = .4; j.from.copy(me.position); do { j.n = (Math.random() * j.part.length) | 0; } while (j.n === j.h); j.tt = 0; }
   }
-  e.bt -= dt; if (!j && e.bt <= 0) { e.bt = 1.1; evBubble(me.position.clone().setY(me.position.y + .5), pick(['👀', '❓', '👀'])); }
+  e.bt -= dt; if (!j && e.bt <= 0) { e.bt = 1.1; evBubble(me.position.clone().setY(me.position.y + .5), '❓'); }
   e.m.forEach((o, i) => { if (o.evFleeT > 0) { o.evFleeT -= dt; o.evOn = false; o.evPin = null; return; }
     const pi = j ? j.part.indexOf(o) : -1;
     if (pi >= 0) {   // a player: floats just under the surface at its spot, looks up at the ball, and bobs up to head-butt when the ball reaches it
@@ -1756,7 +1748,7 @@ function evUpdate(dt) {
       pr.c.addScaledVector(pr.v, dt); if (Math.hypot(pr.c.x, pr.c.z) > RF * .6) pr.v.multiplyScalar(-1); pr.c.y = clamp(pr.c.y + Math.sin(e.t * 1.7 + i) * dt * .25, FLOOR_Y + 1, WATER_Y - 1);
       const f = Math.pow(.5 + .5 * Math.cos(pr.ph), .8), h = .3 + .62 * f, ux = Math.cos(pr.th), uz = Math.sin(pr.th), uy = .12 * Math.sin(pr.th * 2);
       for (const [o, sg] of [[a, 1], [b, -1]]) { evPinTo(o, new THREE.Vector3(pr.c.x + ux * h * sg, pr.c.y + uy * h * sg, pr.c.z + uz * h * sg), new THREE.Vector3(-ux * sg, -uy * sg, -uz * sg), 9, .9); o.boost = Math.max(o.boost, 1.2); }
-      if (f < .14 && pr.cd <= 0) { pr.cd = .75; a.wiggle = b.wiggle = 1; P.copy(pr.c); burstFx.emit(P, 0xffffff, 9, .7); burstFx.emit(P, 0xffd24a, 5, .5); evBubble(P, pick(['💢', '💥', '😠'])); } }
+      if (f < .14 && pr.cd <= 0) { pr.cd = .75; a.wiggle = b.wiggle = 1; P.copy(pr.c); burstFx.emit(P, 0xffffff, 9, .7); burstFx.emit(P, 0xffd24a, 5, .5); evBubble(P, '💢'); } }
   } else if (kind === 'conga') {   // follow-the-leader: everyone starts where it is and falls in behind the fish ahead, so a long line forms by itself and snakes round the whole tank
     const lead = m[0], pathAt = (u, out) => { const uu = Math.max(0, u), th = st.th0 + st.sgn * .55 * uu, r = RF * (.5 + .34 * Math.sin(.4 * uu + st.ph[0])), y = (FLOOR_Y + WATER_Y) / 2 + 1.5 * Math.sin(.37 * uu + st.ph[1]);
       out.set(Math.cos(th) * r, y, Math.sin(th) * r); const k = Math.min(1, uu / 3), sm = k * k * (3 - 2 * k); out.x = st.r0 * Math.cos(st.th0) * (1 - sm) + out.x * sm; out.y = st.y0 * (1 - sm) + out.y * sm; out.z = st.r0 * Math.sin(st.th0) * (1 - sm) + out.z * sm; return out; };
@@ -1777,7 +1769,7 @@ function evUpdate(dt) {
       for (const [o, sg] of [[m[i], 1], [m[i + 1], -1]]) { evPinTo(o, new THREE.Vector3(c.x + ca * .42 * sg, c.y + bob * sg, c.z + sa * .42 * sg), new THREE.Vector3(-sa * sg, .06 * sg, ca * sg).normalize(), 6, .9); o.boost = Math.max(o.boost, 1); } }
   } else if (kind === 'hide') {
     m.forEach(o => { if (!o.evH) o.evH = HOUSES.reduce((b, h) => (!b || Math.hypot(h.c.x - o.pos.x, h.c.z - o.pos.z) < Math.hypot(b.c.x - o.pos.x, b.c.z - o.pos.z)) ? h : b, null); const h = o.evH; evWp(o, new THREE.Vector3(h.c.x + rand(-.05, .05), h.c.y, h.c.z + rand(-.05, .05)), 1.5); o.boost = Math.max(o.boost, 1); });
-    if (e.t < .3 && bub) { P.set(0, WATER_Y - .8, 0); evBubble(P, '😱'); }
+    if (e.t < .3 && bub) P.set(0, WATER_Y - .8, 0);
   }
 }
 
@@ -1897,7 +1889,7 @@ function comboHit(from) {   // reward for a correct tap: chained taps build a co
     const at = G.lastTapP || CENTER; burstFx.emit(at, W[1], 10 + Math.min(n, 9) * 3, 1.5); burstFx.emit(at, 0xffffff, 6 + n, 1.1);
     if (n >= 5) { ringFx.emit(at, .8, .22); setTimeout(() => burstFx.emit(at, W[1], 14, 1.9), 120); }
   }
-  if (n >= 3 && n % 3 === 0 && G.cfg.hint) { refreshHintBtn(); pop('💡 Hint ready!', 86, 200); Snd.play('hint'); }
+  if (n >= 3 && n % 3 === 0 && G.cfg.hint) { refreshHintBtn(); pop('Hint ready!', 86, 200); Snd.play('hint'); }
 }
 function giveToTarget(i, from, delay, size = 56, sprite = null) {
   const t = G.targets[i]; const k = t.count; const slotEl = boxEls[i].slotEls[k]; t.count++; const gi = gid;
@@ -1973,7 +1965,7 @@ const ovFx = (() => {   // small screen-space particles (bubbles, splashes) draw
 const TANK_ART = {};   // the painted tank pictures (public/ui/tanks/*.png)
 function loadTankArt() {
   const ld = new THREE.TextureLoader();
-  return Promise.all(['target_back', 'target_front', 'backup_back', 'backup_front', 'bubble_orb'].map(n => new Promise(res => ld.load(new URL('ui/tanks/' + n + '.png', document.baseURI).href, t => {
+  return Promise.all(['target_back', 'target_front', 'backup_back', 'backup_front', 'bubble_orb', 'bubble'].map(n => new Promise(res => ld.load(new URL('ui/tanks/' + n + '.png', document.baseURI).href, t => {
     if (n === 'bubble_orb') {   // the orb is turned from aqua to the green of the progress gauge's water
       const im = t.image, c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); hueRotate(c, -34); t = new THREE.CanvasTexture(c);
     }
@@ -2082,7 +2074,7 @@ const tankFx = (() => {
     const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(cr, 3)); const cracks = new THREE.LineSegments(cg, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 })), cracks2 = new THREE.LineSegments(cg, new THREE.LineBasicMaterial({ color: 0x103a68, transparent: true, opacity: 0 })); cracks.renderOrder = 5; cracks2.renderOrder = 4; cracks2.position.set(.003, -.006, 0); cracks.frustumCulled = cracks2.frustumCulled = false; cg.setDrawRange(0, 0);
     const twirl = new THREE.ShaderMaterial({ uniforms: { uM: { value: bt }, uTw: { value: 0 }, uA: { value: 1 }, uAsp: { value: 3 }, uT: { value: 0 } }, transparent: true, depthWrite: false,   // the water pictures swirls down a drain while a tank is cleared
       vertexShader: 'varying vec2 vU; void main(){ vU = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
-      fragmentShader: 'uniform sampler2D uM; uniform float uTw; uniform float uA; uniform float uAsp; uniform float uT; varying vec2 vU; void main(){ vec2 c = (vU - .5) * vec2(uAsp, 1.); float r = length(c); float a = uTw * smoothstep(.75, .0, r); float cs = cos(a), sn = sin(a); c = vec2(c.x * cs - c.y * sn, c.x * sn + c.y * cs); vec2 uv = c / vec2(uAsp, 1.) + .5; vec4 t = texture2D(uM, uv); float edge = step(0., uv.x) * step(uv.x, 1.) * step(0., uv.y) * step(uv.y, 1.); vec3 col = mix(t.rgb, vec3(.8, .95, 1.), smoothstep(.45, .0, r) * uTw * .03); gl_FragColor = vec4(col, t.a * uA * edge); }' });
+      fragmentShader: 'uniform sampler2D uM; uniform float uTw; uniform float uA; uniform float uAsp; uniform float uT; varying vec2 vU; void main(){ vec2 c = (vU - .5) * vec2(uAsp, 1.); float r = length(c); float a = uTw * smoothstep(.75, .0, r); float cs = cos(a), sn = sin(a); c = vec2(c.x * cs - c.y * sn, c.x * sn + c.y * cs); vec2 uv = c / vec2(uAsp, 1.) + .5; vec4 t = texture2D(uM, uv); float edge = step(0., uv.x) * step(uv.x, 1.) * step(0., uv.y) * step(uv.y, 1.); vec3 col = mix(t.rgb, vec3(.8, .95, 1.), smoothstep(.45, .0, r) * uTw * .03); gl_FragColor = vec4(col, t.a * uA * edge);\n#include <colorspace_fragment>\n}' });
     const basic = back.material;
     inner.add(back, shim, bub, front, rim2, rim1, cracks2, cracks); ov.scene.add(g); g.visible = false;
     for (let k = 0; k < 8; k++) { bp[k * 3] = rand(-.4, .4); bp[k * 3 + 1] = rand(-.4, .3); bp[k * 3 + 2] = -8; }
@@ -2099,8 +2091,43 @@ const tankFx = (() => {
     for (let k = 0; k < 8; k++) { T.bp[k * 3 + 1] += T.speeds[k] * dt; if (T.bp[k * 3 + 1] > .34) { T.bp[k * 3 + 1] = -.38; T.bp[k * 3] = rand(-.4, .4); } T.bp[k * 3] += Math.sin(t * 2 + k) * .0008; }
     T.bg.attributes.position.needsUpdate = true;
   }
-  function ballMake() {   // the bubble the finished tank turns into: the orb picture
-    const g = new THREE.Group(), m = new THREE.Mesh(plane, new THREE.MeshBasicMaterial({ map: TANK_ART.bubble_orb, transparent: true, depthWrite: false })); m.scale.setScalar(2.1); g.add(m); g.renderOrder = 15; g.position.z = 60; ov.scene.add(g); return g;
+  let rimTex = null, haloTex = null;
+  const glowTex = (stops) => { const c = document.createElement('canvas'); c.width = c.height = 128; const q = c.getContext('2d'), gr = q.createRadialGradient(64, 64, 0, 64, 64, 64); stops.forEach(([o, col]) => gr.addColorStop(o, col)); q.fillStyle = gr; q.fillRect(0, 0, 128, 128); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
+  function ballMake(tex = TANK_ART.bubble_orb) {   // the bubble the finished tank turns into: the orb picture (the level number flies in as the plain soap bubble, with a bright rim and a soft halo so it stands out on the water)
+    const g = new THREE.Group(), m = new THREE.Mesh(plane, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false })); m.scale.setScalar(2.1); g.add(m);
+    if (tex === TANK_ART.bubble) {
+      haloTex ||= glowTex([[0, 'rgba(190,240,255,0)'], [.5, 'rgba(190,240,255,.0)'], [.72, 'rgba(190,240,255,.5)'], [1, 'rgba(190,240,255,0)']]); rimTex ||= glowTex([[0, 'rgba(255,255,255,0)'], [.78, 'rgba(255,255,255,0)'], [.9, 'rgba(255,255,255,.95)'], [.96, 'rgba(210,245,255,.5)'], [1, 'rgba(255,255,255,0)']]);
+      const halo = new THREE.Mesh(plane, new THREE.MeshBasicMaterial({ map: haloTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })), rim = new THREE.Mesh(plane, new THREE.MeshBasicMaterial({ map: rimTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+      halo.scale.setScalar(3.3); rim.scale.setScalar(2.2); halo.userData.k = .75; rim.userData.k = 1; g.add(halo, rim);
+    } g.renderOrder = 15; g.position.z = 60; ov.scene.add(g); return g;
+  }
+  const LVT = { squeeze: 2.15, arrive: 3.1 }, LVO = { ball: null, pp: null, ang: 0, done: false, id: null };   // (the words are painted by paintLevelIntro in src/ui/panels.ts; the same times)
+  const setBallOp = (b, v) => b.children.forEach(c => { c.material.opacity = v * (c.userData.k ?? 1); });
+  function levelOrb(dt) {   // after the level words melt away, a water bubble (the orb of the tank-clear animation) flies, weaving and stretching like jelly, into the level badge
+    const I = window.__lvIntro;
+    if (!I) { if (LVO.ball) { ov.scene.remove(LVO.ball); LVO.ball = null; } LVO.id = null; return; }
+    if (LVO.id !== I) { LVO.id = I; LVO.done = false; if (LVO.ball) { ov.scene.remove(LVO.ball); LVO.ball = null; } }
+    const t = (performance.now() - I.t0) / 1000, sx0 = ov.W / 2, sy0 = ov.H * .36, F0 = 1.5;
+    if (t < F0 || LVO.done) return;
+    const br = document.querySelector('.topbar .lvl').getBoundingClientRect(), bx = br.left + br.width / 2, by = br.top + br.height / 2, R = 28;
+    if (!LVO.ball) { LVO.ball = ballMake(TANK_ART.bubble || TANK_ART.bubble_orb); setBallOp(LVO.ball, 0); LVO.pp = [sx0, sy0]; LVO.ang = 0; }
+    const q = clamp((t - F0) / (LVT.squeeze - F0), 0, 1);   // 0..1 while the words swirl into the bubble
+    if (t < LVT.squeeze) {
+      const born = sm(q), over = 1 + .3 * Math.max(0, (q - .7) / .3) * (1 - q * .2), cx = sx0 + Math.sin(t * 1.05) * 4, cy = sy0 + Math.sin(t * 1.7) * 5 - Math.sin(q * Math.PI) * 14;
+      setBallOp(LVO.ball, clamp((q - .25) / .5, 0, 1)); LVO.ball.position.set(cx - ov.W / 2, ov.H / 2 - cy, 60); LVO.ball.rotation.z = q * 5; LVO.ball.scale.setScalar(Math.max(.01, R * (.2 + .8 * born) * over)); LVO.pp = [cx, cy];
+      const a = t * 16, rad = (1 - q) * 70 + 8; if (Math.random() < .9) ovFx.emit(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad * .7, 1, 22, 0xe6fff0);   // droplets spiral into the bubble
+      if (q > .85 && !LVO.popped) { LVO.popped = true; for (let k = 0; k < 12; k++) { const aa = k / 12 * 6.283; ovFx.emit(cx + Math.cos(aa) * 26, cy + Math.sin(aa) * 26, 1, 70, 0xbff4ff); } }
+      return;
+    }
+    LVO.popped = false;
+    const u = clamp((t - LVT.squeeze) / (LVT.arrive - LVT.squeeze), 0, 1), e2 = u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2, p0 = [sx0, sy0 - 14], side = bx > p0[0] ? -1 : 1, p1 = [lerp(p0[0], bx, .25) + side * 60, Math.min(p0[1], by) - 80];
+    let x = (1 - e2) * (1 - e2) * p0[0] + 2 * (1 - e2) * e2 * p1[0] + e2 * e2 * bx, y = (1 - e2) * (1 - e2) * p0[1] + 2 * (1 - e2) * e2 * p1[1] + e2 * e2 * by;
+    x += Math.sin(u * 14) * 9 * Math.sin(u * Math.PI); y += Math.cos(u * 11) * 5 * Math.sin(u * Math.PI);   // a little weave on the way
+    const vx = x - LVO.pp[0], vy = y - LVO.pp[1], spd = Math.hypot(vx, vy) / Math.max(dt, .008), k = clamp(spd / 1000, 0, .5) + .05 * Math.sin(t * 22);
+    if (spd > 30) LVO.ang = Math.atan2(-vy, vx); LVO.pp = [x, y];
+    setBallOp(LVO.ball, 1); LVO.ball.position.set(x - ov.W / 2, ov.H / 2 - y, 60); LVO.ball.rotation.z = LVO.ang; LVO.ball.scale.set(Math.max(.01, R * (1 - .45 * e2) * (1 + k)), Math.max(.01, R * (1 - .45 * e2) * (1 - k * .7)), 1);
+    ovFx.emit(x, y, 3, 55, 0xbff4ff); ovFx.emit(x - vx * 2, y - vy * 2, 1, 25, 0xffffff); if (Math.random() < .35) ovFx.emit(x, y, 1, 90, 0xfff3b0);
+    if (u >= 1) { ovFx.emit(bx, by, 26, 190, 0xbff4ff); ovFx.emit(bx, by, 14, 110, 0xffffff); ov.scene.remove(LVO.ball); LVO.ball = null; LVO.done = true; window.__lvShown = true; window.__lvPop = performance.now(); Snd.play('complete'); }
   }
   const gaugePt = () => { const r = $('goal').getBoundingClientRect(), f = clamp(((G.goalShown || 0) + 1) / Math.max(1, G.cfg.goal), 0, 1); return [r.left + 8 + (r.width - 16) * f * .96, r.top + r.height / 2]; };
   function clearStep(T, now, dt) {   // wind-up squash, the water swirls down, the tank squeezes into the orb, the orb pops out and flies up into the gauge like a blob of jelly, then splashes in
@@ -2186,7 +2213,7 @@ const tankFx = (() => {
     },
     update() {
       const now = nowS(), dt = Math.min(.05, now - (S.last || now)); S.last = now; window.__tank3d = true;
-      if (!G) { for (const T of [...S.list, S.back]) if (T) T.g.visible = false; ovFx.update(dt); glassWater.update(dt); return; }
+      if (!G) { for (const T of [...S.list, S.back]) if (T) T.g.visible = false; levelOrb(dt); ovFx.update(dt); glassWater.update(dt); return; }
       boxEls.forEach((b, i) => {
         const T = S.list[i] || (S.list[i] = make('target')); T.yaw = i ? -.08 : .08; T.sc = 1; T.spin = 0;
         const tg = G.targets[i]; if (!tg || S.wait[i] || b.root.classList.contains('empty')) { T.g.visible = false; return; }
@@ -2226,15 +2253,15 @@ const tankFx = (() => {
       if (S.pieces) { const P = S.pieces; P.life += dt; for (const q of P.pcs) { q.vy -= 1500 * dt; q.mesh.position.x += q.vx * dt; q.mesh.position.y += q.vy * dt; q.mesh.rotation.z += q.vr * dt; q.mesh.rotation.x += q.vx3 * dt; q.mesh.rotation.y += q.vy3 * dt; const o = 1 - clamp((P.life - .7) / .5, 0, 1); q.m.opacity = o; q.em.opacity = .9 * o; }
         if (P.life > 1.3) { ov.scene.remove(P.g); P.pcs.forEach(q => { q.m.dispose(); q.em.dispose(); q.mesh.geometry.dispose(); }); S.pieces = null; } }
       for (let i = S.shards.length - 1; i >= 0; i--) { const s = S.shards[i]; s.life += dt; s.vy -= 900 * dt; s.m.position.x += s.vx * dt; s.m.position.y += s.vy * dt; s.m.rotation.z += s.vr * dt; s.m.rotation.x += s.vx3 * dt; s.m.rotation.y += s.vy3 * dt; s.mat.opacity = Math.max(0, .62 - s.life * .45); s.em.opacity = Math.max(0, 1 - s.life * .7); if (s.life > 1.4) { ov.scene.remove(s.m); s.mat.dispose(); s.em.dispose(); S.shards.splice(i, 1); } }
-      ovFx.update(dt); glassWater.update(dt);
+      levelOrb(dt); ovFx.update(dt); glassWater.update(dt);
     }
   };
 })();
 function ovRemove(sp) { if (!sp) return; ov.scene.remove(sp.holder); ov.sprites.delete(sp); }
 function ovClear() { for (const sp of ov.sprites) ov.scene.remove(sp.holder); ov.sprites.clear(); ov.flights.length = 0; tankFx.reset(); paused = false; }
 /* a fish (same 3D model as in the big tank) leaps along an arc to a DOM element */
-function flySprite(sp, from, toEl, { delay = 0, dur = 700, size0 = 56, mode = 'target', lift, onland } = {}) {
-  ov.flights.push({ sp, x0: from.x, y0: from.y, toEl, delay, dur, size0, mode, liftPx: lift, t: 0, onland, last: 0, lx: 0, ly: 0 }); if (delay > 0) sp.holder.visible = false; else spPlace(sp, from.x, from.y, size0);
+function flySprite(sp, from, toEl, { delay = 0, dur = 700, size0 = 56, mode = 'target', lift, onland, proj = false, hop = 0, anticip = 0 } = {}) {   // proj: a projectile (squash in the slot, pop up, fall along a parabola with its nose following the path)
+  ov.flights.push({ sp, x0: from.x, y0: from.y, toEl, delay, dur, size0, mode, liftPx: lift, t: 0, onland, last: 0, lx: 0, ly: 0, proj, hop, anticip }); if (delay > 0) sp.holder.visible = false; else spPlace(sp, from.x, from.y, size0);
 }
 function slotSize(r, mode) { return mode === 'target' ? Math.min(r.width, r.height) * 1.0 : r.width * .9; }
 const ease = u => .5 * (u * (2 - u)) + .5 * (u * u * (3 - 2 * u));
@@ -2247,6 +2274,18 @@ function ovUpdate(dt, time) {
     const r = f.toEl.getBoundingClientRect(); if (r.width) { f.lx = r.left + r.width / 2; f.ly = r.top + r.height / 2; f.size1 = slotSize(r, f.mode); }
     const x1 = f.lx || f.x0, y1 = f.ly || f.y0, size1 = f.size1 || f.size0;
     if (f.t < f.delay) { sp.holder.visible = false; continue; }
+    if (f.proj) {
+      const tt = f.t - f.delay, ant = f.anticip, sxp = (x1 - f.x0) >= 0 ? 1 : -1, yaw = sxp > 0 ? 0 : Math.PI;
+      if (tt < ant) { const a = tt / ant; spPlace(sp, f.x0, f.y0 + 3 * a, f.size0, 0, yaw, 0); sp.holder.scale.x *= 1 + .14 * a; sp.holder.scale.y *= 1 - .22 * a; spAnimate(sp, time, dt, 1.5); continue; }   // crouches in the slot before it jumps
+      const u = Math.min(1, (tt - ant) / f.dur), Pj = uu => [f.x0 + (x1 - f.x0) * uu, f.y0 + (y1 - f.y0) * uu - f.hop * 4 * uu * (1 - uu)];
+      const [x, y] = Pj(u), [xn, yn] = Pj(Math.min(1, u + .04)), phi = clamp(Math.atan2(-(yn - y), Math.max(Math.abs(xn - x), 2)), -1.15, 1.15), eo = 1 - (1 - u) * (1 - u);
+      const size = (f.size0 + (size1 - f.size0) * eo) * (1 + .1 * Math.sin(Math.PI * Math.min(1, u * 1.6)));
+      spPlace(sp, x, y, size, sxp > 0 ? phi : -phi, yaw, 0); const sv = Math.abs(Math.sin(Math.PI * u)); sp.holder.scale.x *= 1 + .12 * (1 - u) * (u < .3 ? 1 : .6); sp.holder.scale.y *= 1 - .06 * sv;   // stretches a little while it is going fast
+      spAnimate(sp, time, dt, 3.6);
+      if (time - f.last > .03) { f.last = time; ovFx.emit(x - Math.cos(phi) * sxp * size * .3, y + Math.sin(phi) * size * .3, 1, 40, 0xdff4ff, .7); }   // droplets fall off it, not bubbles: it is out of the water
+      if (u >= 1) { ov.flights.splice(i, 1); sp.age = 0; sp.yaw = yaw; f.onland && f.onland(sp); }
+      continue;
+    }
     const u = Math.min(1, (f.t - f.delay) / f.dur), e = ease(u), lift = f.liftPx !== undefined ? f.liftPx : -Math.min(190, Math.abs(y1 - f.y0) * .5 + 80);   // liftPx: small hop for fish leaving the Backup tray
     const P = (uu) => { const ee = ease(uu); return [f.x0 + (x1 - f.x0) * ee, f.y0 + (y1 - f.y0) * ee + lift * Math.sin(Math.PI * uu)]; };
     const [x, y] = P(u), [xn, yn] = P(Math.min(1, u + .03)); const vx = xn - x, vyUp = -(yn - y); const sx = (x1 - f.x0) >= 0 ? 1 : -1;
@@ -2416,10 +2455,17 @@ function showWin() {
 function showLose() { showOnly('ovLose'); Snd.play('lose'); }
 let paused = false, rsTimer = null;
 let introOn = false;
-function introIcon(kind) {
-  const c = document.createElement('canvas'); c.width = 256; c.height = 200; const g = c.getContext('2d'); g.textAlign = 'center'; g.textBaseline = 'middle';
-  if (kind === 'backup') { for (let i = 0; i < 7; i++) { g.beginPath(); g.arc(30 + i * 32, 120, 13, 0, 6.283); g.fillStyle = i >= 4 ? '#ff5a5a' : 'rgba(255,255,255,.45)'; g.fill(); g.lineWidth = 3; g.strokeStyle = '#fff'; g.stroke(); } g.font = '84px serif'; g.fillText('😵', 128, 50); }
-  else { g.font = '120px serif'; g.fillText(kind === 'hint' ? '💡' : '⬆️', 128, 100); }
+function introIcon(kind) {   // small drawn icons (no emoji)
+  const c = document.createElement('canvas'); c.width = 256; c.height = 200; const g = c.getContext('2d'); g.lineJoin = g.lineCap = 'round';
+  if (kind === 'backup') {
+    for (let i = 0; i < 7; i++) { g.beginPath(); g.arc(30 + i * 32, 120, 13, 0, 6.283); g.fillStyle = i >= 4 ? '#ff5a5a' : 'rgba(255,255,255,.45)'; g.fill(); g.lineWidth = 3; g.strokeStyle = '#fff'; g.stroke(); }
+    g.beginPath(); g.arc(128, 48, 30, 0, 6.283); g.fillStyle = '#ff5a5a'; g.fill(); g.lineWidth = 5; g.strokeStyle = '#fff'; g.stroke(); g.lineWidth = 7; g.beginPath(); g.moveTo(116, 36); g.lineTo(140, 60); g.moveTo(140, 36); g.lineTo(116, 60); g.stroke();
+  } else if (kind === 'hint') {
+    const gr = g.createRadialGradient(112, 70, 6, 128, 84, 54); gr.addColorStop(0, '#fff7c2'); gr.addColorStop(1, '#ffc531'); g.beginPath(); g.arc(128, 84, 50, 0, 6.283); g.fillStyle = gr; g.fill(); g.lineWidth = 6; g.strokeStyle = '#fff'; g.stroke();
+    g.fillStyle = '#d9e8f7'; g.fillRect(104, 138, 48, 14); g.fillRect(110, 156, 36, 12); g.strokeStyle = '#fff'; g.lineWidth = 4; g.strokeRect(104, 138, 48, 14); g.strokeRect(110, 156, 36, 12);
+  } else {
+    g.beginPath(); g.moveTo(128, 30); g.lineTo(186, 100); g.lineTo(150, 100); g.lineTo(150, 168); g.lineTo(106, 168); g.lineTo(106, 100); g.lineTo(70, 100); g.closePath(); g.fillStyle = '#5ec8ff'; g.fill(); g.lineWidth = 8; g.strokeStyle = '#fff'; g.stroke();
+  }
   return c.toDataURL('image/png');
 }
 const INTRO = {
@@ -2435,8 +2481,8 @@ function showSpot(d) {   // no separate pop-up: dim the screen and light up the 
   box.style.left = (r.left - pad) + 'px'; box.style.top = (r.top - pad) + 'px'; box.style.width = (r.width + pad * 2) + 'px'; box.style.height = (r.height + pad * 2) + 'px';
   box.style.borderRadius = Math.min(26, r.height / 2 + pad) + 'px';
   $('spotT').textContent = d.title; $('spotP').textContent = d.text(); $('spotOv').classList.add('show');
-  const tw = Math.min(270, innerWidth - 20); tip.style.width = tw + 'px'; tip.style.left = Math.max(10, Math.min(innerWidth - tw - 10, r.left + r.width / 2 - tw / 2)) + 'px';
-  tip.style.top = (r.bottom + pad + 16) + 'px'; tip.classList.toggle('arrR', r.left + r.width / 2 > innerWidth * .8);
+  const A = $('app').getBoundingClientRect(), tw = Math.min(270, A.width - 20); tip.style.width = tw + 'px'; tip.style.left = Math.max(A.left + 10, Math.min(A.right - tw - 10, r.left + r.width / 2 - tw / 2)) + 'px';   // the tip stays inside the game column
+  tip.style.top = (r.bottom + pad + 16) + 'px'; tip.classList.toggle('arrR', r.left + r.width / 2 > A.left + A.width * .8);
   const cx = r.left + r.width / 2 - parseFloat(tip.style.left); tip.style.setProperty('--ax', Math.max(18, Math.min(tw - 18, cx)) + 'px');
 }
 function showIntro(k) {
@@ -2466,7 +2512,7 @@ function openLevels(from) {
   lvReturn = from; paused = true; const g = $('lvGrid'); g.innerHTML = '';
   for (let n = 1; n <= MAX_LV; n++) {
     const b = document.createElement('button'), locked = false, st = save.stars[n] || 0; b.className = 'lvb' + (locked ? ' lock' : '') + (G && n === G.level ? ' cur' : '');
-    b.innerHTML = locked ? '🔒' : `${n}<small>${'★'.repeat(st)}${'☆'.repeat(3 - st)}</small>`; if (!locked) b.onclick = () => { Snd.play('ui'); newLevel(n); };
+    b.innerHTML = locked ? '' : `${n}<small>${'★'.repeat(st)}${'☆'.repeat(3 - st)}</small>`; if (!locked) b.onclick = () => { Snd.play('ui'); newLevel(n); };
     g.appendChild(b);
   }
   showOnly('ovLevels'); const cur = g.querySelector('.cur'); if (cur) cur.scrollIntoView({ block: 'nearest' });
@@ -2510,7 +2556,7 @@ function refreshClearBtn() { const b = $('bClear'); if (!b) return; b.querySelec
 function clearBackup() {   // booster: everything sitting in the backup strip jumps back into the big tank
   if (!G || G.status !== 'play' || paused || G.clearLeft <= 0 || !G.backup.length) return;
   if (G.backup.some(it => !it.filler && !it.landed)) { toast('Wait for the fish to land!'); return; }
-  G.clearLeft--; const items = G.backup.slice(), gi = gid; G.backup = []; renderBackup(); Snd.play('start'); toast('Backup cleared!');
+  G.clearLeft--; const items = G.backup.slice(), gi = gid; G.backup = []; renderBackup(); Snd.play('start');
   const slots = [...$('backup').querySelectorAll('.slot')];
   items.forEach((it, k) => {
     const sp = it.res; if (!sp) return; const r = slots[k].getBoundingClientRect(), from = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
@@ -2525,7 +2571,7 @@ function clearBackup() {   // booster: everything sitting in the backup strip ju
     const anchor = document.createElement('div'); anchor.style.cssText = `position:fixed;left:${c.x - fsz / 2}px;top:${c.y - fsz / 2}px;width:${fsz}px;height:${fsz}px;pointer-events:none;opacity:0`; document.body.appendChild(anchor);
     setTimeout(() => {
       if (gi !== gid) { anchor.remove(); ovRemove(sp); return; }
-      flySprite(sp, from, anchor, { size0: slotSize(r, 'backup'), dur: 620, delay: 0, mode: 'target', lift: -22, onland: () => {
+      flySprite(sp, from, anchor, { size0: slotSize(r, 'backup'), dur: 560, delay: 0, mode: 'target', proj: true, hop: 64 + Math.random() * 36, anticip: 120, onland: () => {
         anchor.remove(); ovRemove(sp); if (gi !== gid || !G || G.status !== 'play') return;
         spawnThing(it.junk ? { kind: it.id } : { kind: 'fish', type: it.type }, M, G.things.length); const th = G.things[G.things.length - 1]; th.spawnAt = U.uTime.value - G.t0; th.scale = 1;
         const sx = c.x >= from.x ? 1 : -1, hx = camRight.x * sx, hz = camRight.z * sx, hl = Math.hypot(hx, hz) || 1;   // heading: along the screen, the way the fish was flying
@@ -2548,11 +2594,12 @@ function updateHint() {
 }
 
 /* ---- tutorial ---- */
+const thumbImg = k => { const id = SPECIES[Math.min(k, SPECIES.length - 1)].id; return THUMB[id] ? `<img src="${THUMB[id]}" style="height:54px;display:block">` : ''; };
 const TUT = [   // pictures first, three words at most
-  { sel: '#targets', title: 'Find these fish', pic: '<span class="tp-fish">🐠<b>×1</b></span><span class="tp-fish">🐡<b>×1</b></span>' },
-  { sel: '#tankwrap', place: 'in', title: 'Tap to catch', pic: '<span class="tp-tap"><span class="tp-fish">🐠</span><span class="tp-ring"></span><span class="tp-hand">👆</span></span>' },
-  { sel: '#backup', title: "Don't fill Backup", pic: '<span class="tp-bk"><i></i><i></i><i></i><i></i><i class="x"></i><i class="x"></i><i class="x"></i></span><span class="tp-warn">😵</span>' },
-  { sel: '#bHint,#bClear', title: 'Boosters', pic: '<span class="tp-btn">💡<small>Find</small></span><span class="tp-btn">⬆️<small>Clear</small></span>' },
+  { sel: '#targets', title: 'Find these fish', pic: () => `<span class="tp-fish">${thumbImg(0)}<b>×1</b></span><span class="tp-fish">${thumbImg(1)}<b>×1</b></span>` },
+  { sel: '#tankwrap', place: 'in', title: 'Tap to catch', pic: () => `<span class="tp-tap"><span class="tp-fish">${thumbImg(0)}</span><span class="tp-ring"></span></span>` },
+  { sel: '#backup', title: "Don't fill Backup", pic: () => `<span class="tp-bk"><i></i><i></i><i></i><i></i><i class="x"></i><i class="x"></i><i class="x"></i></span>` },
+  { sel: '#bHint,#bClear', title: 'Boosters', pic: () => `<span class="tp-btn"><img src="${introIcon('hint')}" style="width:40px"><small>Find</small></span><span class="tp-btn"><img src="${introIcon('clear')}" style="width:40px"><small>Clear</small></span>` },
 ];
 const guide = { on: false, tgt: null, left: 2 };
 const camTut = { step: null, acc: 0, d0: 0 };   // camera tutorial: drag to rotate -> pinch / scroll to zoom (level 1-2, once)
@@ -2567,7 +2614,7 @@ function camTutUpdate() {
   $('pan').classList.toggle('glow', camTut.step === 'tilt' && ok);
   if (camTut.step === 'done') { box.classList.remove('show'); return; }
   box.className = 'show ' + camTut.step; const coarse = matchMedia('(pointer:coarse)').matches;
-  $('camMsg').textContent = camTut.step === 'rot' ? 'Drag to look around' : camTut.step === 'tilt' ? (coarse ? 'Drag with two fingers to move the view up / down' : 'Shift-drag or right-drag to move the view up / down') : (coarse ? 'Pinch to zoom in / out' : 'Scroll to zoom in / out');
+  $('camMsg').textContent = camTut.step === 'rot' ? 'Drag to look around' : camTut.step === 'tilt' ? 'Drag with two fingers to move the view up / down' : 'Pinch to zoom in / out';
 }
 function guideUpdate() {
   camTutUpdate();
@@ -2586,7 +2633,7 @@ function showTut(i) {
   tutI = i; paused = true; const app = $('app').getBoundingClientRect(), tut = $('tut'); tut.classList.add('show');
   const st = TUT[i], el = (() => { const rs = [...document.querySelectorAll(st.sel)].map(e => e.getBoundingClientRect()), L = Math.min(...rs.map(r => r.left)), T = Math.min(...rs.map(r => r.top)), Rr = Math.max(...rs.map(r => r.right)), B = Math.max(...rs.map(r => r.bottom)); return { left: L, top: T, right: Rr, bottom: B, width: Rr - L, height: B - T }; })(), pad = 6, sp = $('tutSpot'), tip = $('tutTip');
   Object.assign(sp.style, { left: el.left - app.left - pad + 'px', top: el.top - app.top - pad + 'px', width: el.width + pad * 2 + 'px', height: el.height + pad * 2 + 'px' });
-  $('tutH').textContent = st.title; $('tutP').textContent = st.text || ''; $('tutP').style.display = st.text ? '' : 'none'; $('tutPic').innerHTML = st.pic || ''; $('tutNext').textContent = i === TUT.length - 1 ? "Let's go!" : 'Next';
+  $('tutH').textContent = st.title; $('tutP').textContent = st.text || ''; $('tutP').style.display = st.text ? '' : 'none'; $('tutPic').innerHTML = (typeof st.pic === 'function' ? st.pic() : st.pic) || ''; $('tutNext').textContent = i === TUT.length - 1 ? "Let's go!" : 'Next';
   $('tutDots').innerHTML = TUT.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('');
   tip.style.animation = 'none'; void tip.offsetWidth; tip.style.animation = '';
   const th = tip.offsetHeight; let top;
@@ -2747,6 +2794,7 @@ function frame(now) {
   if (!ptrs.size) { orbit.az += orbit.azV * dtp; orbit.azV *= Math.exp(-dtp * 2.6); if (Math.abs(orbit.azV) < .01) orbit.azV = 0; orbit.el = clamp(orbit.el + orbit.elV * dtp, EL_MIN, EL_MAX); orbit.elV *= Math.exp(-dtp * 3.2); if (Math.abs(orbit.elV) < .01) orbit.elV = 0; }
   else if (performance.now() - lastMove > 90) { orbit.azV *= .8; orbit.elV *= .8; }
   if (camTween.on) { if (ptrs.size) camTween.on = false; else { camTween.t += dtp / .7; const k = Math.min(1, camTween.t), e = 1 + 2.2 * Math.pow(k - 1, 3) + 1.2 * Math.pow(k - 1, 2); orbit.az = camTween.az0 + (camTween.azT - camTween.az0) * e; orbit.el = camTween.el0 + (.3 - camTween.el0) * e; orbit.target.y += (PAN_Y0 - orbit.target.y) * Math.min(1, e); orbit.dist = camTween.d0 + (orbit.fit - camTween.d0) * e; if (k >= 1) camTween.on = false; } }
+  { const mv = camDrag || performance.now() - camAct < 110 || !!panHold; window.__toolA = window.__toolA ?? 1; window.__toolA += ((mv ? 0 : 1) - window.__toolA) * (1 - Math.exp(-dtp * (mv ? 14 : 16))); }   // fade out quickly while the camera moves, and straight back when the finger lifts
   if (panHold) orbit.target.y -= panHold * 1.7 * dtp; panBtns.classList.toggle('show', orbit.dist < orbit.fit * .96);
   applyCam();
   // slosh spring driven by rotation
@@ -2770,18 +2818,18 @@ function frame(now) {
 }
 
 /* ============================== boot ============================== */
-loadFish().then(loadModels).then(loadTankArt).then(() => { makeThumbs(); resize(); newLevel(Math.min(save.last || 1, save.unlocked)); requestAnimationFrame(frame); if (PLAYTEST) parent.postMessage({ type: 'ff-ready' }, '*'); });
+loadModels().then(loadUnity).then(prepModelArt).then(loadTankArt).then(() => { makeThumbs(); document.querySelectorAll('.fishy[data-ic=fish]').forEach(e => { e.innerHTML = `<img src="${THUMB[SPECIES[0].id]}" style="height:54px">`; }); resize(); newLevel(Math.min(save.last || 1, save.unlocked)); requestAnimationFrame(frame); if (PLAYTEST) parent.postMessage({ type: 'ff-ready' }, '*'); });
 
 // level editor Play button: the editor posts { type: 'ff-play', level, seed }
 function hashSeed(v) { let h = 2166136261; for (const ch of String(v)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 function seeded(a) { return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 if (PLAYTEST) addEventListener('message', e => {
   const d = e.data; if (!d || d.type !== 'ff-play' || !d.level) return;
-  PLAY_OVERRIDE = d.level; const useSeed = d.seed != null && String(d.seed).trim() !== '', lv = clamp(Math.round(d.level.refLevel) || 8, 1, 15);
+  PLAY_OVERRIDE = d.level; const useSeed = d.seed != null && String(d.seed).trim() !== '', lv = clamp(Math.round(d.level.refLevel) || 8, 1, MAX_LV);
   // warm-up run: colour-variant caches are filled on first use and would change how many random numbers the first run consumes
   if (useSeed) { Math.random = seeded(hashSeed(d.seed)); newLevel(lv); }
   Math.random = useSeed ? seeded(hashSeed(d.seed)) : ORIG_RANDOM; newLevel(lv);
 });
-window.__ff = { makeSprite, completeTarget, giveToTarget, ov, tankFx, ovFx, onTap, renderer, scene, ringFx, sprayInk, themeBoxes, colPush, tube, tubeStart, applyCam, projectToClient, pullFromBackup, swarm, swarmStart, swarmUpdate, assignTarget, get item() { return evItem; }, nowT: () => U.uTime.value - G.t0, EVT, evStart, evEnd, comboHit, guide, startleUpdate, spawnThing, buildBig, LENS, lensToContent, lensToScreen, lensClientToContent, lensContentToClient, pickAtDbg: (x, y) => pickAt(x, y, 1e9), pickAtRay: (x, y) => { const r = canvas.getBoundingClientRect(); raycaster.setFromCamera(new THREE.Vector2(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1), cam); return pickAtRay(); },
+window.__ff = { MODEL3D, UNITY, flySprite, makeSprite, completeTarget, giveToTarget, ov, tankFx, ovFx, onTap, renderer, scene, ringFx, sprayInk, themeBoxes, colPush, tube, tubeStart, applyCam, projectToClient, pullFromBackup, swarm, swarmStart, swarmUpdate, assignTarget, get item() { return evItem; }, nowT: () => U.uTime.value - G.t0, EVT, evStart, evEnd, comboHit, guide, startleUpdate, spawnThing, LENS, lensToContent, lensToScreen, lensClientToContent, lensContentToClient, pickAtDbg: (x, y) => pickAt(x, y, 1e9), pickAtRay: (x, y) => { const r = canvas.getBoundingClientRect(); raycaster.setFromCamera(new THREE.Vector2(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1), cam); return pickAtRay(); },
   pickStats: () => { pickRender(); const r = canvas.getBoundingClientRect(), out = {}; for (let y = 0; y < PICK.h; y++) for (let x = 0; x < PICK.w; x++) { const i = (y * PICK.w + x) * 4, id = PICK.buf[i] + PICK.buf[i + 1] * 256; if (!id) continue; const o = out[id] || (out[id] = { n: 0, x: 0, y: 0 }); o.n++; o.x += x; o.y += y; }
     return Object.entries(out).map(([id, o]) => ({ kind: PICK.map.get(+id)?.kind, id: +id, n: o.n, cx: r.left + o.x / o.n / PICK.w * r.width, cy: r.top + (PICK.h - 1 - o.y / o.n) / PICK.h * r.height })); }, PICKMAP: PICK.map, glassWater, showLose, tapClam, feed, inks, FISHART, cam, renderer, ov, surfaceSplash, waterBurst, miniSplash, boxEls: () => boxEls, get G() { return G; }, pickThing, orbit, newLevel, SPECIES, THUMB, scatter, onTap, missTap, hint, save, openLevels, showTut };

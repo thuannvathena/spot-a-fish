@@ -13,8 +13,7 @@
 - Code crops to the opaque area, finds the eye (dark round area) and generates thickness. If the eye is unclear, the blink lid will not show.
 - The dark outline is generated from the fish's own colour. **Do not paint a black outline.**
 - Keep species clearly different in shape and colour: decoys include hue-rotated copies of targets, so already-similar originals make levels unfair.
-- Sources: `Fish_img/` (artist PSDs, ~1.9 GB, not in this repo). `game/assets/fishes/` holds the 30 PNGs the build uses.
-- `fish_22` (whale) and `fish_30` (shark) use code models; their PNGs are not turned into meshes.
+- The fish are 3D models in `public/models/` (`unity/` for the Unity set, `blue_white_babe/`). The old 2D fish pictures in `game/assets/fishes/` are no longer used by the build.
 
 ## A.3 Animation and expressions wanted from the artist <Badge type="warning" text="Coming soon" />
 
