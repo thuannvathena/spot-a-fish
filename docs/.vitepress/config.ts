@@ -62,6 +62,7 @@ export default defineConfig({
                     items: [
                         { text: 'Getting Started', link: '/guide/getting-started' },
                         { text: 'Level editor spec', link: '/guide/editor' },
+                        { text: 'Asset workflow', link: '/guide/asset-workflow' },
                         { text: 'Deployment', link: '/guide/deployment' },
                         { text: 'Game Design Document →', link: '/gdd/' }
                     ]

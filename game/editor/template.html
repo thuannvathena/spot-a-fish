@@ -21,8 +21,12 @@ header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(-
 :root[data-theme=light] .logo{color:#111}
 .tab{padding:5px 12px;border-radius:6px;color:var(--mu);cursor:pointer;border:0;background:none}.tab.on{background:var(--pn2);color:var(--tx)}
 .grow{flex:1}.mu{color:var(--mu)}.sm{font-size:11px}
-main{flex:1;display:grid;grid-template-columns:var(--lw,200px) 6px minmax(0,1fr) 6px var(--rw,260px);min-height:0}
-main.org{grid-template-columns:var(--lw,200px) 6px minmax(0,1fr) 6px var(--rw,260px)}
+main{flex:1;display:grid;grid-template-columns:var(--lw,200px) 6px minmax(0,1fr) 6px var(--rw,260px) var(--pw,clamp(240px,26vw,380px));min-height:0}
+main.org,main.nopv{grid-template-columns:var(--lw,200px) 6px minmax(0,1fr) 6px var(--rw,260px) 0}
+main.org #cP,main.nopv #cP{display:none}
+#cP{border-left:1px solid var(--bd);display:flex;flex-direction:column;gap:6px;padding:8px}
+#pvFrame{flex:1;min-height:0;width:100%;border:1px solid var(--bd);border-radius:10px;background:#0b0e13}
+.fishgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}.fishgrid div{background:var(--pn);border:1px solid var(--bd);border-radius:6px;padding:3px;text-align:center;font-size:10px;color:var(--mu)}.fishgrid img{width:100%;height:46px;object-fit:contain;display:block}
 .col{overflow:auto;padding:10px;min-width:0}
 .col.collapsed{padding:0;overflow:hidden;width:0}
 .split{background:var(--bd);cursor:col-resize}.split:hover{background:var(--ac)}
@@ -57,12 +61,13 @@ details>summary{cursor:pointer;color:var(--mu);margin-bottom:6px}
   <span class="logo" title="Athena logo placeholder: replace with the official asset">ATHENA</span><span class="mu">Spot A Fish Editor</span>
   <button class="tab on" id="tEd">Editor</button><button class="tab" id="tOrg">Organiser</button>
   <span class="grow mu sm" id="store" style="text-align:right"></span>
-  <button id="bUndo" title="Undo">Undo</button><button id="bRedo" title="Redo">Redo</button><button id="bSave" class="pr">Save</button><button id="bTheme">Theme</button><button id="bPlay" class="pr">Play</button>
+  <button id="bUndo" title="Undo">Undo</button><button id="bRedo" title="Redo">Redo</button><button id="bSave" class="pr">Save</button><button id="bPv" title="Show or hide the tank preview">Preview</button><button id="bTheme">Theme</button><button id="bPlay" class="pr">Play</button>
 </header>
 <main id="main">
   <section class="col" id="cL"></section><div class="split" id="sL" title="Drag to resize, double-click to reset"></div>
   <section class="col" id="cC"></section><div class="split" id="sR" title="Drag to resize, double-click to reset"></div>
   <section class="col" id="cR"></section>
+  <aside class="col" id="cP"><div style="display:flex;align-items:center;gap:6px"><b style="font-size:12px">Tank preview</b><span class="mu sm grow">the real game: same 3D tank and fish</span><button id="pvReload" title="Rebuild the tank from the current level">Reload</button><button id="pvHide" title="Hide this panel">Hide</button></div><iframe id="pvFrame" title="Tank preview"></iframe><p class="mu sm" id="pvInfo" style="margin:0"></p></aside>
 </main>
 <div class="status" id="status">Ready</div>
 <div class="over" id="ovAdd"><div class="modal" id="mAdd"></div></div>

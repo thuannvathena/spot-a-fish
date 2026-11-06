@@ -20,6 +20,9 @@ if [[ -n "$(git status --porcelain)" ]]; then
     exit 1
 fi
 
+# the repo is public: no links to private tools, no tokens, no personal paths or e-mails in what gets published
+node scripts/check-public.mjs --tracked || { echo "Release stopped: fix the items above (see scripts/check-public.mjs)." >&2; exit 1; }
+
 git fetch --quiet origin
 if [[ "$VERSION" == latest ]]; then
     # latest always mirrors what's on GitHub's main.

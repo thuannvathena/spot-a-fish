@@ -6,7 +6,7 @@ import * as Phaser from 'phaser';
 export interface R { x: number; y: number; w: number; h: number }
 export const FONT = '"Lilita One", system-ui, sans-serif';
 export const INK = 0x0a2f57, INK2 = 0x06213f;
-export const DPR = Math.min(2, window.devicePixelRatio || 1);
+export const DPR = Math.min(Number((/[?&]uires=([\d.]+)/.exec(location.search) || [])[1]) || 2, window.devicePixelRatio || 1)   // ?uires=3 draws the UI at the phone's full pixel density;
 
 /** Element box in HUD coordinates (CSS pixels from the HUD's top-left), or null when it is not laid out. */
 export const rectOf = (el: Element | null | undefined, o: DOMRect): R | null => {
@@ -70,6 +70,16 @@ export class Layer {
         return e.t;
     }
 
+    /** A preloaded picture stretched to a box (the painted UI pieces). Returns false when the texture is not there. */
+    pic(key: string, tex: string, r: R, o: { alpha?: number } = {}) {
+        if (!this.scene.textures.exists(tex)) return false;
+        let im = this.imgs.get(key);
+        if (!im) { im = this.scene.add.image(0, 0, tex).setDepth(this.depth + 0.2); this.imgs.set(key, im); }
+        im.setPosition(r.x + r.w / 2, r.y + r.h / 2).setDisplaySize(r.w, r.h).setAlpha(o.alpha ?? 1).setVisible(true);
+        this.used.add('i' + key);
+        return true;
+    }
+
     /** Image fitted inside a box (object-fit: contain). Returns false while the texture is still loading. */
     image(key: string, src: string, r: R, o: { alpha?: number; tint?: number; rot?: number } = {}) {
         const tk = texFor(this.scene, src);
@@ -81,12 +91,12 @@ export class Layer {
         im.setPosition(r.x + r.w / 2, r.y + r.h / 2).setDisplaySize(f.width * s, f.height * s).setAlpha(o.alpha ?? 1).setRotation(o.rot ?? 0).setVisible(true);
         if (o.tint === undefined) im.clearTint(); else im.setTint(o.tint);
         this.used.add('i' + key);
-        return true;
+        return im;
     }
 }
 
 // ---- aquarium theme: deep water blues, foam white, coral and amber accents, sea green for success ----
-export const T = { deep: 0x0b3d73, deeper: 0x07294f, mid: 0x1d6fb8, aqua: 0x45d9e8, foam: 0xf2fbff, coral: 0xff7a5c, coralD: 0xb83a28, coralL: 0xffb4a0, amber: 0xffc14d, amberD: 0x9a5e10, amberL: 0xffe3a0, sea: 0x2fd6a3, seaD: 0x0c7d62, seaL: 0x9bf0d6 };
+export const T = { deep: 0x2186d3, deeper: 0x16639f, mid: 0x4db3ee, aqua: 0x5fe4f0, foam: 0xf2fbff, coral: 0xff7a5c, coralD: 0xb83a28, coralL: 0xffb4a0, amber: 0xffc14d, amberD: 0x9a5e10, amberL: 0xffe3a0, sea: 0x2fd6a3, seaD: 0x0c7d62, seaL: 0x9bf0d6 };
 export const hexCss = (n: number) => '#' + n.toString(16).padStart(6, '0');
 
 /** Frosted-glass panel: soft shadow, translucent tint, light on top, shade below, a bright rim. */
@@ -121,9 +131,9 @@ export function brass(g: Phaser.GameObjects.Graphics, r: R, radius: number, o: {
     g.lineStyle(1.5, BR.dk, 0.85 * a).strokeRoundedRect(r.x, r.y, r.w, r.h, radius);
 }
 /** A dark inset (the window behind glass, the inside of a brass frame). */
-export function recess(g: Phaser.GameObjects.Graphics, r: R, radius: number, tint = 0x0a3a63, alpha = 1) {
+export function recess(g: Phaser.GameObjects.Graphics, r: R, radius: number, tint = 0x1f7cc8, alpha = 1) {
     g.fillStyle(tint, alpha).fillRoundedRect(r.x, r.y, r.w, r.h, radius);
-    g.fillStyle(0x000000, 0.28).fillRoundedRect(r.x, r.y, r.w, Math.max(3, r.h * 0.14), { tl: radius, tr: radius, bl: 2, br: 2 });
+    g.fillStyle(0x000000, 0.16).fillRoundedRect(r.x, r.y, r.w, Math.max(3, r.h * 0.14), { tl: radius, tr: radius, bl: 2, br: 2 });
     g.lineStyle(1.5, 0x021428, 0.55).strokeRoundedRect(r.x, r.y, r.w, r.h, radius);
 }
 export function rivet(g: Phaser.GameObjects.Graphics, x: number, y: number, rad = 2) {
@@ -135,7 +145,7 @@ export function porthole(g: Phaser.GameObjects.Graphics, cx: number, cy: number,
     g.fillStyle(0x021428, 0.22).fillCircle(cx + 0.5, cy + 3, rad + 1);
     g.fillStyle(BR.dk, 1).fillCircle(cx, cy, rad); g.fillStyle(BR.lo, 1).fillCircle(cx, cy, rad - 1); g.fillStyle(BR.mid, 1).fillCircle(cx, cy - 0.5, rad - 1.6);
     g.fillStyle(BR.hi, 1).fillEllipse(cx - rad * 0.12, cy - rad * 0.55, rad * 1.1, rad * 0.5); g.fillStyle(BR.mid, 1).fillCircle(cx, cy + 0.5, rad - th * 0.9);
-    g.fillStyle(BR.dk, 1).fillCircle(cx, cy, rad - th); g.fillStyle(o.glass ?? 0x0a3a63, o.glassA ?? 1).fillCircle(cx, cy, rad - th - 1.2);
+    g.fillStyle(BR.dk, 1).fillCircle(cx, cy, rad - th); g.fillStyle(o.glass ?? 0x1f7cc8, o.glassA ?? 1).fillCircle(cx, cy, rad - th - 1.2);
     g.lineStyle(1.2, 0xffffff, 0.3).strokeCircle(cx, cy, rad - th - 1.2); g.fillStyle(0xffffff, 0.12).fillEllipse(cx - rad * 0.2, cy - rad * 0.3, rad * 0.9, rad * 0.45);
 }
 /** A starfish: five rounded arms, warm gold with pale dots, or an empty outline. */

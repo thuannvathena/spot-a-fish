@@ -8,7 +8,7 @@ const app = document.getElementById('app') as HTMLElement;
 const host = document.getElementById('phaser-hud') as HTMLElement;
 // Native pixel density: the canvas has DPR times more pixels than its CSS box (Hud.ts zooms its camera by the same factor).
 // Phaser 4 has no resolution option, so the size is set by hand and kept in sync with the layout.
-const DPR = Math.min(2, window.devicePixelRatio || 1);
+const DPR = Math.min(Number((/[?&]uires=([\d.]+)/.exec(location.search) || [])[1]) || 2, window.devicePixelRatio || 1)   // ?uires=3 draws the UI at the phone's full pixel density;
 const px = () => ({ w: Math.max(1, Math.round(host.clientWidth * DPR)), h: Math.max(1, Math.round(host.clientHeight * DPR)) });
 
 // Phaser draws the HUD on a transparent canvas above the 3D canvas. The canvas ignores pointer events (CSS),
@@ -28,4 +28,5 @@ document.fonts.load('28px "Lilita One"').finally(() => {
     const game = new Phaser.Game(config);
     new ResizeObserver(() => { const { w, h } = px(); game.scale.resize(w, h); }).observe(host);
     if (import.meta.env.DEV) (window as unknown as { game: Phaser.Game }).game = game;
+    (window as unknown as { __phaser: Phaser.Game }).__phaser = game;   // used by the ?prof=1 test buttons
 });

@@ -50,6 +50,7 @@ export function cfgFromLevel(lv, L) {
   if (typeof lv.startle === 'boolean') C.startle = lv.startle;
   if (pair(lv.startleGap)) C.startleGap = lv.startleGap;
   if (num(lv.theme)) C.theme = lv.theme;
+  if (typeof lv.onlyFish === 'string') C.onlyFish = lv.onlyFish;   // every fish of the level is this 3D model (see MODEL_DEFS in main.js)
   const t = lv.tube;
   if (t) {
     if (typeof t.enabled === 'boolean') C.tube = t.enabled;

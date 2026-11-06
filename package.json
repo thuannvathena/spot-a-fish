@@ -15,7 +15,9 @@
     "release": "bash scripts/release.sh",
     "release:latest": "bash scripts/release.sh latest",
     "spike:prepare": "cd game && node build.mjs && cd .. && node scripts/make-phaser-index.mjs",
-    "build:phaser": "npm run spike:prepare && vite build"
+    "build:phaser": "npm run spike:prepare && vite build",
+    "check:public": "node scripts/check-public.mjs",
+    "hooks:install": "bash scripts/install-hooks.sh"
   },
   "devDependencies": {
     "typescript": "^7.0.2",

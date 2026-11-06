@@ -1,6 +1,6 @@
-import * as THREE from 'three';
 import { LEVEL_SCHEMA, defaultsFor } from '../src/levelcfg.js';
 import DEFAULTS from '../src/levels.json';
+import { FISH_IMG, FISH_NUM } from '../src/fishimg.js';
 
 /* ---------- constants and helpers ---------- */
 const FISH_CAP = 40, TUBE_INIT = 40, SPECIES_MAX = 29, CATCHABLE = 27, HISTORY_KEEP = 10;
@@ -152,9 +152,8 @@ function renderCenter() {
     ${num('Fish size', 'sizeK', lv, { min: 0.5, max: 3, step: 0.05 })}${num('Fish speed', 'speedK', lv, { min: 0.3, max: 3, step: 0.05 })}
     <div class="f"><small>Bounty tanks (x1)</small>${(lv.bounty || []).map((b, i) => `<span>${esc(b)} <a href="#" data-rmb="${i}" class="mu">remove</a></span>`).join(', ') || '<span class="mu">none</span>'}
      <select id="addB"><option value="">+ add bounty</option>${BOUNTY.map(b => `<option>${b}</option>`).join('')}</select></div></div></div>
-   <div class="sec"><h3 class="t">Preview <span class="mu sm">3D sketch, drag to rotate. Fish positions are random in game.</span></h3><canvas id="cv"></canvas>
-    <p class="mu sm" id="pvInfo">Start fish ${st.start} · tube ${st.pumped} · target fish ${st.tf} · decoys ${st.decoy}</p></div>`;
-  drawPreview();
+   <details class="sec"><summary>Fish in the game (${FISH_IMG.length} species, plus 3D models)</summary><div class="fishgrid">${FISH_IMG.map((src, i) => `<div title="species ${i + 1}${FISH_NUM[i] > CATCHABLE ? ' (not catchable)' : ''}"><img src="${src}" alt=""><span>#${i + 1}</span></div>`).join('')}</div>
+    <p class="mu sm">A level picks its species from this list at random; the game builds each one as a 3D fish. The tank on the right is the real game, so you see exactly what the player sees.</p></details>`;
 }
 function renderRight() {
   const el = $('cR'), lv = level(); if (!S.store || !lv) { el.innerHTML = ''; return; }
@@ -204,52 +203,19 @@ function openAddDlg() {
 }
 const closeDlg = () => { $('ovAdd').classList.remove('show'); S.dlgSel = new Set(); S.dlgQ = ''; S.dlgFocus = false; };
 
-/* ---------- preview (three.js cylinder tank) ---------- */
-let pv = null;
-function drawPreview() {
-  const cv = $('cv'), lv = level(); if (!cv || !lv) return;
-  if (!pv || pv.cv !== cv) {
-    const r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(40, 1, .1, 100);
-    sc.add(new THREE.HemisphereLight(0xffffff, 0x335566, 2.2)); const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(3, 6, 4); sc.add(dl);
-    pv = { cv, r, sc, cam, g: new THREE.Group(), yaw: .6, pitch: .35, dist: 15 }; sc.add(pv.g);
-    let drag = null; cv.onpointerdown = e => { drag = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; };
-    cv.onpointermove = e => { if (!drag) return; pv.yaw -= (e.clientX - drag[0]) * .01; pv.pitch = Math.max(-.2, Math.min(1.2, pv.pitch + (e.clientY - drag[1]) * .008)); drag = [e.clientX, e.clientY]; renderPv(); };
-    cv.onpointerup = () => { drag = null; cv.style.cursor = 'grab'; };
-    cv.onwheel = e => { e.preventDefault(); pv.dist = Math.max(8, Math.min(26, pv.dist + e.deltaY * .01)); renderPv(); };
-  }
-  const g = pv.g; while (g.children.length) { const o = g.children.pop(); o.traverse(n => { n.geometry && n.geometry.dispose(); n.material && n.material.dispose && n.material.dispose(); }); }
-  const st = stats(lv), M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: .5, ...o });
-  const glass = new THREE.Mesh(new THREE.CylinderGeometry(3.25, 3.25, 5.2, 48, 1, true), new THREE.MeshStandardMaterial({ color: 0xbfe8fa, transparent: true, opacity: .22, side: THREE.DoubleSide })); glass.position.y = 2.6; g.add(glass);
-  const water = new THREE.Mesh(new THREE.CylinderGeometry(3.15, 3.15, 4.3, 48), new THREE.MeshStandardMaterial({ color: 0x1a6aa0, transparent: true, opacity: .5 })); water.position.y = 2.65; g.add(water);
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.6, .4, 48), M(0x20262f)); base.position.y = -.2; g.add(base);
-  const top = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, .06, 48), M(0x4aa6d8, { transparent: true, opacity: .8 })); top.position.y = 4.78; g.add(top);
-  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  const dots = (n, c, rad) => { for (let i = 0; i < Math.min(n, 120); i++) { const a = rnd() * 6.28, r = Math.sqrt(rnd()) * 2.6, m = new THREE.Mesh(new THREE.SphereGeometry(rad, 10, 8), M(c)); m.position.set(Math.cos(a) * r, .8 + rnd() * 3.6, Math.sin(a) * r); g.add(m); } };
-  dots(st.tf, 0xf28a1f, .16); dots(st.start - st.tf, 0x4cc3c3, .13);
-  dots((lv.urchin || 0) + (lv.jelly || 0) + (lv.squid || 0) + (lv.clam || 0), 0x9aa4b4, .24);
-  const nt = Math.min(Math.max(1, lv.goal | 0), 8); for (let i = 0; i < nt; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.55, .55, .9, 24), M(0x2a6a99, { transparent: true, opacity: .85 })); c.position.set((i - (nt - 1) / 2) * 1.35, 7.2, 0); g.add(c); }
-  if (lv.tube && lv.tube.enabled) { const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(4.4, 0, 0), new THREE.Vector3(4.4, 4, 0), new THREE.Vector3(4, 5.3, 0), new THREE.Vector3(2.9, 4.6, 0)]); g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 24, .26, 10), M(0xf28a1f))); }
-  renderPv();
-}
-function renderPv() {
-  if (!pv) return; const { r, sc, cam, cv } = pv, w = cv.clientWidth || 600, h = cv.clientHeight || 300;
-  r.setPixelRatio(Math.min(2, devicePixelRatio)); r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
-  cam.position.set(Math.sin(pv.yaw) * Math.cos(pv.pitch) * pv.dist, 3.6 + Math.sin(pv.pitch) * pv.dist, Math.cos(pv.yaw) * Math.cos(pv.pitch) * pv.dist); cam.lookAt(0, 3.4, 0); r.render(sc, cam);
-}
-addEventListener('resize', () => { if (S.tab === 'ed') renderPv(); });
 
 /* ---------- render ---------- */
 function renderAll() {
-  $('main').className = S.tab === 'org' ? 'org' : '';
+  $('main').className = S.tab === 'org' ? 'org' : S.pvOff ? 'nopv' : '';
   $('tEd').classList.toggle('on', S.tab === 'ed'); $('tOrg').classList.toggle('on', S.tab === 'org');
   $('store').textContent = S.store ? S.store.label : 'No storage chosen';
-  renderLeft(); if (S.tab === 'ed') { renderCenter(); renderRight(); } else renderOrganiser();
+  renderLeft(); if (S.tab === 'ed') { renderCenter(); renderRight(); schedulePv(); const lv0 = level(), q = $('pvInfo'); if (lv0 && q) { const st0 = stats(lv0); q.textContent = `Start fish ${st0.start} · tube ${st0.pumped} · target fish ${st0.tf} · decoys ${st0.decoy}`; } } else renderOrganiser();
   $('bSave').classList.toggle('dirty', S.dirty); $('bSave').disabled = !level() || S.tab !== 'ed'; $('bPlay').disabled = !level() || S.tab !== 'ed';
   $('bUndo').disabled = !S.undo.length || S.tab !== 'ed'; $('bRedo').disabled = !S.redo.length || S.tab !== 'ed';
 }
 function renderLight() {
   renderLeft(); const lv = level();
-  if (S.tab === 'ed' && lv) { renderChecks(); const st = stats(lv); const p = $('pvInfo'); if (p) p.textContent = `Start fish ${st.start} · tube ${st.pumped} · target fish ${st.tf} · decoys ${st.decoy}`; drawPreview(); }
+  if (S.tab === 'ed' && lv) { renderChecks(); const st = stats(lv); const p = $('pvInfo'); if (p) p.textContent = `Start fish ${st.start} · tube ${st.pumped} · target fish ${st.tf} · decoys ${st.decoy}`; schedulePv(); }
   $('bSave').classList.toggle('dirty', S.dirty); $('bUndo').disabled = !S.undo.length; $('bRedo').disabled = !S.redo.length;
 }
 
@@ -281,13 +247,26 @@ async function importFiles(files) {
 }
 async function saveCol() { const c = S.cols.find(x => x.id === S.curCol); if (!c) return; try { await S.store.saveCollection(c); S.colDirty = false; status('Saved collection ' + c.name); } catch (e) { status('Save failed: ' + e.message, true); } renderAll(); }
 
+/* ---------- live tank preview: the real game in a side panel, fed the level being edited ---------- */
+let pvSent = '', pvTimer = 0, pvReady = false;
+const pvUrl = () => (location.pathname.includes('/editor/') ? '../demo/index.html' : '../index.html') + '?playtest=1';
+function pvSend(force) {
+  const lv = level(), f = $('pvFrame'); if (!lv || !f || !pvReady || !f.contentWindow || S.pvOff || $('play').classList.contains('show')) return;
+  const key = JSON.stringify(lv) + '|' + S.seed; if (!force && key === pvSent) return; pvSent = key;
+  f.contentWindow.postMessage({ type: 'ff-play', level: clone(lv), seed: S.seed }, '*');
+}
+function schedulePv() { clearTimeout(pvTimer); pvTimer = setTimeout(() => pvSend(false), 700); }
+function pvLoad() { const f = $('pvFrame'); pvReady = false; pvSent = ''; f.src = pvUrl(); }
+$('pvReload').onclick = () => pvLoad(); $('pvHide').onclick = $('bPv').onclick = () => { S.pvOff = !S.pvOff; $('main').className = S.tab === 'org' ? 'org' : S.pvOff ? 'nopv' : ''; if (S.pvOff) { $('pvFrame').src = 'about:blank'; pvReady = false; } else pvLoad(); };
+if (innerWidth < 1100) { S.pvOff = true; $('main').className = 'nopv'; } else if (S.tab === 'ed') pvLoad();
+
 /* ---------- Play test ---------- */
 const demoUrl = () => (location.pathname.includes('/editor/') ? '../demo/index.html' : '../index.html') + '?playtest=1';
 function postPlay() { const lv = level(), f = $('pFrame'); if (!lv || !f.contentWindow) return; f.contentWindow.postMessage({ type: 'ff-play', level: clone(lv), seed: $('pSeed').value }, '*'); $('pInfo').textContent = `Playing ${lv.id} ${lv.name} · progress and stars are not saved`; }
-addEventListener('message', e => { if (e.data && e.data.type === 'ff-ready' && $('play').classList.contains('show')) postPlay(); });
-$('bPlay').onclick = () => { if (!level()) return; $('pSeed').value = S.seed; $('play').classList.add('show'); $('pFrame').src = demoUrl(); };
+addEventListener('message', e => { if (!e.data || e.data.type !== 'ff-ready') return; if ($('play').classList.contains('show') && e.source === $('pFrame').contentWindow) postPlay(); else if (e.source === $('pvFrame').contentWindow) { pvReady = true; pvSend(true); } });
+$('bPlay').onclick = () => { if (!level()) return; $('pvFrame').src = 'about:blank'; pvReady = false; $('pSeed').value = S.seed; $('play').classList.add('show'); $('pFrame').src = demoUrl(); };
 $('pRestart').onclick = postPlay;
-$('pBack').onclick = () => { S.seed = $('pSeed').value; $('play').classList.remove('show'); $('pFrame').src = 'about:blank'; renderAll(); };
+$('pBack').onclick = () => { S.seed = $('pSeed').value; $('play').classList.remove('show'); $('pFrame').src = 'about:blank'; if (!S.pvOff && S.tab === 'ed') pvLoad(); renderAll(); };
 
 /* ---------- events ---------- */
 const root = document.body;

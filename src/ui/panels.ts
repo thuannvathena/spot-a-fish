@@ -3,7 +3,7 @@ import { BR, FONT, T, Layer, R, Zones, brass, fontPx, glass, hex, hexCss, inRect
 
 // Painters: each one mirrors a group of hidden HTML elements (see src/ui/kit.ts) into Phaser drawings and touch zones.
 
-export interface GameState { level: number; completed: number; status?: string; cfg: { goal: number; backup: boolean }; backup: { junk?: boolean; filler?: boolean }[] }
+export interface GameState { level: number; completed: number; goalShown?: number; status?: string; cfg: { goal: number; backup: boolean }; backup: { junk?: boolean; filler?: boolean }[] }
 export interface Ctx { scene: Phaser.Scene; o: DOMRect; w: number; h: number; G?: GameState; zones: Zones; ovZones: Zones; spotZones: Zones; hits: R[]; modal: boolean }
 
 const click = (el: Element) => () => (el as HTMLElement).click();
@@ -92,9 +92,6 @@ function aquarium(g: Phaser.GameObjects.Graphics, r: R, a: number, t: number, se
     // glass edge
     g.lineStyle(3, 0xe4f6ff, a).strokeRoundedRect(r.x, r.y, r.w, r.h, all);
     g.lineStyle(2, 0xaaf0ff, 0.45 * a).strokeRoundedRect(r.x + 3, r.y + 3, r.w - 6, r.h - 6, 12);
-    // brass corner brackets hold the glass
-    g.lineStyle(4, BR.mid, a);
-    for (const [bx, by, sx, sy] of [[r.x, r.y, 1, 1], [r.x + r.w, r.y, -1, 1], [r.x, r.y + r.h, 1, -1], [r.x + r.w, r.y + r.h, -1, -1]]) { g.beginPath(); g.moveTo(bx, by + sy * 12); g.lineTo(bx, by); g.lineTo(bx + sx * 12, by); g.strokePath(); }
 }
 
 /* ---------- target tanks ---------- */
@@ -102,14 +99,13 @@ export function paintTargets(L: Layer, c: Ctx) {
     const g = L.g, t = c.scene.time.now / 1000;
     document.querySelectorAll('#targets .target').forEach((el, i) => {
         const root = rectOf(el, c.o); if (!root) return;
-        const a = opacityOf(el), done = el.classList.contains('done');
+        const a = opacityOf(el);
         const bR = rectOf(el.querySelector('.board'), c.o), aR = rectOf(el.querySelector('.aq'), c.o), baseR = rectOf(el.querySelector('.base'), c.o);
         if (a < 0.02) return;
         c.hits.push(root);
-        if (baseR) { g.fillStyle(0x021428, 0.2 * a).fillRoundedRect(baseR.x, baseR.y + 2, baseR.w, baseR.h, 4); g.fillStyle(BR.mid, a).fillRoundedRect(baseR.x, baseR.y, baseR.w, baseR.h, 4); g.fillStyle(BR.hi, 0.8 * a).fillRect(baseR.x + 3, baseR.y + 1, baseR.w - 6, 1.5); g.lineStyle(1.2, BR.dk, 0.8 * a).strokeRoundedRect(baseR.x, baseR.y, baseR.w, baseR.h, 4); }
+        void baseR;   // no brass base under the tank any more
         if (aR) {
-            if (done) g.fillStyle(0x4ff0a0, 0.35 * a).fillRoundedRect(aR.x - 8, aR.y - 8, aR.w + 16, aR.h + 16, 24);
-            aquarium(g, aR, a, t, i);
+            if (!(window as unknown as { __tank3d?: boolean }).__tank3d) aquarium(g, aR, a, t, i);   // the 3D tank in the overlay replaces this flat drawing
             // collected fish (thumbnails sit in the slots)
             el.querySelectorAll('.slots img').forEach((im, k) => {
                 const src = (im as HTMLImageElement).getAttribute('src'), cls = (im as HTMLElement).className;
@@ -119,14 +115,17 @@ export function paintTargets(L: Layer, c: Ctx) {
             });
         }
         if (bR) {
-            // a brass nameplate hanging on two chains
-            g.lineStyle(1.6, BR.mid, 0.9 * a); for (const fx of [0.2, 0.8]) for (let cy = bR.y - 9; cy < bR.y; cy += 3) { g.beginPath(); g.moveTo(bR.x + bR.w * fx, cy); g.lineTo(bR.x + bR.w * fx, cy + 1.6); g.strokePath(); }
-            brass(g, bR, 9, { alpha: a }); recess(g, { x: bR.x + 3.5, y: bR.y + 3.5, w: bR.w - 7, h: bR.h - 7 }, 6, T.deeper, a);
-            rivet(g, bR.x + 7, bR.y + bR.h / 2, 1.4); rivet(g, bR.x + bR.w - 7, bR.y + bR.h / 2, 1.4);
-            const sig = el.querySelector('.sig') as HTMLImageElement | null, sr = rectOf(sig, c.o);
-            if (sig && sr && sig.getAttribute('src')) L.image(`tg${i}sig`, sig.getAttribute('src')!, sr, { alpha: a });
-            const b = el.querySelector('.board b'), br = rectOf(b, c.o);
-            if (b && br) L.text(`tg${i}n`, br.x + br.w / 2, br.y + br.h / 2 + 1, lerpTxt(b), { size: fontPx(b, 24), color: hexCss(T.amberL), stroke: hexCss(T.deeper), sw: 4, alpha: a });
+            // the painted label plate hangs on the tank's top rim (a plain brass plate is the fallback while the picture loads)
+            if (!L.pic(`tg${i}plate`, 'ui_plate', bR, { alpha: a })) { brass(g, bR, 9, { alpha: a }); recess(g, { x: bR.x + 3.5, y: bR.y + 3.5, w: bR.w - 7, h: bR.h - 7 }, 6, 0x1a70b8, a); }
+            // the fish icon and the count form one group, centred in the plate's body (the two brackets at the bottom are not part of the body)
+            const sig = el.querySelector('.sig') as HTMLImageElement | null, bEl = el.querySelector('.board b'), bodyH = bR.h * 0.8, cy = bR.y + bodyH * 0.5 + 1;
+            if (bEl) {
+                const tx = L.text(`tg${i}n`, 0, cy + 1, lerpTxt(bEl), { size: 23, color: '#ffffff', stroke: '#0c5b8e', sw: 4, alpha: a });
+                const im = sig && sig.getAttribute('src') ? L.image(`tg${i}sig`, sig.getAttribute('src')!, { x: 0, y: 0, w: 400, h: bodyH * 0.9 }, { alpha: a }) : false;
+                const iw = im ? im.displayWidth : 0, gap = im ? 6 : 0, x0 = bR.x + (bR.w - (iw + gap + tx.width)) / 2;
+                if (im) im.setPosition(x0 + iw / 2, cy);
+                tx.setPosition(x0 + iw + gap + tx.width / 2, cy + 1);
+            }
         }
     });
 }
@@ -136,23 +135,19 @@ type Icon = (g: Phaser.GameObjects.Graphics, x: number, y: number) => void;
 const line = (g: Phaser.GameObjects.Graphics, w: number, col: number, pts: [number, number][]) => { g.lineStyle(w, col, 1); g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach((p) => g.lineTo(p[0], p[1])); g.strokePath(); };
 const ICONS: Record<string, Icon> = {
     bHint: (g, x, y) => { g.lineStyle(2.4, A, 1).strokeCircle(x, y - 3, 6.5); line(g, 2.4, A, [[x - 3.5, y + 7], [x + 3.5, y + 7]]); line(g, 2.4, A, [[x - 2, y + 10.5], [x + 2, y + 10.5]]); line(g, 2.4, A, [[x - 2.5, y + 3], [x - 2.5, y - 1], [x + 2.5, y - 1], [x + 2.5, y + 3]]); },
-    bClear: (g, x, y) => { line(g, 2.6, A, [[x, y + 4], [x, y - 7]]); line(g, 2.6, A, [[x - 5, y - 2], [x, y - 7], [x + 5, y - 2]]); line(g, 2.6, 0xffe27a, [[x - 8, y + 8], [x + 8, y + 8]]); },
-    bUp: (g, x, y) => line(g, 3, A, [[x - 6, y + 3], [x, y - 3], [x + 6, y + 3]]),
-    bDn: (g, x, y) => line(g, 3, A, [[x - 6, y - 3], [x, y + 3], [x + 6, y - 3]])
+    bClear: (g, x, y) => { line(g, 2.6, A, [[x, y + 4], [x, y - 7]]); line(g, 2.6, A, [[x - 5, y - 2], [x, y - 7], [x + 5, y - 2]]); line(g, 2.6, 0xffe27a, [[x - 8, y + 8], [x + 8, y + 8]]); }
 };
 export function paintTools(L: Layer, c: Ctx) {
     const g = L.g, t = c.scene.time.now / 1000;
-    for (const id of ['bHint', 'bClear', 'bUp', 'bDn']) {
+    for (const id of ['bHint', 'bClear']) {   // (the camera up / down buttons are gone: two-finger drag moves the view)
         const el = document.getElementById(id); if (!el) continue;
         const r = rectOf(el, c.o); if (!r || r.w < 4 || !shown(el)) continue;
-        const pan = id === 'bUp' || id === 'bDn';
-        if (pan && !document.getElementById('pan')?.classList.contains('show')) continue;
         const cx = r.x + r.w / 2, cy = r.y + r.h / 2, rad = r.w / 2, press = c.zones.pressed === id, dy = press ? 3 : 0, off = el.classList.contains('off');
-        porthole(g, cx, cy + dy, rad, { thick: 4.5, glass: off ? 0x274560 : 0x0a3a63 });
+        porthole(g, cx, cy + dy, rad, { thick: 4.5, glass: off ? 0x5a7c99 : 0x1f7cc8 });
         const p = parseFloat(el.style.getPropertyValue('--p')) || 0;
         if (p > 0.5) { g.fillStyle(0x000a1e, 0.6).slice(cx, cy + dy, rad - 5.5, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * p) / 100, false).fillPath(); }
         ICONS[id](g, cx, cy + dy);
-        const glow = el.classList.contains('glow') || (pan && document.getElementById('pan')?.classList.contains('glow'));
+        const glow = el.classList.contains('glow');
         if (glow) { const k = 0.5 + 0.5 * Math.sin(t * 6); g.lineStyle(4, T.amber, 0.6 + 0.4 * k).strokeCircle(cx, cy + dy, rad + 3 + 3 * k); }
         const cnt = el.querySelector('.cnt'), cr = rectOf(cnt, c.o);
         if (cnt && cr && id === 'bClear') {
@@ -160,8 +155,7 @@ export function paintTools(L: Layer, c: Ctx) {
             L.text('cnt' + id, cr.x + cr.w / 2, cr.y + cr.h / 2 + 0.5, lerpTxt(cnt), { size: 12, color: '#ffffff', stroke: hexCss(T.coralD), sw: 2 });
         }
         c.hits.push(r);
-        if (pan) { const v = id === 'bUp' ? -1 : 1; c.zones.add(id, r, { down: () => (window as unknown as { __pan?: (v: number) => void }).__pan?.(v), up: () => (window as unknown as { __pan?: (v: number) => void }).__pan?.(0) }); }
-        else c.zones.add(id, r, { click: click(el) });
+        c.zones.add(id, r, { click: click(el) });
     }
 }
 
@@ -186,7 +180,7 @@ export function paintOverlay(L: Layer, c: Ctx) {
     if (!ov) return;
     c.modal = true;
     const z = c.ovZones, g = L.g;
-    g.fillStyle(T.deeper, 0.74).fillRect(0, 0, c.w, c.h);
+    g.fillStyle(T.deeper, 0.6).fillRect(0, 0, c.w, c.h);
     z.add('ovBlock', { x: 0, y: 0, w: c.w, h: c.h }, {});   // swallows taps behind the overlay
     const card = ov.querySelector('.card'), cr = rectOf(card, c.o); if (!cr) return;
     brass(g, cr, 30);

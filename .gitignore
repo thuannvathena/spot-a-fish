@@ -13,3 +13,8 @@ game/index.html
 game/src/fishimg.js
 game/editor/index.html
 /index.html
+
+# third-party game extracts kept locally for reference only (never publish)
+SpotAFish_PrimaryContent/
+SpotAFish_UnityProject/
+Lose Anim.mov

@@ -55,3 +55,7 @@ All audio is placeholder sound synthesized in code (WebAudio). No sound files an
 **Missing sounds:** tube shaking and cap opening, food bucket pouring, fish eating, fish head-butting, squid ink spray, clam opening and closing, swarm. A real SFX set and background music are also needed.
 
 To swap sounds, edit `Snd` at the top of `game/src/main.js` (about lines 22–74). Keep the event names (`Snd.play('good')`) and change what is inside to play files.
+
+## A.6 3D fish models (test) <Badge type="warning" text="Test" />
+
+A rigged `.fbx` fish can be used instead of a 2D image. Put `model.fbx` and the atlas `Full.png` in `public/models/<key>/`, then add an entry to `MODEL_DEFS` in `game/src/main.js` (`key`, `fbx`, `png`, `len`). Requirements seen so far: units in cm, the fish faces +Z, the atlas is in the second UV set, one `Swim` clip. Level L16 (`"onlyFish": "<key>"`) fills the tank with this model. Cost: about 8 skinned meshes and 121 bones per fish, so merge meshes or reduce bones before shipping to mobile.
