@@ -7,6 +7,8 @@
 - Obstacles (urchin, jellyfish, squid, clam, swarm), random events, feeding bucket, pump tube.
 - Collision between fish, obstacles, decorations and tube.
 - Progress saved in `localStorage`, Pause menu with Reset progress.
+- Painted UI (label plates, progress tube, tanks), combo words and hint arrow, 3D tap wave, glass-break and water-on-glass lose sequence.
+- Level editor with a live preview of the real game.
 - Docs site and versioned web releases.
 
 ## 4.2 Roadmap <Badge type="warning" text="Coming soon" />
@@ -47,6 +49,7 @@ Order of priority. Milestones are scope buckets, not dates.
 | Squid ink over tube, feeding event thumbnail not checked visually | Possible visual bugs | Visual check |
 | Reported clipping when rotating | Script shows 0 violations; pair of objects unknown | Screenshot and name both objects if seen again |
 | Hover gold outline checked only in a virtual machine | Thickness or brightness may need tuning on real hardware | Tune on device |
+| Lose sequence (water simulation on the glass, breaking tank) tuned only in a desktop browser | Look, timing and frame rate on a phone unknown | Measure on a real phone and tune |
 | UI is a mirror of hidden HTML elements | Phaser draws the UI from state that `main.js` writes into hidden HTML; works, but a later clean-up should make the game emit events instead | Refactor when the UI is final |
 | Combo words, sparks, flying fish trails are still HTML/3D effects | Not drawn by Phaser | Decide if they should move |
 | Lens and tube are coupled | Changing lens math without updating `PW_GLSL` bends or offsets the tube | Keep in sync (see dev notes) |

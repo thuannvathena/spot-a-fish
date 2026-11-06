@@ -4,6 +4,10 @@ Every published version stays playable at its own URL. The [landing page](https:
 
 ## latest (main) <Badge type="tip" text="Live" />
 
+- No changes since v0.1.0. [Play the latest build](https://thuannvathena.github.io/spot-a-fish/demo/).
+
+## v0.1.0
+
 - **Backup tank cracks and breaks apart:** before it bursts the glass shows a web of cracks that grows outwards from one impact point (inside the tank only). When it bursts the tank itself is cut into jagged pieces of its own picture that fly out and fall, instead of fading away.
 - **Round bubbles in the tanks:** the bubbles in the target and backup tanks were drawn as white squares; they are now round bubble rings.
 - **Water effects rebuilt in 3D / shader:** a tap now sends a pressure wave through the tank (a see-through shell lit at its rim plus two thin rings, hidden by fish in front). In the lose sequence the backup glass breaks into many irregular tumbling shards with bright edges, the fish are shot at the screen in about 0.2 s, and each hit splashes water on the glass right away. The water on the glass is a small thin-film simulation lit by a shader (rim, caustic, highlight): a hit leaves a thick ragged patch with tongues, gravity drains it (thick water runs fast, thin water hardly moves), the glass holds the water at some spots so the streams wind and split, and a sliding fish drags water along. Fish stay stuck about a second before sliding. The tank and background stay frosted (blurred) until the lose popup appears at 3.7 s, and the popup itself is sharp; the tap wave is thinner, fainter and fades in half a second.
@@ -27,9 +31,7 @@ Every published version stays playable at its own URL. The [landing page](https:
 - **Swim wake:** swimming fish leave pale water specks behind the tail; faster fish leave more and brighter ones.
 - **3D fish animation:** curved swimming with circling loops, turns with inertia and banking, a travelling body wave and bend into turns, moving fins, and eye expressions (blink, wide when hovered or startled, sleepy when hanging still).
 - **3D fish models (test):** a rigged `.fbx` fish (Blue white babe) can replace the 2D fish. Test level L16 uses only this model, 40 fish. Fix: swarm fish no longer show square card backgrounds.
-
 Imported from the Find Fish prototype (changes since the first playtester feedback):
-
 - **Playtest feedback:** about 50–60% fewer decoy fish; fish per tank rises 1 → 2 → 3; slower, bigger fish early; long tutorial replaced by a goal popup and a pointing hand; level 1 cannot be lost; gentler stars.
 - **Fish look and motion:** softer outline from the fish's own colour, less glow, more body wobble and wider tail, longer swim paths, fewer idle fish.
 - **Rewards:** combo words with sparkles; every 3rd combo refills Hint.
@@ -51,13 +53,13 @@ Imported from the Find Fish prototype (changes since the first playtester feedba
 - **UI style: brass and glass.** The whole Phaser UI is drawn like aquarium equipment: a brass control rail with a porthole for the level and a valve wheel for pause; a glass water gauge that fills as target tanks are finished, marked with starfish (the stars of the game); hanging brass nameplates and corner brackets on the target tanks; a brass shelf with glass jars for the Backup (slimmer than before); brass-bezel tool buttons; popups in riveted brass frames with a coral banner and pearl buttons; a level list as a reef of pearls joined by stepping stones, with starfish for the stars; messages and spotlight tips with brass edges.
 - **Hover glow:** the gold highlight is now a glow hull around the whole 3D fish, so it wraps the fish from any angle (before it was a flat plane that showed only as a slice when the fish faced the camera).
 - **Fish bodies:** each fish is one closed, welded surface that follows the true outline of its picture, with a rounded edge, so there is no gap between the two faces. The rim is rounded with several rows of vertices following a circular profile, and vertices near the edge read the picture a few pixels inside, so there is no seam, stitch marks or pale bands even when a fish is seen head-on. The dark outline is a thin inverted hull behind the body, and the fish colours are smeared a few pixels past the outline, so edge-on views show no black tear or dots. Clear Backup fish leave the tray with a short hop and enter below it through the mouth of the tank.
-
 Detailed history is in the original project's `CHANGELOG.md`.
-
 [Play latest](https://thuannvathena.github.io/spot-a-fish/demo/)
+- **Level editor:** a Tank preview panel runs the real game with the level being edited, and a list shows the fish species in the game.
 
 ## Document history
 
 | Date | Change |
 |---|---|
 | 2026-11-05 | GDD created from the Find Fish prototype's handover notes and changelog |
+| 2026-11-06 | Released v0.1.0 |

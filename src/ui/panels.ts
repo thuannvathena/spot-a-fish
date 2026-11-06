@@ -228,6 +228,7 @@ export function paintOverlay(L: Layer, c: Ctx) {
         } else walk(e);
     });
     if (card) walk(card);
+    L.text('ver', cr.x + cr.w / 2, cr.y + cr.h + 14, `Spot A Fish ${__APP_VERSION__}`, { size: 11, color: '#bfe6ff', stroke: hexCss(T.deeper), sw: 2 });   // build label, so a screenshot shows which version it is
 }
 
 /* ---------- spotlight tutorial: dim the screen, light the real control, short tip ---------- */
