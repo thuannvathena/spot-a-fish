@@ -98,7 +98,7 @@ html,body{margin:0;height:100%;background:#0a3f78;color:var(--txt);font-family:v
 @keyframes fishin{0%{transform:translateY(-34px) rotate(-30deg) scale(.5)}55%{transform:translateY(8px) rotate(8deg) scale(1.18)}80%{transform:translateY(-3px) scale(.96)}100%{transform:none}}
 @keyframes bob{50%{transform:translateY(-4px) rotate(-3deg)}}
 .target .base{position:relative;z-index:1;height:10px;margin:0 -3px;border-radius:0 0 9px 9px;background:linear-gradient(#b4d4f2,#6f9cca);border:2px solid var(--ink2);border-top:0;box-shadow:0 5px 8px rgba(0,0,0,.35)}
-.target.empty{opacity:.25;filter:grayscale(1)}
+.target.empty{opacity:0;pointer-events:none}   /* a target that is gone leaves nothing behind (the space stays so the other tank keeps its place) */
 .target.pop{animation:slidein .75s cubic-bezier(.25,.9,.35,1) backwards}
 @keyframes popin{0%{transform:scale(.1) translateY(30px);opacity:0}100%{transform:none;opacity:1}}
 @keyframes slidein{0%{transform:translateY(90px) scale(.6) rotate(5deg);opacity:0}55%{transform:translateY(-10px) scale(1.05) rotate(-1deg);opacity:1}78%{transform:translateY(3px) scale(.99)}100%{transform:none;opacity:1}}
@@ -191,7 +191,7 @@ canvas#bg3d{position:absolute;left:-4%;top:-4%;width:108%;height:108%;display:bl
 .tp-btn small{position:absolute;bottom:-18px;font-size:14px;color:#ffe27a;text-shadow:0 1px 0 #0b3a66}
 #camTut{position:fixed;left:0;right:0;top:36%;z-index:46;display:none;pointer-events:none;text-align:center}
 #camTut.show{display:block}
-#camMsg{display:inline-block;max-width:84%;padding:8px 16px 9px;border-radius:999px;font-size:18px;line-height:1.15;color:#fff;background:rgba(8,40,80,.78);border:2px solid rgba(255,255,255,.6);text-shadow:0 2px 0 rgba(0,20,50,.8)}
+#camMsg{display:inline-block;max-width:84%;font-size:20px;line-height:1.15;color:#fff;text-shadow:0 2px 0 rgba(0,20,50,.8)}
 #camTut .cg{position:relative;height:90px;margin-top:130px}
 #camTut .cg i{position:absolute;left:50%;top:30px;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:rgba(255,255,255,.55);border:3px solid #fff;box-shadow:0 0 0 6px rgba(255,255,255,.2),0 4px 8px rgba(0,30,60,.4)}
 #camTut .cg b{position:absolute;left:50%;top:-4px;margin-left:-60px;width:120px;font-size:38px;color:#fff;text-shadow:0 2px 6px rgba(0,30,60,.7)}
@@ -217,11 +217,11 @@ body.wet #bg3d,body.wet #c,body.wet>canvas{animation:wetf var(--wt,3s) ease-in f
 #goalMsg{position:fixed;left:50%;transform:translateX(-50%);z-index:46;display:none;max-width:84%;padding:8px 16px 9px;border-radius:999px;text-align:center;font-size:17px;line-height:1.15;color:#fff;background:rgba(8,40,80,.72);border:2px solid rgba(255,255,255,.55);text-shadow:0 2px 0 rgba(0,20,50,.8);pointer-events:none;animation:gmpulse 2.2s ease-in-out infinite}
 #goalMsg.show{display:block}
 @keyframes gmpulse{50%{transform:translateX(-50%) scale(1.04)}}
-#guideHand{position:fixed;z-index:47;font-size:44px;line-height:1;pointer-events:none;display:none;margin-left:-8px;animation:gh 1s ease-in-out infinite;filter:drop-shadow(0 4px 3px rgba(0,30,60,.5))}
+#guideHand{position:fixed;z-index:47;width:44px;height:44px;font-size:44px;line-height:1;pointer-events:none;display:none;margin-left:-8px;animation:gh 1s ease-in-out infinite;filter:drop-shadow(0 4px 3px rgba(0,30,60,.5))}
 #guideHand.show{display:block}
 @keyframes gh{0%,100%{transform:translateY(8px)}50%{transform:translateY(-6px) scale(.92)}}
 /* levels */
-.lvgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-height:44vh;overflow:auto;padding:6px 4px 10px;touch-action:pan-y}
+.lvgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-height:min(60vh,540px);overflow:auto;padding:6px 4px 10px;touch-action:pan-y}
 .lvb{aspect-ratio:1;border-radius:15px;border:3px solid #8a4a00;background:linear-gradient(#ffd84e,#ff9a1f);box-shadow:0 4px 0 #8a4a00,inset 0 2px 0 rgba(255,255,255,.55);font-family:var(--font);font-size:23px;color:#fff;text-shadow:0 2px 0 #8a4a00,1px 0 0 #8a4a00,-1px 0 0 #8a4a00;cursor:pointer;padding:0;line-height:1}
 .lvb small{display:block;font-size:12px;letter-spacing:1px;margin-top:2px;color:#fff6c2}
 .lvb.lock{background:linear-gradient(#5d7390,#3a4b63);border-color:#1f2d40;box-shadow:0 4px 0 #1f2d40;color:#9db0c8;text-shadow:none;cursor:default}
@@ -266,7 +266,7 @@ body.wet #bg3d,body.wet #c,body.wet>canvas{animation:wetf var(--wt,3s) ease-in f
 .intro-tag{display:inline-block;margin:0 0 6px;padding:2px 14px 4px;border-radius:10px;font-size:14px;letter-spacing:1px;color:#fff;background:linear-gradient(#ff8095,#ff3050);border:2px solid #7a0a1c;text-shadow:0 2px 0 #7a0a1c}
 .intro-tag.ev{background:linear-gradient(#57d98a,#1fa85a);border-color:#0a5a2c;text-shadow:0 2px 0 #0a5a2c}
 .intro-t{margin:0 0 8px;font-size:30px;line-height:1;color:#fff;font-weight:400;text-shadow:0 3px 0 var(--ink),2px 0 0 var(--ink),-2px 0 0 var(--ink),0 -2px 0 var(--ink)}
-.fishy{font-size:54px;margin:2px 0 8px;filter:drop-shadow(0 4px 0 rgba(0,20,50,.5))}
+.fishy{height:54px;min-height:54px;margin:2px 0 8px;filter:drop-shadow(0 4px 0 rgba(0,20,50,.5))}
 .btn{display:block;width:100%;margin-top:11px;padding:11px 14px 13px;border-radius:18px;font-size:22px;color:#fff;cursor:pointer;font-family:var(--font);letter-spacing:.5px;
   background:linear-gradient(#8dffc6,#2fdc8a 55%,#17b66b);border:3px solid #0a6a3e;box-shadow:0 5px 0 #0a6a3e,inset 0 3px 0 rgba(255,255,255,.55);text-shadow:0 2px 0 #0a6a3e,2px 0 0 #0a6a3e,-2px 0 0 #0a6a3e,0 -2px 0 #0a6a3e}
 .btn.alt{background:linear-gradient(#ffe27a,#ffb12b 55%,#ff8f10);border-color:#8a4a00;box-shadow:0 5px 0 #8a4a00,inset 0 3px 0 rgba(255,255,255,.6);text-shadow:0 2px 0 #8a4a00,2px 0 0 #8a4a00,-2px 0 0 #8a4a00,0 -2px 0 #8a4a00}
@@ -281,13 +281,13 @@ body.wet #bg3d,body.wet #c,body.wet>canvas{animation:wetf var(--wt,3s) ease-in f
 /* the HTML UI stays in the layout as a hidden model (the game writes state and reads positions there); Phaser draws it all */
 .topbar,.backup,.targets,.tools,.pan,.overlay,#spotOv,#tut,#toast,#goalMsg,#hint,#camTut,#guideHand{visibility:hidden!important}
 </style>
-  <script type="module" crossorigin src="./assets/index-B7KNAqbx.js"></script>
+  <script type="module" crossorigin src="./assets/index-1vXdKOFl.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/phaser-CH2t6pmq.js">
   <link rel="stylesheet" crossorigin href="./assets/index-D2IENCT-.css">
 </head>
 <body>
 <div id="app"><div id="phaser-hud"></div>
-  <canvas id="c"></canvas><div id="guideHand">👆</div><div id="camTut"><div id="camMsg"></div><div class="cg"><i class="f1"></i><i class="f2"></i><b class="arr">↔</b></div></div><div id="goalMsg">Fill the tanks with the fish shown above!</div>
+  <canvas id="c"></canvas><div id="guideHand">👆</div><div id="camTut"><div id="camMsg"></div><div class="cg"><i class="f1"></i><i class="f2"></i></div></div><div id="goalMsg">Fill the tanks with the fish shown above!</div>
   <header class="topbar">
     <div class="lvl outline"><small>LEVEL</small><b id="lvl">1</b></div>
     <div class="goal" id="goal"><div class="fill" id="goalFill"></div><div class="txt"><span class="ico">★</span><span><span id="goalNow">0</span> / <span id="goalMax">4</span></span></div></div>
@@ -302,12 +302,12 @@ body.wet #bg3d,body.wet #c,body.wet>canvas{animation:wetf var(--wt,3s) ease-in f
     <div class="pan" id="pan"><button class="tool" id="bUp" aria-label="Move camera up"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 2px 0 #0a3a6a)"><path d="M6 15l6-6 6 6"/></svg></button><button class="tool" id="bDn" aria-label="Move camera down"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 2px 0 #0a3a6a)"><path d="M6 9l6 6 6-6"/></svg></button></div>
   </main>
 
-  <div class="overlay" id="ovPause"><div class="card"><div class="ribbon">PAUSED</div><div class="fishy">🐠</div><p>Take a breath, the fish will wait.</p>
+  <div class="overlay" id="ovPause"><div class="card"><div class="ribbon">PAUSED</div><div class="fishy" data-ic="fish"></div><p>Take a breath, the fish will wait.</p>
     <button class="btn" id="bResume">Resume</button><button class="btn ghost" id="bRestart1">Restart level</button><button class="btn ghost" id="bLevels1">Levels</button><button class="btn ghost" id="bReset" style="background:linear-gradient(#ff9aa8,#e0405a)">↺ Reset progress</button></div></div>
   <div id="spotOv"><div id="spotBox"></div><div id="spotTip"><b id="spotT"></b><p id="spotP"></p><span class="spotok">Tap to continue</span></div></div>
-  <div class="overlay" id="ovWin"><div class="card"><div class="ribbon">LEVEL COMPLETE</div><div class="stars"><span>⭐</span><span>⭐</span><span>⭐</span></div><p id="winTxt"></p>
+  <div class="overlay" id="ovWin"><div class="card"><div class="ribbon">LEVEL COMPLETE</div><div class="stars"><span>★</span><span>★</span><span>★</span></div><p id="winTxt"></p>
     <button class="btn" id="bNext">Next level</button><button class="btn ghost" id="bReplay">Replay</button><button class="btn ghost" id="bLevels2">Levels</button></div></div>
-  <div class="overlay" id="ovLose"><div class="card"><div class="ribbon" style="background:linear-gradient(#ff8095,#ff3050);border-color:#7a0a1c;box-shadow:0 4px 0 #7a0a1c;text-shadow:0 2px 0 #7a0a1c,1px 0 0 #7a0a1c,-1px 0 0 #7a0a1c">BACKUP FULL</div><div class="fishy">🫧</div><p>No more room to keep fish.<br>Look carefully before you tap!</p>
+  <div class="overlay" id="ovLose"><div class="card"><div class="ribbon" style="background:linear-gradient(#ff8095,#ff3050);border-color:#7a0a1c;box-shadow:0 4px 0 #7a0a1c;text-shadow:0 2px 0 #7a0a1c,1px 0 0 #7a0a1c,-1px 0 0 #7a0a1c">BACKUP FULL</div><div class="fishy" data-ic="bubbles"></div><p>No more room to keep fish.<br>Look carefully before you tap!</p>
     <button class="btn alt" id="bRetry">Try again</button><button class="btn ghost" id="bLevels3">Levels</button></div></div>
   <div class="overlay" id="ovIntro"><div class="card"><div class="ribbon" id="introRib">NEW OBSTACLE</div><div class="intro-pic"><img id="introImg" alt=""></div><div class="intro-tag" id="introTag">OBSTACLE</div><h2 class="intro-t" id="introTitle"></h2><p id="introTxt"></p>
     <button class="btn alt" id="bIntro">Got it!</button></div></div>
