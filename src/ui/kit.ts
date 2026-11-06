@@ -42,9 +42,10 @@ export class Layer {
     private imgs = new Map<string, Phaser.GameObjects.Image>();
     private used = new Set<string>();
 
-    constructor(private scene: Phaser.Scene, private depth: number) {
-        this.g = scene.add.graphics().setDepth(depth);
-        this.gt = scene.add.graphics().setDepth(depth + 0.05);
+    /** `onNew` is called for every object the layer creates (the HUD uses it to send the layers to different cameras). */
+    constructor(private scene: Phaser.Scene, private depth: number, private onNew: (o: Phaser.GameObjects.GameObject) => void = () => { }) {
+        this.g = scene.add.graphics().setDepth(depth); onNew(this.g);
+        this.gt = scene.add.graphics().setDepth(depth + 0.05); onNew(this.gt);
     }
 
     begin() { this.g.clear(); this.gt.clear(); this.used.clear(); }
@@ -58,7 +59,7 @@ export class Layer {
     text(key: string, x: number, y: number, str: string, o: TextOpts = {}) {
         let e = this.texts.get(key);
         if (!e) {
-            e = { t: this.scene.add.text(0, 0, '', { fontFamily: FONT }).setResolution(DPR).setDepth(this.depth + 0.5), sig: '' };
+            e = { t: this.scene.add.text(0, 0, '', { fontFamily: FONT }).setResolution(DPR).setDepth(this.depth + 0.5), sig: '' }; this.onNew(e.t);
             this.texts.set(key, e);
         }
         const sig = [o.size, o.color, o.stroke, o.sw, o.wrap, o.align].join('|');
@@ -76,7 +77,7 @@ export class Layer {
     pic(key: string, tex: string, r: R, o: { alpha?: number } = {}) {
         if (!this.scene.textures.exists(tex)) return false;
         let im = this.imgs.get(key);
-        if (!im) { im = this.scene.add.image(0, 0, tex).setDepth(this.depth + 0.2); this.imgs.set(key, im); }
+        if (!im) { im = this.scene.add.image(0, 0, tex).setDepth(this.depth + 0.2); this.onNew(im); this.imgs.set(key, im); }
         im.setPosition(r.x + r.w / 2, r.y + r.h / 2).setDisplaySize(r.w, r.h).setAlpha(o.alpha ?? 1).setVisible(true);
         this.used.add('i' + key);
         return true;
@@ -87,7 +88,7 @@ export class Layer {
         const tk = texFor(this.scene, src);
         if (!tk) return false;
         let im = this.imgs.get(key);
-        if (!im) { im = this.scene.add.image(0, 0, tk).setDepth(this.depth + 0.25); this.imgs.set(key, im); }
+        if (!im) { im = this.scene.add.image(0, 0, tk).setDepth(this.depth + 0.25); this.onNew(im); this.imgs.set(key, im); }
         if (im.texture.key !== tk) im.setTexture(tk);
         const f = this.scene.textures.get(tk).getSourceImage() as HTMLImageElement, s = Math.min(r.w / f.width, r.h / f.height);
         im.setPosition(r.x + r.w / 2, r.y + r.h / 2).setDisplaySize(f.width * s, f.height * s).setAlpha(o.alpha ?? 1).setRotation(o.rot ?? 0).setVisible(true);

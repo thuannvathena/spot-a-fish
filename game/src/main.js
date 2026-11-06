@@ -2192,7 +2192,7 @@ const tankFx = (() => {
       for (const T of S.list) if (T) { T.g.visible = false; T.back.material = T.basic; }
       for (const T of S.fx) { if (T.clear && T.clear.ball) ov.scene.remove(T.clear.ball); ov.scene.remove(T.g); } S.fx.length = 0; S.wait.length = 0;
       if (S.back) { const B = S.back; B.g.visible = false; B.front.visible = true; B.shim.visible = true; B.rim1.material.opacity = B.rim2.material.opacity = 0; B.rim1.visible = B.rim2.visible = true; B.drain = 0; B.back.position.y = 0; B.back.visible = true; B.cracks.geometry.setDrawRange(0, 0); B.cracks2.material.opacity = 0; B.cracks.material.opacity = 0; }
-      for (const s of S.shards) ov.scene.remove(s.m); S.shards.length = 0; if (S.pieces) { ov.scene.remove(S.pieces.g); S.pieces.pcs.forEach(q => { q.m.dispose(); q.em.dispose(); q.mesh.geometry.dispose(); }); S.pieces = null; } S.brk = null; glassWater.clear(); document.getElementById('splat')?.remove(); document.body.classList.remove('wet');
+      for (const s of S.shards) ov.scene.remove(s.m); S.shards.length = 0; if (S.pieces) { ov.scene.remove(S.pieces.g); S.pieces.pcs.forEach(q => { q.m.dispose(); q.em.dispose(); q.mesh.geometry.dispose(); }); S.pieces = null; } S.brk = null; glassWater.clear(); document.getElementById('splat')?.remove(); document.body.classList.remove('wet'); window.__wetT0 = 0;
     },
     breakBackup() {
       if (S.brk || !S.back || !G) return; const fish = G.backup.map(it => it && it.res ? { sp: it.res, tx: ov.W * rand(.2, .8), ty: ov.H * rand(.32, .62), delay: rand(0, .12), spin: rand(-1.2, 1.2), dwell: rand(.75, 1.0), gone: false, hit: false } : null);
@@ -2243,7 +2243,7 @@ const tankFx = (() => {
             BT.drain = 1;   // the tank is gone: it flew apart in pieces
             for (const f of B.fish) if (f && !f.hit && el >= .55 + f.delay) {   // each fish hits the glass: water splashes right there
               f.hit = true; glassWater.hit(f.tx, f.ty, rand(60, 90), f.dwell); ovFx.emit(f.tx, f.ty, 18, 300, 0xdff4ff, 1.2); ovFx.emit(f.tx, f.ty, 6, 200, 0xffffff, 1); kick(3); if ((B.n = (B.n || 0) + 1) % 3 === 1) Snd.play('splash');
-              if (!B.hit) { B.hit = true; kick(7); Snd.play('bad'); document.body.style.setProperty('--wt', (3.7 - el) + 's'); document.body.classList.add('wet'); }
+              if (!B.hit) { B.hit = true; kick(7); Snd.play('bad'); document.body.style.setProperty('--wt', (3.7 - el) + 's'); document.body.classList.add('wet'); window.__wetT0 = performance.now(); window.__wetDur = 3.7 - el; }
             }
             if (el >= .7 && !B.hit && !B.fish.some(f => f)) for (let k = 0; k < 4; k++) B.fish.push({ sp: null, tx: ov.W * rand(.2, .8), ty: ov.H * rand(.3, .65), delay: 0, hit: false, gone: true });   // nothing to throw: the water still hits
             if (el >= .5 && !paused) paused = true;   // the whole game stalls for a moment

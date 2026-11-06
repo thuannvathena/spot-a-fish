@@ -7,6 +7,14 @@ import { Ctx, GameState, levelPop, paintLevelIntro, paintMessages, paintOverlay,
 const ff = () => (window as unknown as { __ff?: { G?: GameState } }).__ff;
 const UI30 = /[?&]ui30=0/.test(location.search) ? false : matchMedia('(pointer:coarse)').matches || /[?&]ui30=1/.test(location.search);
 
+/** how many px of blur the frosted lose screen has right now (same curve as the CSS on the 3D canvases: rises quickly at first, then slowly to 9 px) */
+function wetBlurPx(): number {
+    const w = window as unknown as { __wetT0?: number; __wetDur?: number }; if (!w.__wetT0) return 0;
+    const u = Math.min(1, (performance.now() - w.__wetT0) / 1000 / Math.max(0.5, w.__wetDur ?? 3)), pts: [number, number][] = [[0, 0], [0.25, 2], [0.85, 8], [1, 9]];
+    for (let i = 1; i < pts.length; i++) if (u <= pts[i][0]) return pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * ((u - pts[i - 1][0]) / (pts[i][0] - pts[i - 1][0]));
+    return 9;
+}
+
 export class Hud extends Phaser.Scene {
     private base!: Layer; private ovl!: Layer; private spot!: Layer; private msg!: Layer;
     private zBase!: Zones; private zOv!: Zones; private zSpot!: Zones;
@@ -26,8 +34,12 @@ export class Hud extends Phaser.Scene {
     }
 
     create() {
-        this.cameras.main.setOrigin(0, 0).setZoom(DPR);   // draw in CSS pixels; the canvas has DPR x more pixels
-        this.base = new Layer(this, 0); this.ovl = new Layer(this, 20); this.spot = new Layer(this, 40); this.msg = new Layer(this, 60);
+        const main = this.cameras.main.setOrigin(0, 0).setZoom(DPR);   // draw in CSS pixels; the canvas has DPR x more pixels
+        // two cameras on the same canvas: the first draws only the base layer (the top row, the target plates, the booster buttons) and can be blurred on its own;
+        // the second draws everything above it (pop-ups, messages), so a pop-up stays sharp over a blurred screen
+        this.camTop = this.cameras.add(0, 0, main.width, main.height).setOrigin(0, 0).setZoom(DPR);
+        const toBase = (o: Phaser.GameObjects.GameObject) => this.camTop.ignore(o), toTop = (o: Phaser.GameObjects.GameObject) => main.ignore(o);
+        this.base = new Layer(this, 0, toBase); this.ovl = new Layer(this, 20, toTop); this.spot = new Layer(this, 40, toTop); this.msg = new Layer(this, 60, toTop);
         this.zBase = new Zones(this, 5); this.zOv = new Zones(this, 25); this.zSpot = new Zones(this, 45);
         // the 3D canvas calls this before handling a tap: true = the tap belongs to the Phaser UI
         (window as unknown as { __uiHit: (x: number, y: number) => boolean }).__uiHit = (cx, cy) =>
@@ -35,6 +47,8 @@ export class Hud extends Phaser.Scene {
     }
 
     private lastDraw = 0;
+    private camTop!: Phaser.Cameras.Scene2D.Camera;
+    private blurCtl: Phaser.Filters.Blur | null = null;
 
     update(_t: number, _dt: number) {
         const t0 = performance.now();
@@ -46,6 +60,9 @@ export class Hud extends Phaser.Scene {
         const G = ff()?.G;
         const c: Ctx = { scene: this, o, w: o.width, h: o.height, G, zones: this.zBase, ovZones: this.zOv, spotZones: this.zSpot, hits: [], modal: false };
         for (const l of [this.base, this.ovl, this.spot, this.msg]) l.begin();
+        { const px = wetBlurPx(), cam = this.cameras.main;   // the lose sequence frosts the screen: the base layer blurs together with the 3D scene
+          if (px < 0.3) { if (this.blurCtl) this.blurCtl.setActive(false); }
+          else { if (!this.blurCtl) this.blurCtl = cam.filters.internal.addBlur(2, 0, 0, 1, 0xffffff, 10) as Phaser.Filters.Blur; this.blurCtl.setActive(true); this.blurCtl.x = px; this.blurCtl.y = px; } }
         for (const z of [this.zBase, this.zOv, this.zSpot]) z.begin();
         if (G) {
             this.topBar(c, dt);
