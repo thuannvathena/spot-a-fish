@@ -1,28 +1,37 @@
 [
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
+    "version": 2,
     "id": "L01",
-    "name": "First catch",
+    "name": "Tutorial",
     "status": "Ready",
     "difficulty": "Easy",
     "category": "Tutorial",
     "refLevel": 1,
     "goal": 4,
-    "per": 1,
+    "per": 3,
+    "tanks": [
+      1,
+      1,
+      1,
+      1
+    ],
     "bounty": [],
-    "species": 8,
-    "decoyFish": 8,
+    "species": 7,
+    "decoyFish": 6,
     "look": 0,
-    "sizeK": 1.7,
-    "speedK": 0.72,
-    "urchin": 1,
+    "shift": 130,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
     "jelly": 0,
     "squid": 0,
     "clam": 0,
     "swarm": false,
     "tube": {
       "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
@@ -30,8 +39,12 @@
     "hint": false,
     "tank": false,
     "clear": false,
+    "theme": 0,
+    "events": [
+      "conga"
+    ],
     "eventGap": [
-      6,
+      8,
       10
     ],
     "feed": false,
@@ -39,40 +52,52 @@
       24,
       34
     ],
-    "swarmGap": [
-      28,
-      40
-    ],
     "startle": false,
     "startleGap": [
       26,
       38
+    ],
+    "swarmGap": [
+      30,
+      30
     ]
   },
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
+    "version": 2,
     "id": "L02",
-    "name": "Backup",
+    "name": "Backup Slot",
     "status": "Ready",
     "difficulty": "Easy",
     "category": "Normal",
     "refLevel": 2,
-    "goal": 5,
-    "per": 1,
+    "goal": 7,
+    "per": 3,
+    "tanks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      2
+    ],
     "bounty": [],
-    "species": 10,
-    "decoyFish": 12,
+    "species": 12,
+    "decoyFish": 10,
     "look": 0,
-    "sizeK": 1.7,
-    "speedK": 0.72,
-    "urchin": 1,
+    "shift": 130,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
     "jelly": 0,
     "squid": 0,
     "clam": 0,
     "swarm": false,
     "tube": {
       "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
@@ -80,8 +105,12 @@
     "hint": false,
     "tank": false,
     "clear": false,
+    "theme": 0,
+    "events": [
+      "conga"
+    ],
     "eventGap": [
-      6,
+      8,
       10
     ],
     "feed": false,
@@ -89,40 +118,53 @@
       24,
       34
     ],
-    "swarmGap": [
-      28,
-      40
-    ],
     "startle": false,
     "startleGap": [
       26,
       38
+    ],
+    "swarmGap": [
+      30,
+      30
     ]
   },
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
+    "version": 2,
     "id": "L03",
-    "name": "Squid",
+    "name": "Level 3",
     "status": "Ready",
     "difficulty": "Easy",
     "category": "Normal",
     "refLevel": 3,
-    "goal": 4,
-    "per": 2,
+    "goal": 8,
+    "per": 3,
+    "tanks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      2,
+      2
+    ],
     "bounty": [],
-    "species": 8,
-    "decoyFish": 14,
-    "look": 1,
-    "sizeK": 1.7,
-    "speedK": 0.72,
+    "species": 14,
+    "decoyFish": 12,
+    "look": 0,
+    "shift": 130,
+    "sizeK": 1.4,
+    "speedK": 0.85,
     "urchin": 0,
     "jelly": 0,
-    "squid": 1,
+    "squid": 0,
     "clam": 0,
     "swarm": false,
     "tube": {
       "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
@@ -130,49 +172,67 @@
     "hint": false,
     "tank": false,
     "clear": false,
+    "theme": 0,
+    "events": [
+      "conga",
+      "waltz"
+    ],
     "eventGap": [
-      6,
+      8,
       10
     ],
-    "feed": true,
+    "feed": false,
     "feedGap": [
       24,
       34
-    ],
-    "swarmGap": [
-      28,
-      40
     ],
     "startle": false,
     "startleGap": [
       26,
       38
+    ],
+    "swarmGap": [
+      30,
+      30
     ]
   },
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
+    "version": 2,
     "id": "L04",
-    "name": "Hint",
+    "name": "Booster 1: Hint",
     "status": "Ready",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "category": "Normal",
     "refLevel": 4,
-    "goal": 4,
-    "per": 2,
+    "goal": 8,
+    "per": 3,
+    "tanks": [
+      1,
+      1,
+      1,
+      1,
+      2,
+      2,
+      2,
+      2
+    ],
     "bounty": [],
-    "species": 8,
-    "decoyFish": 18,
-    "look": 1,
-    "sizeK": 1.5,
-    "speedK": 0.82,
-    "urchin": 1,
-    "jelly": 1,
-    "squid": 1,
+    "species": 16,
+    "decoyFish": 16,
+    "look": 0,
+    "shift": 130,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
     "clam": 0,
     "swarm": false,
     "tube": {
       "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
@@ -180,49 +240,206 @@
     "hint": true,
     "tank": false,
     "clear": false,
+    "theme": 0,
+    "events": [
+      "conga",
+      "waltz"
+    ],
     "eventGap": [
-      6,
+      8,
       10
     ],
-    "feed": true,
+    "feed": false,
     "feedGap": [
       24,
       34
-    ],
-    "swarmGap": [
-      28,
-      40
     ],
     "startle": false,
     "startleGap": [
       26,
       38
+    ],
+    "swarmGap": [
+      30,
+      30
     ]
   },
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
+    "version": 2,
     "id": "L05",
-    "name": "Clear Backup",
+    "name": "Level 5",
     "status": "Ready",
-    "difficulty": "Medium",
+    "difficulty": "Hard",
     "category": "Normal",
     "refLevel": 5,
-    "goal": 5,
+    "goal": 10,
     "per": 3,
+    "tanks": [
+      1,
+      1,
+      1,
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
     "bounty": [],
-    "species": 10,
+    "species": 22,
     "decoyFish": 24,
-    "look": 1,
-    "sizeK": 1.5,
-    "speedK": 0.82,
-    "urchin": 2,
-    "jelly": 1,
-    "squid": 1,
+    "look": 4,
+    "shift": 130,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
     "clam": 0,
     "swarm": false,
     "tube": {
       "enabled": false,
+      "extraFish": 0,
+      "waves": [],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": false,
+    "clear": false,
+    "theme": 0,
+    "events": [
+      "conga",
+      "waltz"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": false,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L06",
+    "name": "Level 6",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 6,
+    "goal": 8,
+    "per": 3,
+    "tanks": [
+      1,
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    "bounty": [],
+    "species": 14,
+    "decoyFish": 12,
+    "look": 1,
+    "shift": 130,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": false,
+      "extraFish": 0,
+      "waves": [],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": false,
+    "clear": false,
+    "theme": 0,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": false,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L07",
+    "name": "Booster 2: Tank Clear",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 7,
+    "goal": 8,
+    "per": 3,
+    "tanks": [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    "bounty": [],
+    "species": 14,
+    "decoyFish": 12,
+    "look": 1,
+    "shift": 130,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
@@ -230,203 +447,137 @@
     "hint": true,
     "tank": true,
     "clear": false,
+    "theme": 0,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl"
+    ],
     "eventGap": [
-      6,
+      8,
       10
     ],
-    "feed": true,
+    "feed": false,
     "feedGap": [
       24,
       34
-    ],
-    "swarmGap": [
-      28,
-      40
     ],
     "startle": false,
     "startleGap": [
       26,
       38
-    ]
-  },
-  {
-    "schema": "spot-a-fish-level",
-    "version": 1,
-    "id": "L06",
-    "name": "Clam",
-    "status": "Ready",
-    "difficulty": "Medium",
-    "category": "Bounty",
-    "refLevel": 6,
-    "goal": 6,
-    "per": 3,
-    "bounty": [
-      "tiny"
-    ],
-    "species": 12,
-    "decoyFish": 30,
-    "look": 1,
-    "sizeK": 1.5,
-    "speedK": 0.82,
-    "urchin": 0,
-    "jelly": 0,
-    "squid": 0,
-    "clam": 1,
-    "swarm": false,
-    "tube": {
-      "enabled": false,
-      "autoPumpWhenStuck": true,
-      "stuckDelaySec": 2.5
-    },
-    "backup": true,
-    "hint": true,
-    "tank": true,
-    "clear": true,
-    "eventGap": [
-      6,
-      10
-    ],
-    "feed": true,
-    "feedGap": [
-      24,
-      34
     ],
     "swarmGap": [
-      28,
-      40
-    ],
-    "startle": false,
-    "startleGap": [
-      26,
-      38
+      30,
+      30
     ]
   },
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
-    "id": "L07",
-    "name": "Pump tube",
+    "version": 2,
+    "id": "L08",
+    "name": "Level 8",
     "status": "Ready",
     "difficulty": "Medium",
     "category": "Normal",
-    "refLevel": 7,
-    "goal": 6,
-    "per": 3,
-    "bounty": [],
-    "species": 12,
-    "decoyFish": 36,
-    "look": 1,
-    "sizeK": 1.35,
-    "speedK": 0.9,
-    "urchin": 2,
-    "jelly": 2,
-    "squid": 1,
-    "clam": 1,
-    "swarm": false,
-    "tube": {
-      "enabled": true,
-      "autoPumpWhenStuck": true,
-      "stuckDelaySec": 2.5
-    },
-    "backup": true,
-    "hint": true,
-    "tank": true,
-    "clear": true,
-    "eventGap": [
-      5,
-      8
-    ],
-    "feed": true,
-    "feedGap": [
-      24,
-      34
-    ],
-    "swarmGap": [
-      28,
-      40
-    ],
-    "startle": false,
-    "startleGap": [
-      26,
-      38
-    ]
-  },
-  {
-    "schema": "spot-a-fish-level",
-    "version": 1,
-    "id": "L08",
-    "name": "Camo bounty",
-    "status": "Ready",
-    "difficulty": "Medium",
-    "category": "Bounty",
     "refLevel": 8,
-    "goal": 7,
+    "goal": 9,
     "per": 3,
-    "bounty": [
-      "camo"
+    "tanks": [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
     ],
-    "species": 14,
-    "decoyFish": 42,
-    "look": 2,
-    "sizeK": 1.35,
-    "speedK": 0.9,
-    "urchin": 2,
-    "jelly": 2,
-    "squid": 1,
-    "clam": 1,
+    "bounty": [],
+    "species": 21,
+    "decoyFish": 23,
+    "look": 4,
+    "shift": 130,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 1,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
     "swarm": false,
     "tube": {
-      "enabled": true,
+      "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
     "backup": true,
     "hint": true,
     "tank": true,
-    "clear": true,
-    "eventGap": [
-      5,
-      8
+    "clear": false,
+    "theme": 0,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl"
     ],
-    "feed": true,
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": false,
     "feedGap": [
       24,
       34
-    ],
-    "swarmGap": [
-      28,
-      40
     ],
     "startle": false,
     "startleGap": [
       26,
       38
+    ],
+    "swarmGap": [
+      30,
+      30
     ]
   },
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
+    "version": 2,
     "id": "L09",
-    "name": "Swarm",
+    "name": "Booster 3: Backup Clear",
     "status": "Ready",
-    "difficulty": "Medium",
+    "difficulty": "Easy",
     "category": "Normal",
     "refLevel": 9,
     "goal": 7,
     "per": 3,
+    "tanks": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      3
+    ],
     "bounty": [],
-    "species": 14,
-    "decoyFish": 48,
-    "look": 2,
-    "sizeK": 1.35,
-    "speedK": 0.9,
+    "species": 12,
+    "decoyFish": 10,
+    "look": 1,
+    "shift": 130,
+    "sizeK": 1.4,
+    "speedK": 0.85,
     "urchin": 0,
     "jelly": 0,
     "squid": 0,
     "clam": 0,
-    "swarm": true,
+    "swarm": false,
     "tube": {
-      "enabled": true,
+      "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
@@ -434,51 +585,69 @@
     "hint": true,
     "tank": true,
     "clear": true,
-    "eventGap": [
-      5,
-      8
+    "theme": 0,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop"
     ],
-    "feed": true,
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": false,
     "feedGap": [
       24,
       34
-    ],
-    "swarmGap": [
-      28,
-      40
     ],
     "startle": false,
     "startleGap": [
       26,
       38
+    ],
+    "swarmGap": [
+      30,
+      30
     ]
   },
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
+    "version": 2,
     "id": "L10",
-    "name": "Fast bounty",
+    "name": "Level 10",
     "status": "Ready",
-    "difficulty": "Medium",
-    "category": "Bounty",
+    "difficulty": "Hard",
+    "category": "Normal",
     "refLevel": 10,
     "goal": 8,
     "per": 3,
-    "bounty": [
-      "fast"
+    "tanks": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      3,
+      3,
+      3
     ],
-    "species": 16,
-    "decoyFish": 54,
-    "look": 2,
-    "sizeK": 1.25,
-    "speedK": 1,
-    "urchin": 3,
-    "jelly": 2,
-    "squid": 1,
-    "clam": 1,
-    "swarm": true,
+    "bounty": [],
+    "species": 20,
+    "decoyFish": 21,
+    "look": 4,
+    "shift": 130,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 2,
+    "jelly": 1,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
     "tube": {
-      "enabled": true,
+      "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
@@ -486,49 +655,68 @@
     "hint": true,
     "tank": true,
     "clear": true,
+    "theme": 0,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop"
+    ],
     "eventGap": [
-      5,
-      8
+      8,
+      10
     ],
-    "feed": true,
+    "feed": false,
     "feedGap": [
-      18,
-      26
+      24,
+      34
     ],
-    "swarmGap": [
-      28,
-      40
-    ],
-    "startle": true,
+    "startle": false,
     "startleGap": [
       26,
       38
+    ],
+    "swarmGap": [
+      30,
+      30
     ]
   },
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
+    "version": 2,
     "id": "L11",
-    "name": "Level 11",
+    "name": "Feature 1: Squid",
     "status": "Ready",
-    "difficulty": "Hard",
+    "difficulty": "Easy",
     "category": "Normal",
     "refLevel": 11,
-    "goal": 8,
+    "goal": 7,
     "per": 3,
+    "tanks": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      3,
+      3
+    ],
     "bounty": [],
-    "species": 16,
-    "decoyFish": 58,
-    "look": 2,
-    "sizeK": 1.25,
-    "speedK": 1,
-    "urchin": 3,
-    "jelly": 3,
+    "species": 12,
+    "decoyFish": 10,
+    "look": 1,
+    "shift": 110,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
     "squid": 1,
-    "clam": 1,
-    "swarm": true,
+    "clam": 0,
+    "swarm": false,
     "tube": {
-      "enabled": true,
+      "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
@@ -536,51 +724,67 @@
     "hint": true,
     "tank": true,
     "clear": true,
+    "theme": 0,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop"
+    ],
     "eventGap": [
-      5,
-      8
+      8,
+      10
     ],
-    "feed": true,
+    "feed": false,
     "feedGap": [
-      18,
-      26
+      24,
+      34
     ],
-    "swarmGap": [
-      28,
-      40
-    ],
-    "startle": true,
+    "startle": false,
     "startleGap": [
       26,
       38
+    ],
+    "swarmGap": [
+      30,
+      30
     ]
   },
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
+    "version": 2,
     "id": "L12",
     "name": "Level 12",
     "status": "Ready",
-    "difficulty": "Hard",
-    "category": "Bounty",
+    "difficulty": "Easy",
+    "category": "Normal",
     "refLevel": 12,
-    "goal": 9,
+    "goal": 6,
     "per": 3,
-    "bounty": [
-      "tiny"
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3
     ],
+    "bounty": [],
     "species": 18,
-    "decoyFish": 62,
-    "look": 2,
-    "sizeK": 1.25,
-    "speedK": 1,
-    "urchin": 3,
-    "jelly": 3,
-    "squid": 2,
-    "clam": 2,
-    "swarm": true,
+    "decoyFish": 24,
+    "look": 4,
+    "shift": 110,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
     "tube": {
-      "enabled": true,
+      "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
@@ -588,49 +792,68 @@
     "hint": true,
     "tank": true,
     "clear": true,
+    "theme": 0,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble"
+    ],
     "eventGap": [
-      5,
-      8
+      8,
+      10
     ],
-    "feed": true,
+    "feed": false,
     "feedGap": [
-      18,
-      26
+      24,
+      34
     ],
-    "swarmGap": [
-      20,
-      30
-    ],
-    "startle": true,
+    "startle": false,
     "startleGap": [
       26,
       38
+    ],
+    "swarmGap": [
+      30,
+      30
     ]
   },
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
+    "version": 2,
     "id": "L13",
     "name": "Level 13",
     "status": "Ready",
-    "difficulty": "Hard",
+    "difficulty": "Easy",
     "category": "Normal",
     "refLevel": 13,
-    "goal": 9,
+    "goal": 6,
     "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
     "bounty": [],
     "species": 18,
-    "decoyFish": 66,
-    "look": 2,
-    "sizeK": 1.25,
-    "speedK": 1,
-    "urchin": 4,
-    "jelly": 3,
-    "squid": 2,
-    "clam": 2,
-    "swarm": true,
+    "decoyFish": 23,
+    "look": 4,
+    "shift": 110,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
     "tube": {
-      "enabled": true,
+      "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
@@ -638,51 +861,69 @@
     "hint": true,
     "tank": true,
     "clear": true,
-    "eventGap": [
-      5,
-      8
+    "theme": 1,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble"
     ],
-    "feed": true,
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": false,
     "feedGap": [
-      18,
-      26
+      24,
+      34
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
     ],
     "swarmGap": [
-      20,
+      30,
       30
-    ],
-    "startle": true,
-    "startleGap": [
-      18,
-      28
     ]
   },
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
+    "version": 2,
     "id": "L14",
     "name": "Level 14",
     "status": "Ready",
-    "difficulty": "Hard",
-    "category": "Bounty",
+    "difficulty": "Medium",
+    "category": "Normal",
     "refLevel": 14,
-    "goal": 10,
+    "goal": 7,
     "per": 3,
-    "bounty": [
-      "camo"
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "species": 20,
-    "decoyFish": 70,
-    "look": 2,
-    "sizeK": 1.25,
-    "speedK": 1,
-    "urchin": 4,
-    "jelly": 3,
-    "squid": 2,
-    "clam": 2,
-    "swarm": true,
+    "bounty": [],
+    "species": 19,
+    "decoyFish": 21,
+    "look": 4,
+    "shift": 110,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 1,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
     "tube": {
-      "enabled": true,
+      "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
@@ -690,51 +931,72 @@
     "hint": true,
     "tank": true,
     "clear": true,
-    "eventGap": [
-      5,
-      8
+    "theme": 1,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble"
     ],
-    "feed": true,
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": false,
     "feedGap": [
-      18,
-      26
+      24,
+      34
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
     ],
     "swarmGap": [
-      20,
+      30,
       30
-    ],
-    "startle": true,
-    "startleGap": [
-      18,
-      28
     ]
   },
   {
     "schema": "spot-a-fish-level",
-    "version": 1,
+    "version": 2,
     "id": "L15",
     "name": "Level 15",
     "status": "Ready",
     "difficulty": "Hard",
     "category": "Bounty",
     "refLevel": 15,
-    "goal": 10,
+    "goal": 8,
     "per": 3,
+    "tanks": [
+      1,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
     "bounty": [
-      "fast"
+      "tiny"
     ],
     "species": 20,
-    "decoyFish": 74,
-    "look": 2,
-    "sizeK": 1.25,
-    "speedK": 1,
-    "urchin": 4,
-    "jelly": 4,
-    "squid": 2,
-    "clam": 2,
-    "swarm": true,
+    "decoyFish": 19,
+    "look": 4,
+    "shift": 110,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 1,
+    "jelly": 1,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
     "tube": {
-      "enabled": true,
+      "enabled": false,
+      "extraFish": 0,
+      "waves": [],
       "autoPumpWhenStuck": true,
       "stuckDelaySec": 2.5
     },
@@ -742,23 +1004,4052 @@
     "hint": true,
     "tank": true,
     "clear": true,
+    "theme": 1,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble"
+    ],
     "eventGap": [
-      5,
-      8
+      8,
+      10
     ],
     "feed": true,
     "feedGap": [
-      18,
-      26
+      24,
+      34
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
     ],
     "swarmGap": [
-      20,
+      30,
       30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L16",
+    "name": "Pump",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 16,
+    "goal": 6,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 18,
+    "decoyFish": 30,
+    "look": 4,
+    "shift": 110,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 7,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 1,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L17",
+    "name": "Level 17",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 17,
+    "goal": 6,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 18,
+    "decoyFish": 38,
+    "look": 4,
+    "shift": 110,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 1,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L18",
+    "name": "Level 18",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Normal",
+    "refLevel": 18,
+    "goal": 7,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 14,
+    "decoyFish": 46,
+    "look": 1,
+    "shift": 110,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 1,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 24,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 1,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L19",
+    "name": "Level 19",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 19,
+    "goal": 7,
+    "per": 3,
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 19,
+    "decoyFish": 37,
+    "look": 4,
+    "shift": 110,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 1,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L20",
+    "name": "Level 20",
+    "status": "Ready",
+    "difficulty": "Very Hard",
+    "category": "Normal",
+    "refLevel": 20,
+    "goal": 9,
+    "per": 3,
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 21,
+    "decoyFish": 63,
+    "look": 2,
+    "shift": 110,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 40,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 2
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 1,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L21",
+    "name": "Feature 2: Shell",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 21,
+    "goal": 7,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 12,
+    "decoyFish": 24,
+    "look": 2,
+    "shift": 90,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 1,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
     ],
     "startle": true,
     "startleGap": [
-      18,
-      28
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L22",
+    "name": "Level 22",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 22,
+    "goal": 7,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 12,
+    "decoyFish": 26,
+    "look": 2,
+    "shift": 90,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 1,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L23",
+    "name": "Level 23",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 23,
+    "goal": 7,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 12,
+    "decoyFish": 32,
+    "look": 2,
+    "shift": 90,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 1,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L24",
+    "name": "Level 24",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Normal",
+    "refLevel": 24,
+    "goal": 8,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 16,
+    "decoyFish": 40,
+    "look": 2,
+    "shift": 90,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 24,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 6,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 1,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L25",
+    "name": "Level 25",
+    "status": "Ready",
+    "difficulty": "Hard",
+    "category": "Bounty",
+    "refLevel": 25,
+    "goal": 9,
+    "per": 3,
+    "tanks": [
+      1,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [
+      "camo"
+    ],
+    "species": 21,
+    "decoyFish": 51,
+    "look": 3,
+    "shift": 90,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 2,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 36,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 2
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 2,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L26",
+    "name": "Level 26",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 26,
+    "goal": 7,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 12,
+    "decoyFish": 24,
+    "look": 2,
+    "shift": 90,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 2,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L27",
+    "name": "Level 27",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 27,
+    "goal": 8,
+    "per": 3,
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 14,
+    "decoyFish": 28,
+    "look": 2,
+    "shift": 90,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 2,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L28",
+    "name": "Level 28",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Normal",
+    "refLevel": 28,
+    "goal": 8,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 16,
+    "decoyFish": 42,
+    "look": 2,
+    "shift": 90,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 1,
+    "jelly": 1,
+    "squid": 0,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 24,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 6,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 2,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L29",
+    "name": "Level 29",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 29,
+    "goal": 8,
+    "per": 3,
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 14,
+    "decoyFish": 28,
+    "look": 2,
+    "shift": 90,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 2,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L30",
+    "name": "Level 30",
+    "status": "Ready",
+    "difficulty": "Hard",
+    "category": "Normal",
+    "refLevel": 30,
+    "goal": 9,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 21,
+    "decoyFish": 57,
+    "look": 3,
+    "shift": 90,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 36,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 2
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 2,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L31",
+    "name": "Feature 3: Fish Swarm",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 31,
+    "goal": 8,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 14,
+    "decoyFish": 26,
+    "look": 2,
+    "shift": 75,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 2,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L32",
+    "name": "Level 32",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 32,
+    "goal": 8,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 14,
+    "decoyFish": 28,
+    "look": 2,
+    "shift": 75,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 2,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L33",
+    "name": "Level 33",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 33,
+    "goal": 8,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 14,
+    "decoyFish": 30,
+    "look": 2,
+    "shift": 75,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 2,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L34",
+    "name": "Level 34",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Normal",
+    "refLevel": 34,
+    "goal": 9,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 18,
+    "decoyFish": 41,
+    "look": 2,
+    "shift": 75,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 1,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 24,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 2,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L35",
+    "name": "Level 35",
+    "status": "Ready",
+    "difficulty": "Hard",
+    "category": "Bounty",
+    "refLevel": 35,
+    "goal": 11,
+    "per": 3,
+    "tanks": [
+      1,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [
+      "fast"
+    ],
+    "species": 22,
+    "decoyFish": 55,
+    "look": 3,
+    "shift": 75,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 1,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 36,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 9,
+          "holdLast": true,
+          "holdFish": 2
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 2,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L36",
+    "name": "Level 36",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 36,
+    "goal": 9,
+    "per": 3,
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 16,
+    "decoyFish": 28,
+    "look": 2,
+    "shift": 75,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 6,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 2,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L37",
+    "name": "Level 37",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 37,
+    "goal": 9,
+    "per": 3,
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 16,
+    "decoyFish": 28,
+    "look": 2,
+    "shift": 75,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 6,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 3,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L38",
+    "name": "Level 38",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Normal",
+    "refLevel": 38,
+    "goal": 10,
+    "per": 3,
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 22,
+    "decoyFish": 39,
+    "look": 3,
+    "shift": 75,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 1,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 24,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 8,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 3,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L39",
+    "name": "Level 39",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 39,
+    "goal": 9,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 16,
+    "decoyFish": 28,
+    "look": 1,
+    "shift": 75,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 6,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 3,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L40",
+    "name": "Level 40",
+    "status": "Ready",
+    "difficulty": "Very Hard",
+    "category": "Normal",
+    "refLevel": 40,
+    "goal": 11,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 22,
+    "decoyFish": 67,
+    "look": 0,
+    "shift": 75,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 50,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 6,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 9,
+          "holdLast": true,
+          "holdFish": 2
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 3,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L41",
+    "name": "Level 41",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 41,
+    "goal": 9,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 16,
+    "decoyFish": 28,
+    "look": 1,
+    "shift": 62,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 6,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 3,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L42",
+    "name": "Level 42",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 42,
+    "goal": 9,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 16,
+    "decoyFish": 28,
+    "look": 1,
+    "shift": 62,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 6,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 3,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L43",
+    "name": "Level 43",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 43,
+    "goal": 9,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 16,
+    "decoyFish": 28,
+    "look": 3,
+    "shift": 62,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 6,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 3,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L44",
+    "name": "Level 44",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Normal",
+    "refLevel": 44,
+    "goal": 10,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 20,
+    "decoyFish": 37,
+    "look": 3,
+    "shift": 62,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 24,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 8,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 3,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L45",
+    "name": "Level 45",
+    "status": "Ready",
+    "difficulty": "Hard",
+    "category": "Bounty",
+    "refLevel": 45,
+    "goal": 13,
+    "per": 3,
+    "tanks": [
+      1,
+      1,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [
+      "tiny",
+      "camo"
+    ],
+    "species": 22,
+    "decoyFish": 43,
+    "look": 1,
+    "shift": 62,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 36,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 8,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 10,
+          "holdLast": true,
+          "holdFish": 2
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 3,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L46",
+    "name": "Level 46",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 46,
+    "goal": 10,
+    "per": 3,
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 18,
+    "decoyFish": 28,
+    "look": 1,
+    "shift": 62,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 3,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L47",
+    "name": "Level 47",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 47,
+    "goal": 10,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 18,
+    "decoyFish": 27,
+    "look": 3,
+    "shift": 62,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 3,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L48",
+    "name": "Level 48",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Normal",
+    "refLevel": 48,
+    "goal": 11,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 22,
+    "decoyFish": 35,
+    "look": 3,
+    "shift": 62,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 24,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 6,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 8,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 3,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L49",
+    "name": "Level 49",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 49,
+    "goal": 10,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 18,
+    "decoyFish": 27,
+    "look": 2,
+    "shift": 62,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 1,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L50",
+    "name": "Level 50",
+    "status": "Ready",
+    "difficulty": "Hard",
+    "category": "Normal",
+    "refLevel": 50,
+    "goal": 12,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 22,
+    "decoyFish": 49,
+    "look": 3,
+    "shift": 62,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 36,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 10,
+          "holdLast": true,
+          "holdFish": 2
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L51",
+    "name": "Level 51",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 51,
+    "goal": 10,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 22,
+    "decoyFish": 26,
+    "look": 4,
+    "shift": 55,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 2,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L52",
+    "name": "Level 52",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 52,
+    "goal": 10,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 18,
+    "decoyFish": 26,
+    "look": 1,
+    "shift": 55,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 2,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L53",
+    "name": "Level 53",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 53,
+    "goal": 11,
+    "per": 3,
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 22,
+    "decoyFish": 25,
+    "look": 4,
+    "shift": 55,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 2,
+    "jelly": 1,
+    "squid": 0,
+    "clam": 2,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L54",
+    "name": "Level 54",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Normal",
+    "refLevel": 54,
+    "goal": 12,
+    "per": 3,
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 22,
+    "decoyFish": 33,
+    "look": 4,
+    "shift": 55,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 2,
+    "jelly": 2,
+    "squid": 0,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 24,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 6,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 9,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L55",
+    "name": "Level 55",
+    "status": "Ready",
+    "difficulty": "Hard",
+    "category": "Normal",
+    "refLevel": 55,
+    "goal": 13,
+    "per": 3,
+    "tanks": [
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 22,
+    "decoyFish": 47,
+    "look": 2,
+    "shift": 55,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 1,
+    "clam": 2,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 36,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 8,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 10,
+          "holdLast": true,
+          "holdFish": 2
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L56",
+    "name": "Level 56",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 56,
+    "goal": 11,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 22,
+    "decoyFish": 24,
+    "look": 4,
+    "shift": 55,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 2,
+    "jelly": 1,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L57",
+    "name": "Level 57",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 57,
+    "goal": 11,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 22,
+    "decoyFish": 24,
+    "look": 4,
+    "shift": 55,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 2,
+    "jelly": 2,
+    "squid": 0,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L58",
+    "name": "Level 58",
+    "status": "Ready",
+    "difficulty": "Medium",
+    "category": "Normal",
+    "refLevel": 58,
+    "goal": 12,
+    "per": 3,
+    "tanks": [
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 22,
+    "decoyFish": 32,
+    "look": 3,
+    "shift": 55,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 1,
+    "jelly": 0,
+    "squid": 2,
+    "clam": 1,
+    "swarm": false,
+    "tube": {
+      "enabled": true,
+      "extraFish": 24,
+      "waves": [
+        {
+          "afterTanks": 3,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 6,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 9,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L59",
+    "name": "Level 59",
+    "status": "Ready",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 59,
+    "goal": 11,
+    "per": 3,
+    "tanks": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [],
+    "species": 22,
+    "decoyFish": 23,
+    "look": 4,
+    "shift": 55,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 2,
+    "jelly": 1,
+    "squid": 0,
+    "clam": 2,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 14,
+      "waves": [
+        {
+          "afterTanks": 4,
+          "holdLast": true,
+          "holdFish": 1
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 1
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L60",
+    "name": "Level 60",
+    "status": "Ready",
+    "difficulty": "Very Hard",
+    "category": "Bounty",
+    "refLevel": 60,
+    "goal": 14,
+    "per": 3,
+    "tanks": [
+      1,
+      1,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "bounty": [
+      "fast",
+      "camo"
+    ],
+    "species": 22,
+    "decoyFish": 54,
+    "look": 4,
+    "shift": 55,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 2,
+    "clam": 0,
+    "swarm": true,
+    "tube": {
+      "enabled": true,
+      "extraFish": 50,
+      "waves": [
+        {
+          "afterTanks": 2,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 5,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 7,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 9,
+          "holdLast": true,
+          "holdFish": 2
+        },
+        {
+          "afterTanks": 12,
+          "holdLast": true,
+          "holdFish": 2
+        }
+      ],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [
+      "conga",
+      "waltz",
+      "swirl",
+      "drop",
+      "squabble",
+      "hide"
+    ],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": true,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": true,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ]
+  },
+  {
+    "schema": "spot-a-fish-level",
+    "version": 2,
+    "id": "L61",
+    "name": "Tripo fish test",
+    "status": "Draft",
+    "difficulty": "Easy",
+    "category": "Normal",
+    "refLevel": 61,
+    "goal": 4,
+    "per": 1,
+    "tanks": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "bounty": [],
+    "species": 12,
+    "decoyFish": 8,
+    "look": 0,
+    "shift": 55,
+    "sizeK": 1.4,
+    "speedK": 0.85,
+    "urchin": 0,
+    "jelly": 0,
+    "squid": 0,
+    "clam": 0,
+    "swarm": false,
+    "tube": {
+      "enabled": false,
+      "extraFish": 0,
+      "waves": [],
+      "autoPumpWhenStuck": true,
+      "stuckDelaySec": 2.5
+    },
+    "backup": true,
+    "hint": true,
+    "tank": true,
+    "clear": true,
+    "theme": 4,
+    "events": [],
+    "eventGap": [
+      8,
+      10
+    ],
+    "feed": false,
+    "feedGap": [
+      24,
+      34
+    ],
+    "startle": false,
+    "startleGap": [
+      26,
+      38
+    ],
+    "swarmGap": [
+      30,
+      30
+    ],
+    "fishKeys": [
+      "tripo_Emerald_blue",
+      "tripo_Golden_Flame",
+      "tripo_Goldie_tot",
+      "tripo_Green_Orby",
+      "tripo_Green_finny",
+      "tripo_brown_stripe",
+      "tripo_deep_lantern_fish",
+      "tripo_ghostly_wave",
+      "tripo_golden_spot",
+      "tripo_golden_tide",
+      "tripo_goldie",
+      "tripo_green_beast"
     ]
   }
 ]

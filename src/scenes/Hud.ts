@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { BR, DPR, Layer, R, Zones, T, hexCss, inRect, porthole, rectOf } from '../ui/kit';
+import { BF_FILES } from '../ui/bf';
 import { Ctx, GameState, levelPop, paintLevelIntro, paintMessages, paintWinText, paintOverlay, paintSpot, paintTargets, paintTools } from '../ui/panels';
 
 // The whole game UI, drawn by Phaser. The Three.js game keeps writing its state into hidden HTML elements
@@ -37,6 +38,8 @@ export class Hud extends Phaser.Scene {
 
     preload() {   // the painted UI pieces (made in the asset workflow, see docs)
         for (const n of ['ui_plate', 'ui_tube']) this.load.image(n, new URL(`ui/${n}.png`, document.baseURI).href);
+        for (const n of BF_FILES) this.load.image('bf_' + n, new URL(`ui/bf/${n}.png`, document.baseURI).href);   // the pop-up pieces
+        for (const [k, f] of [['tk_back', 'backup_back'], ['tk_front', 'backup_front']]) this.load.image(k, new URL(`ui/tanks/${f}.png`, document.baseURI).href);
     }
 
     create() {
@@ -47,6 +50,13 @@ export class Hud extends Phaser.Scene {
         const toBase = (o: Phaser.GameObjects.GameObject) => this.camTop.ignore(o), toTop = (o: Phaser.GameObjects.GameObject) => main.ignore(o);
         this.base = new Layer(this, 0, toBase); this.ovl = new Layer(this, 20, toTop); this.spot = new Layer(this, 40, toTop); this.msg = new Layer(this, 60, toTop);
         this.zBase = new Zones(this, 5); this.zOv = new Zones(this, 25); this.zSpot = new Zones(this, 45);
+        // the level list (60 levels) is drawn by Phaser from a hidden scrolling list: the mouse wheel and a finger / mouse drag scroll that list
+        const appEl = document.getElementById('app') as HTMLElement, lvGrid = () => (document.getElementById('ovLevels')?.classList.contains('show') ? document.getElementById('lvGrid') : null);
+        let drag = false, y0 = 0, s0 = 0; const W = window as unknown as { __lvDrag?: boolean };
+        appEl.addEventListener('wheel', (e) => { const g = lvGrid(); if (g) { g.scrollTop += e.deltaY; e.preventDefault(); } }, { passive: false });
+        appEl.addEventListener('pointerdown', (e) => { const g = lvGrid(); if (g) { drag = true; y0 = e.clientY; s0 = g.scrollTop; W.__lvDrag = false; } });
+        appEl.addEventListener('pointermove', (e) => { if (!drag) return; const g = lvGrid(); if (!g) { drag = false; return; } const dy = e.clientY - y0; if (Math.abs(dy) > 8) W.__lvDrag = true; if (W.__lvDrag) g.scrollTop = s0 - dy; });
+        window.addEventListener('pointerup', () => { drag = false; });
         // the 3D canvas calls this before handling a tap: true = the tap belongs to the Phaser UI
         (window as unknown as { __uiHit: (x: number, y: number) => boolean }).__uiHit = (cx, cy) =>
             this.modal || this.hits.some((r) => inRect(r, cx - this.left, cy - this.top));
@@ -86,7 +96,18 @@ export class Hud extends Phaser.Scene {
         this.hits = c.hits; this.modal = c.modal;
         // the 3D overlay canvas (flying and resident fish) sits above everything: dim it while a popup is open
         this.ovCanvas ??= (window as unknown as { __ff?: { ov?: { canvas: HTMLCanvasElement } } }).__ff?.ov?.canvas ?? null;
-        if (this.ovCanvas) this.ovCanvas.style.opacity = this.modal ? '0.15' : '';
+        if (this.ovCanvas) {
+            const st = this.ovCanvas.style, spot = document.getElementById('spotOv'), hole = document.getElementById('spotBox');
+            if (!this.modal) { st.opacity = ''; st.clipPath = ''; }
+            else if (spot && spot.classList.contains('show') && hole) {   // a highlight guide: the 3D picture (the Backup tank) shows at full strength inside the lit hole only
+                const r = hole.getBoundingClientRect(), rad = parseFloat(hole.style.borderRadius) || 20;
+                st.opacity = '1'; st.clipPath = `inset(${Math.max(0, r.top)}px ${Math.max(0, window.innerWidth - r.right)}px ${Math.max(0, window.innerHeight - r.bottom)}px ${Math.max(0, r.left)}px round ${rad}px)`;
+            } else {   // a pop-up: the 3D overlay (target tanks, Backup) stays as a faint picture round it, and its own area is cut out so nothing shows through the pop-up
+                const pr = (window as unknown as { __popRect?: { x: number; y: number; w: number; h: number } | null }).__popRect;
+                st.opacity = '0.15';
+                st.clipPath = pr ? `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${pr.x}px ${pr.y}px, ${pr.x}px ${pr.y + pr.h}px, ${pr.x + pr.w}px ${pr.y + pr.h}px, ${pr.x + pr.w}px ${pr.y}px, ${pr.x}px ${pr.y}px)` : '';
+            }
+        }
         const w = window as unknown as { __hudMs?: number; __hudLast?: number }; w.__hudLast = performance.now() - t0; w.__hudMs = (w.__hudMs ?? 0) * 0.9 + w.__hudLast * 0.1;   // CPU time of the UI redraw, shown by ?fps=1
     }
 

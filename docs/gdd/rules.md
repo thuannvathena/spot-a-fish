@@ -9,7 +9,7 @@
 | Level 1 | Cannot be lost: Backup is hidden and a wrong tap only scatters fish |
 | Max fish in tank at once | 40 (`FISH_CAP`). The pump tube holds decoys back while the tank is full; held target fish still come out first |
 | Levels with a pump tube start with | 40 fish (`TUBE_INIT`) |
-| Total levels | 15 (`MAX_LV`) |
+| Total levels | 60 (`MAX_LV`) |
 | Fish needed per tank (`per`) | L1–2: 1, L3–4: 2, L5+: 3 |
 
 ## 3.2 Fish <Badge type="tip" text="Live" />
@@ -38,7 +38,7 @@
 
 ## 3.5 Random events <Badge type="tip" text="Live" />
 
-One event every 6–10 s (5–8 s from L7), never the same twice in a row. Touching a fish makes it leave the event. **Only one big thing happens at a time:** feeding, the pearl game, the falling rock, the swarm and a tube wave wait until the one before has finished.
+After any event ends (random event, feeding, falling rock, swarm) nothing else starts for 8–10 s, and the same random event never comes twice in a row. Touching a fish makes it leave the event. **Only one big thing happens at a time:** feeding, the pearl game, the falling rock, the swarm and a tube wave wait until the one before has finished.
 
 | Event | From level | What happens |
 |---|---|---|

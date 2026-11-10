@@ -32,7 +32,7 @@ export function texFor(scene: Phaser.Scene, src: string): string | null {
     return scene.textures.exists(key) ? key : null;
 }
 
-export interface TextOpts { size?: number; color?: string; stroke?: string; sw?: number; ox?: number; oy?: number; alpha?: number; wrap?: number; align?: 'left' | 'center'; italic?: boolean }
+export interface TextOpts { sh?: number; size?: number; color?: string; stroke?: string; sw?: number; ox?: number; oy?: number; alpha?: number; wrap?: number; align?: 'left' | 'center'; italic?: boolean }
 
 /** One drawing layer: a Graphics object plus pools of texts and images, all at the same depth band. */
 export class Layer {
@@ -40,6 +40,7 @@ export class Layer {
     readonly gt: Phaser.GameObjects.Graphics;   // a second graphics for the booster buttons, so they can fade as a whole
     private texts = new Map<string, { t: Phaser.GameObjects.Text; sig: string }>();
     private imgs = new Map<string, Phaser.GameObjects.Image>();
+    private nines = new Map<string, Phaser.GameObjects.NineSlice>();
     private used = new Set<string>();
 
     /** `onNew` is called for every object the layer creates (the HUD uses it to send the layers to different cameras). */
@@ -53,6 +54,7 @@ export class Layer {
     end() {
         this.texts.forEach((v, k) => { if (!this.used.has('t' + k)) v.t.setVisible(false); });
         this.imgs.forEach((v, k) => { if (!this.used.has('i' + k)) v.setVisible(false); });
+        this.nines.forEach((v, k) => { if (!this.used.has('n' + k)) v.setVisible(false); });
     }
 
     /** Text anchored by its centre (ox/oy 0.5) by default. */
@@ -62,10 +64,11 @@ export class Layer {
             e = { t: this.scene.add.text(0, 0, '', { fontFamily: FONT }).setResolution(DPR).setDepth(this.depth + 0.5), sig: '' }; this.onNew(e.t);
             this.texts.set(key, e);
         }
-        const sig = [o.size, o.color, o.stroke, o.sw, o.wrap, o.align].join('|');
+        const sig = [o.size, o.color, o.stroke, o.sw, o.wrap, o.align, o.sh].join('|');
         if (sig !== e.sig) {
             e.sig = sig;
             e.t.setStyle({ fontFamily: FONT, fontSize: `${o.size ?? 16}px`, color: o.color ?? '#ffffff', stroke: o.stroke ?? '', strokeThickness: o.stroke ? (o.sw ?? 4) : 0, align: o.align ?? 'center', wordWrap: o.wrap ? { width: o.wrap } : undefined });
+            if (o.sh) e.t.setShadow(0, o.sh, '#00143c', 0, true, true); else e.t.setShadow(0, 0, '#000000', 0, false, false);   // a hard drop shadow under the letters (the look of the painted pop-ups)
         }
         e.t.setOrigin(o.ox ?? 0.5, o.oy ?? 0.5).setPosition(x, y).setAlpha(o.alpha ?? 1).setVisible(true);
         if (e.t.text !== str) e.t.setText(str);
@@ -74,12 +77,25 @@ export class Layer {
     }
 
     /** A preloaded picture stretched to a box (the painted UI pieces). Returns false when the texture is not there. */
-    pic(key: string, tex: string, r: R, o: { alpha?: number } = {}) {
+    pic(key: string, tex: string, r: R, o: { alpha?: number; rot?: number; flipX?: boolean; fill?: number } = {}) {
         if (!this.scene.textures.exists(tex)) return false;
         let im = this.imgs.get(key);
         if (!im) { im = this.scene.add.image(0, 0, tex).setDepth(this.depth + 0.2); this.onNew(im); this.imgs.set(key, im); }
-        im.setPosition(r.x + r.w / 2, r.y + r.h / 2).setDisplaySize(r.w, r.h).setAlpha(o.alpha ?? 1).setVisible(true);
+        if (im.texture.key !== tex) im.setTexture(tex);   // the same slot can show another picture (a switch that is on or off)
+        im.setPosition(r.x + r.w / 2, r.y + r.h / 2).setDisplaySize(r.w, r.h).setRotation(o.rot ?? 0).setFlip(!!o.flipX, false).setAlpha(o.alpha ?? 1).setVisible(true);
+        if (o.fill !== undefined) { im.setTint(o.fill); im.tintMode = Phaser.TintModes.FILL; } else { im.clearTint(); im.tintMode = Phaser.TintModes.MULTIPLY; }   // a flat white copy (the trail)
         this.used.add('i' + key);
+        return true;
+    }
+
+    /** A painted picture whose corners keep their size while the middle stretches (`ins` = left, right, top, bottom, in picture pixels). */
+    nine(key: string, tex: string, r: R, ins: [number, number, number, number], o: { alpha?: number; k?: number } = {}) {   // k = screen pixels per picture pixel (the picture is drawn bigger than it is shown)
+        if (!this.scene.textures.exists(tex)) return false;
+        const id = key + '#' + tex + '#' + ins.join(',');   // one object per picture and cut: re-using one for another picture kept the old cut and bent the shape
+        let n = this.nines.get(id);
+        if (!n) { n = this.scene.add.nineslice(0, 0, tex, undefined, r.w, r.h, ins[0], ins[1], ins[2], ins[3]).setDepth(this.depth + 0.2); this.onNew(n); this.nines.set(id, n); }
+        const k = o.k ?? 1; n.setScale(k).setPosition(r.x + r.w / 2, r.y + r.h / 2).setSize(r.w / k, r.h / k).setAlpha(o.alpha ?? 1).setVisible(true);
+        this.used.add('n' + id);
         return true;
     }
 

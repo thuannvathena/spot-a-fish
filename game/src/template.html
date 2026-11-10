@@ -14,7 +14,9 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{margin:0;height:100%;background:#0a3f78;color:var(--txt);font-family:var(--font);overflow:hidden;touch-action:none;letter-spacing:.3px}
 .outline{text-shadow:0 2px 0 var(--ink),2px 0 0 var(--ink),-2px 0 0 var(--ink),0 -2px 0 var(--ink),2px 2px 0 var(--ink),-2px 2px 0 var(--ink),2px -2px 0 var(--ink),-2px -2px 0 var(--ink)}
-#app{position:relative;margin:0 auto;height:100dvh;max-width:480px;display:flex;flex-direction:column;overflow:hidden;
+/* the game screen is a fixed phone shape (9:16, like the 1080x1920 design pictures): it is scaled to fit the window and centred, with bars at the sides or top instead of changing its shape */
+html,body{display:flex;align-items:center;justify-content:center}
+#app{position:relative;margin:0;flex:none;width:min(100vw,calc(100dvh * 9 / 16));height:min(100dvh,calc(100vw * 16 / 9));display:flex;flex-direction:column;overflow:hidden;
   background:#0f5aa0}
 
 /* ================= HUD ================= */
@@ -138,7 +140,7 @@ canvas#bg3d{position:absolute;left:-4%;top:-4%;width:108%;height:108%;display:bl
 
 /* tools */
 .tools{pointer-events:auto;position:absolute;right:10px;top:6px;z-index:5;display:flex;flex-direction:column;gap:10px}
-.tool{position:relative;width:44px;height:44px;border-radius:50%;border:3px solid var(--ink);background:linear-gradient(#58b9f2,#1b79c4);box-shadow:0 4px 0 var(--ink2),inset 0 2px 0 rgba(255,255,255,.5);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:#fff;font-family:var(--font);overflow:hidden}
+.tool{position:relative;width:54px;height:54px;border-radius:50%;border:3px solid var(--ink);background:linear-gradient(#58b9f2,#1b79c4);box-shadow:0 4px 0 var(--ink2),inset 0 2px 0 rgba(255,255,255,.5);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:#fff;font-family:var(--font);overflow:hidden}
 #bSound,#bCam{display:none}
 .tool:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink2)}
 .tool.off{filter:grayscale(.8);opacity:.85}
@@ -268,6 +270,8 @@ body.wetwin #bg3d,body.wetwin #c,body.wetwin>canvas{animation:wetw 2.6s ease-in-
 .intro-tag{display:inline-block;margin:0 0 6px;padding:2px 14px 4px;border-radius:10px;font-size:14px;letter-spacing:1px;color:#fff;background:linear-gradient(#ff8095,#ff3050);border:2px solid #7a0a1c;text-shadow:0 2px 0 #7a0a1c}
 .intro-tag.ev{background:linear-gradient(#57d98a,#1fa85a);border-color:#0a5a2c;text-shadow:0 2px 0 #0a5a2c}
 .intro-t{margin:0 0 8px;font-size:30px;line-height:1;color:#fff;font-weight:400;text-shadow:0 3px 0 var(--ink),2px 0 0 var(--ink),-2px 0 0 var(--ink),0 -2px 0 var(--ink)}
+/* model-only elements of the new pop-ups: the Phaser UI draws them, the DOM just carries state and clicks */
+#bXPause,#bSnd,#bMus,#bVib,#poFish,#loFish,#introLv,#spotPic{display:none}
 .fishy{height:54px;min-height:54px;margin:2px 0 8px;filter:drop-shadow(0 4px 0 rgba(0,20,50,.5))}
 .btn{display:block;width:100%;margin-top:11px;padding:11px 14px 13px;border-radius:18px;font-size:22px;color:#fff;cursor:pointer;font-family:var(--font);letter-spacing:.5px;
   background:linear-gradient(#8dffc6,#2fdc8a 55%,#17b66b);border:3px solid #0a6a3e;box-shadow:0 5px 0 #0a6a3e,inset 0 3px 0 rgba(255,255,255,.55);text-shadow:0 2px 0 #0a6a3e,2px 0 0 #0a6a3e,-2px 0 0 #0a6a3e,0 -2px 0 #0a6a3e}
@@ -278,7 +282,7 @@ body.wetwin #bg3d,body.wetwin #c,body.wetwin>canvas{animation:wetw 2.6s ease-in-
 </head>
 <body>
 <div id="app">
-  <canvas id="c"></canvas><div id="guideHand">👆</div><div id="camTut"><div id="camMsg"></div><div class="cg"><i class="f1"></i><i class="f2"></i></div></div><div id="goalMsg">Fill the tanks with the fish shown above!</div>
+  <canvas id="c"></canvas><div id="guideHand">👆</div><div id="camTut"><div id="camMsg"></div><div class="cg"><i class="f1"></i><i class="f2"></i></div></div><div id="goalMsg">Tap a fish</div>
   <header class="topbar">
     <div class="lvl outline"><small>LEVEL</small><b id="lvl">1</b></div>
     <div class="goal" id="goal"><div class="fill" id="goalFill"></div><div class="txt"><span class="ico">★</span><span><span id="goalNow">0</span> / <span id="goalMax">4</span></span></div></div>
@@ -293,16 +297,16 @@ body.wetwin #bg3d,body.wetwin #c,body.wetwin>canvas{animation:wetw 2.6s ease-in-
     <div class="pan" id="pan"><button class="tool" id="bUp" aria-label="Move camera up"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 2px 0 #0a3a6a)"><path d="M6 15l6-6 6 6"/></svg></button><button class="tool" id="bDn" aria-label="Move camera down"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 2px 0 #0a3a6a)"><path d="M6 9l6 6 6-6"/></svg></button></div>
   </main>
 
-  <div class="overlay" id="ovPause"><div class="card"><div class="ribbon">PAUSED</div><div class="fishy" data-ic="fish"></div><p>Take a breath, the fish will wait.</p>
+  <div class="overlay" id="ovPause"><div class="card"><div class="ribbon">Settings</div><button id="bXPause">X</button><button id="bSnd">Sound</button><button id="bMus">Music</button><button id="bVib">Vibration</button><div class="fishy" data-ic="fish"></div><p>Take a breath, the fish will wait.</p>
     <button class="btn" id="bResume">Resume</button><button class="btn ghost" id="bRestart1">Restart level</button><button class="btn ghost" id="bLevels1">Levels</button><button class="btn ghost" id="bReset" style="background:linear-gradient(#ff9aa8,#e0405a)">↺ Reset progress</button></div></div>
-  <div id="spotOv"><div id="spotBox"></div><div id="spotTip"><b id="spotT"></b><p id="spotP"></p><span class="spotok">Tap to continue</span></div></div>
+  <div id="spotOv"><img id="spotPic" alt=""><div id="spotBox"></div><div id="spotTip"><b id="spotT"></b><p id="spotP"></p><span class="spotok">Tap to continue</span></div></div>
   <div class="overlay" id="ovWin"><div class="card"><div class="ribbon">LEVEL COMPLETE</div><div class="stars"><span>★</span><span>★</span><span>★</span></div><p id="winTxt"></p>
     <button class="btn" id="bNext">Next level</button><button class="btn ghost" id="bReplay">Replay</button><button class="btn ghost" id="bLevels2">Levels</button></div></div>
-  <div class="overlay" id="ovLose"><div class="card"><div class="ribbon" style="background:linear-gradient(#ff8095,#ff3050);border-color:#7a0a1c;box-shadow:0 4px 0 #7a0a1c;text-shadow:0 2px 0 #7a0a1c,1px 0 0 #7a0a1c,-1px 0 0 #7a0a1c">BACKUP FULL</div><div class="fishy" data-ic="bubbles"></div><p>No more room to keep fish.<br>Look carefully before you tap!</p>
+  <div class="overlay" id="ovLose"><div class="card"><div class="ribbon" style="background:linear-gradient(#ff8095,#ff3050);border-color:#7a0a1c;box-shadow:0 4px 0 #7a0a1c;text-shadow:0 2px 0 #7a0a1c,1px 0 0 #7a0a1c,-1px 0 0 #7a0a1c">BACKUP FULL</div><img id="loFish" alt=""><div class="fishy" data-ic="bubbles"></div><p>No more room to keep fish.<br>Look carefully before you tap!</p>
     <button class="btn alt" id="bRetry">Try again</button><button class="btn ghost" id="bLevels3">Levels</button></div></div>
-  <div class="overlay" id="ovPlayOn"><div class="card"><div class="ribbon" style="background:linear-gradient(#ff8095,#ff3050);border-color:#7a0a1c;box-shadow:0 4px 0 #7a0a1c;text-shadow:0 2px 0 #7a0a1c,1px 0 0 #7a0a1c,-1px 0 0 #7a0a1c">BACKUP FULL</div><div class="fishy" data-ic="bubbles"></div><p>Keep playing? The fish in Backup<br>jump back into the tank.</p>
+  <div class="overlay" id="ovPlayOn"><div class="card"><div class="ribbon" style="background:linear-gradient(#ff8095,#ff3050);border-color:#7a0a1c;box-shadow:0 4px 0 #7a0a1c;text-shadow:0 2px 0 #7a0a1c,1px 0 0 #7a0a1c,-1px 0 0 #7a0a1c">BACKUP FULL</div><img id="poFish" alt=""><div class="fishy" data-ic="bubbles"></div><p>Keep playing? The fish in Backup<br>jump back into the tank.</p>
     <button class="btn alt" id="bPlayOn">Play on</button><button class="btn ghost" id="bNoPlayOn">No thanks</button></div></div>
-  <div class="overlay" id="ovIntro"><div class="card"><div class="ribbon" id="introRib">NEW OBSTACLE</div><div class="intro-pic"><img id="introImg" alt=""></div><div class="intro-tag" id="introTag">OBSTACLE</div><h2 class="intro-t" id="introTitle"></h2><p id="introTxt"></p>
+  <div class="overlay" id="ovIntro"><div class="card"><div class="ribbon" id="introRib">NEW OBSTACLE</div><div class="intro-pic"><img id="introImg" alt=""></div><div class="intro-tag" id="introTag">OBSTACLE</div><span id="introLv"></span><h2 class="intro-t" id="introTitle"></h2><p id="introTxt"></p>
     <button class="btn alt" id="bIntro">Got it!</button></div></div>
   <div class="overlay" id="ovLevels"><div class="card"><div class="ribbon">LEVELS</div><div class="lvgrid" id="lvGrid" style="margin-top:6px"></div><button class="btn ghost" id="bLvBack">Back</button></div></div>
   <div class="tut" id="tut"><div class="spot" id="tutSpot"></div><div class="tip" id="tutTip"><div class="pic" id="tutPic"></div><h3 id="tutH"></h3><p id="tutP"></p><div class="row"><button class="skip" id="tutSkip">Skip</button><div class="dots" id="tutDots"></div><button class="btn sm" id="tutNext">Next</button></div></div></div>

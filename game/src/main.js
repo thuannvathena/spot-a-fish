@@ -9,6 +9,7 @@ import LV from './levels.json';
 /* ============================== constants ============================== */
 const R = 3.25, TANK_H = 5.2, FLOOR_Y = 0.45, WATER_Y = 4.75, RF = 2.75, RK = R / 2.6; // tank radius, glass top, sand, water level, fish roam radius
 const BACKUP_MAX = 7, LEAP = .3, NT = 2;   // NT = how many target tanks are shown at once
+const vib = p => { if (!save.noVib && navigator.vibrate) try { navigator.vibrate(p); } catch (e) { } };   // the vibration switch of the settings pop-up
 const rand = (a, b) => a + Math.random() * (b - a);
 const pick = a => a[(Math.random() * a.length) | 0];
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -21,19 +22,19 @@ const $ = id => document.getElementById(id);
 /* ============================== save ============================== */
 const SAVE_KEY = 'findfish_v1'; let resetting = false;
 const PLAYTEST = /[?&]playtest=1/.test(location.search), ORIG_RANDOM = Math.random;   // opened by the level editor: nothing is saved, tutorials are skipped
-const save = { unlocked: 1, last: 1, stars: {}, muted: false, tut: false };
+const save = { unlocked: 1, last: 1, stars: {}, muted: false, noMusic: false, noVib: false, tut: false };   // muted = sound effects off, noMusic = music off, noVib = no vibration
 try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch (e) { }
-if (PLAYTEST) Object.assign(save, { tut: true, unlocked: 99, g1: 1, gRot: 1, gZoom: 1, gTilt: 1, iBackup: 1, iHint: 1, iTank: 1, iClear: 1, iSquid: 1, iClam: 1, iSwarm: 1 });
+if (PLAYTEST) Object.assign(save, { tut: true, unlocked: 99, g1: 1, gRot: 1, gZoom: 1, gTilt: 1, iBackup: 1, iHint: 1, iTank: 1, iClear: 1, iSquid: 1, iClam: 1, iSwarm: 1, iPump: 1 });
 const persist = () => { if (resetting || PLAYTEST) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { } };
 const MAX_LV = LV.length;
 
 /* ============================== sound (WebAudio synth) ============================== */
 const Snd = (() => {
-  let ctx = null, master = null, noiseBuf = null;
+  let ctx = null, master = null, musicG = null, noiseBuf = null;
   function init() {
     if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-    ctx = new AC(); master = ctx.createGain(); master.gain.value = save.muted ? 0 : .85; master.connect(ctx.destination);
+    ctx = new AC(); master = ctx.createGain(); master.gain.value = save.muted ? 0 : .85; master.connect(ctx.destination); musicG = ctx.createGain(); musicG.gain.value = save.noMusic ? 0 : 1; musicG.connect(ctx.destination);
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     loadSamples();
   }
@@ -50,7 +51,7 @@ const Snd = (() => {
   /* background music: starts from the beginning with every level, ducks to half while a pop-up is open and comes back gradually, fades out slowly when the win / lose pop-up comes */
   function bgmStart() {
     bgmWant = true; if (!ctx || !SFX.bgm_ap) return; bgmKill(0);
-    const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = SFX.bgm_ap; src.loop = true; g.gain.value = .0001; src.connect(g); g.connect(master); src.start();
+    const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = SFX.bgm_ap; src.loop = true; g.gain.value = .0001; src.connect(g); g.connect(musicG || master); src.start();
     g.gain.setTargetAtTime(.55 * bgmDuck, ctx.currentTime, .4); bgm = { src, g };
   }
   function bgmKill(fade) { if (!bgm) return; const b = bgm; bgm = null; if (fade > 0 && ctx) { b.g.gain.cancelScheduledValues(ctx.currentTime); b.g.gain.setTargetAtTime(.0001, ctx.currentTime, fade / 3); setTimeout(() => { try { b.src.stop(); } catch (e) { } }, fade * 1000 + 100); } else { try { b.src.stop(); } catch (e) { } } }
@@ -97,7 +98,8 @@ const Snd = (() => {
     }
   }
   function setMuted(m) { save.muted = m; persist(); if (master) master.gain.value = m ? 0 : .85; }
-  return { init, play, setMuted, sfx, bgmStart, bgmStop, bgmDuckTo };
+  function setMusic(on) { save.noMusic = !on; persist(); if (musicG) musicG.gain.value = on ? 1 : 0; }
+  return { init, play, setMuted, setMusic, sfx, bgmStart, bgmStop, bgmDuckTo };
 })();
 ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, () => Snd.init(), { passive: true }));
 
@@ -107,6 +109,10 @@ const SPECIES = []; let BASE_N = 0;   // the species are the 3D models (blue_whi
 const FISHART = {};   // id -> { tex, geo, hx, hy, hz }
 /* Fish are the supplied illustrations, "inflated" into real 3D: the alpha silhouette is turned into a puffy volume (thick in the middle,
    thin at fins and tail), the painting is mapped on both faces, and it is lit like any 3D model. */
+function hueRGB(c, deg) {   // the same colour turn as hueRotate, for one colour (0-1 values)
+  const rad = deg * Math.PI / 180, k = Math.cos(rad), n = Math.sin(rad), [r, g, b] = c, m = [.213 + k * .787 - n * .213, .715 - k * .715 - n * .715, .072 - k * .072 + n * .928, .213 - k * .213 + n * .143, .715 + k * .285 + n * .140, .072 - k * .072 - n * .283, .213 - k * .213 - n * .787, .715 - k * .715 + n * .715, .072 + k * .928 + n * .072];
+  return [0, 1, 2].map(o => Math.max(0, Math.min(1, m[o * 3] * r + m[o * 3 + 1] * g + m[o * 3 + 2] * b)));
+}
 function hueRotate(cnv, deg) {   // recolour a canvas (keeps white eyes / neutral tones, shifts every hue)
   const g = cnv.getContext('2d', { willReadFrequently: true }), d = g.getImageData(0, 0, cnv.width, cnv.height), p = d.data, rad = deg * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad);
   const a0 = .213 + c * .787 - s * .213, a1 = .715 - c * .715 - s * .715, a2 = .072 - c * .072 + s * .928, b0 = .213 - c * .213 + s * .143, b1 = .715 + c * .285 + s * .140, b2 = .072 - c * .072 - s * .283, c0 = .213 - c * .213 - s * .787, c1 = .715 - c * .715 + s * .715, c2 = .072 + c * .928 + s * .072;
@@ -320,7 +326,7 @@ function registerUnity(key, gltf) {
   const wrap = new THREE.Group(); wrap.add(obj); wrap.rotation.y = Math.PI; wrap.updateMatrixWorld(true);   // the models face -Z after the conversion; the game wants +Z
   const sc = document.createElement('canvas'); sc.width = img.width; sc.height = img.height; { const g = sc.getContext('2d'); g.drawImage(img, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#fff'; g.fillRect(0, 0, sc.width, sc.height); }
   const sil = new THREE.CanvasTexture(sc), box = new THREE.Box3().setFromObject(wrap), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3()), len = THREE.MathUtils.clamp(size.z * .24, .4, .74), k = len / size.z, vt = {};
-  MODEL3D[key] = { img, vt, hueTex(hue) { if (!hue) return this.tex; if (!vt[hue]) { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').drawImage(img, 0, 0); hueRotate(c, hue); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; vt[hue] = t; } return vt[hue]; },
+  MODEL3D[key] = { img, vt, hueTex(hue) { if (!hue) return this.tex; if (!vt[hue]) { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').drawImage(img, 0, 0); hueRotate(c, hue); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.flipY = map.flipY; t.anisotropy = 4; vt[hue] = t; } return vt[hue]; },
     obj: wrap, tex: map, sil, clip: null, k, ctr, hx: len / 2, hy: size.y * k / 2, hz: size.x * k / 2, len, cut: 0, eye: UNITY.eyes['fish_' + key.replace(/\D/g, '').padStart(2, '0')] || null };
   const sp = { id: 'm_' + key, model3d: key, len }; SPECIES.push(sp); MODEL_IDX[key] = SPECIES.length - 1; UNITY.keys.push(key); makeModelThumb(sp);
 }
@@ -334,6 +340,68 @@ function loadUnity() {
   })();
   return UNITY.p;
 }
+/* ---- the Tripo fish (public/models/tripo): single static meshes without a skeleton. They swim with a bend of the whole body made in the vertex shader (the tail swings most). They are added after BASE_N is fixed, so no ordinary level draws them: only a level that lists them in `fishKeys` (level 61). ---- */
+const TRIPO = ['Emerald_blue', 'Golden_Flame', 'Goldie_tot', 'Green_Orby', 'Green_finny', 'brown_stripe', 'deep_lantern_fish', 'ghostly_wave', 'golden_spot', 'golden_tide', 'goldie', 'green_beast'], TRIPO_LEN = .62;
+function scanEyeTex(img) {   // finds every eye picture on a Tripo texture (a compact dark pupil with a small white highlight beside it) and returns a copy of the texture with those eyeballs painted over in the colour of the skin around them (the blink fades between the two), or null
+  const S = 512, cv = document.createElement('canvas'); cv.width = S; cv.height = S; const cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(img, 0, 0, S, S);
+  const D = cx.getImageData(0, 0, S, S).data, lum = new Float32Array(S * S), wh = new Uint8Array(S * S), lab = new Int32Array(S * S);
+  for (let i = 0; i < S * S; i++) { const r = D[i * 4], g = D[i * 4 + 1], b = D[i * 4 + 2]; lum[i] = .299 * r + .587 * g + .114 * b; wh[i] = lum[i] > 222 && Math.min(r, g, b) > 195 ? 1 : 0; }
+  const eyes = [], stack = []; let nl = 0;
+  for (let i0 = 0; i0 < S * S; i0++) {
+    if (lab[i0] || lum[i0] >= 95) continue; nl++; let a = 0, sx = 0, sy = 0, x0 = S, x1 = 0, y0 = S, y1 = 0; stack.push(i0); lab[i0] = nl;
+    while (stack.length) { const i = stack.pop(), x = i % S, y = (i / S) | 0; a++; sx += x; sy += y; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      for (const j of [i - 1, i + 1, i - S, i + S]) if (j >= 0 && j < S * S && !lab[j] && lum[j] < 95 && !((j - i === 1 && x === S - 1) || (j - i === -1 && x === 0))) { lab[j] = nl; stack.push(j); } }
+    const w = x1 - x0 + 1, h = y1 - y0 + 1; if (a < 20 || a > 2600 || Math.max(w, h) / Math.min(w, h) > 2 || a < .45 * w * h) continue;
+    const ex = sx / a, ey = sy / a, r = Math.sqrt(a / Math.PI); let nw = 0, wmax = 0, wA = 0; const Rs = Math.ceil(r * 3.8);
+    for (let y = Math.max(0, Math.floor(ey - Rs)); y <= Math.min(S - 1, Math.ceil(ey + Rs)); y++) for (let x = Math.max(0, Math.floor(ex - Rs)); x <= Math.min(S - 1, Math.ceil(ex + Rs)); x++) { const d = Math.hypot(x - ex, y - ey); if (d > Rs || !wh[y * S + x]) continue; if (d < r * 2.4) nw++; wA++; if (d > wmax) wmax = d; }
+    if (nw < 2 || nw > .5 * Math.PI * (r * 2.4) ** 2) continue;   // a highlight is a few white pixels, not a field of them (the white stripes of a fish)
+    eyes.push({ x: ex, y: ey, r, R: Math.min(r * 4.2, Math.max(r * 2.5, wmax * 1.25)) });
+  }
+  if (!eyes.length) return null;
+  const out = document.createElement('canvas'); out.width = img.width; out.height = img.height; const og = out.getContext('2d'); og.drawImage(img, 0, 0); const k = img.width / S;
+  for (const e of eyes) {   // the skin colour: the average of the ring just outside the eyeball, without the white and dark pictures
+    let sr = 0, sg = 0, sb = 0, n = 0; for (let t = 0; t < 40; t++) for (const f of [1.25, 1.5, 1.75]) { const x = Math.round(e.x + Math.cos(t / 40 * 6.283) * e.R * f), y = Math.round(e.y + Math.sin(t / 40 * 6.283) * e.R * f); if (x < 0 || y < 0 || x >= S || y >= S) continue; const i = y * S + x; if (wh[i] || lum[i] < 95) continue; sr += D[i * 4]; sg += D[i * 4 + 1]; sb += D[i * 4 + 2]; n++; }
+    if (!n) continue; const c = `${Math.round(sr / n)},${Math.round(sg / n)},${Math.round(sb / n)}`, X = e.x * k, Y = e.y * k, R = e.R * k, gr = og.createRadialGradient(X, Y, R * .78, X, Y, R * 1.05); gr.addColorStop(0, `rgba(${c},1)`); gr.addColorStop(1, `rgba(${c},0)`); og.fillStyle = gr; og.beginPath(); og.arc(X, Y, R * 1.05, 0, 6.2832); og.fill();
+  }
+  return { canvas: out, n: eyes.length };
+}
+async function loadTripo() {
+  const base = document.baseURI, ld = new FBXLoader(), tl = new THREE.TextureLoader();
+  await Promise.all(TRIPO.map(async n => { try {
+    const obj = await ld.loadAsync(new URL(`models/tripo/${n}/model.fbx`, base).href), tex = await tl.loadAsync(new URL(`models/tripo/${n}/tex.jpg`, base).href); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    let mesh = null; obj.updateWorldMatrix(true, true); obj.traverse(m => { if (m.isMesh && !mesh) mesh = m; }); if (!mesh) throw new Error('no mesh');
+    const g = mesh.geometry.clone(); g.applyMatrix4(mesh.matrixWorld); g.computeBoundingBox(); const box = g.boundingBox, size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
+    g.translate(-ctr.x, -ctr.y, -ctr.z);
+    // the nose is the end of the long axis (x) where the body is thicker (the tail is thin and flat)
+    const P = g.attributes.position; let zl0 = 1e9, zl1 = -1e9, zr0 = 1e9, zr1 = -1e9; for (let i = 0; i < P.count; i++) { const x = P.getX(i), z = P.getZ(i); if (x < -size.x * .32) { zl0 = Math.min(zl0, z); zl1 = Math.max(zl1, z); } else if (x > size.x * .32) { zr0 = Math.min(zr0, z); zr1 = Math.max(zr1, z); } }
+    if (zl1 - zl0 > zr1 - zr0) g.rotateY(Math.PI);   // the nose must point to +x
+    const k = TRIPO_LEN / size.x; g.scale(k, k, k);
+    const img = tex.image, vt = {};
+    MODEL3D['tripo_' + n] = { static: true, lid: scanEyeTex(tex.image), geo: g, tex, img, vt, len: TRIPO_LEN, hx: TRIPO_LEN / 2, hy: size.y * k / 2, hz: size.z * k / 2,
+      hueTex(hue) { if (!hue) return this.tex; if (!vt[hue]) { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').drawImage(img, 0, 0); hueRotate(c, hue); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.flipY = tex.flipY; t.anisotropy = 4; vt[hue] = t; } return vt[hue]; } };
+    const sp = { id: 'm_tripo_' + n, model3d: 'tripo_' + n, len: TRIPO_LEN }; SPECIES.push(sp); MODEL_IDX['tripo_' + n] = SPECIES.length - 1; makeModelThumb(sp);
+  } catch (e) { console.warn('Tripo fish ' + n + ' not loaded', e); } }));
+}
+function buildStaticFish(sp) {   // same interface as buildModelFish (swim pose, hover glow, tap proxy) for a mesh without bones
+  const M = MODEL3D[sp.model3d], tex = sp.hue ? M.hueTex(sp.hue) : M.tex, g = new THREE.Group(), uPh = { value: 0 }, uAmp = { value: .2 }, L = M.len;
+  const wave = sh => { sh.uniforms.uPh = uPh; sh.uniforms.uAmp = uAmp; sh.vertexShader = 'uniform float uPh; uniform float uAmp; varying vec3 vOP;\n' + sh.vertexShader.replace('#include <begin_vertex>', `vOP = position; vec3 transformed = vec3( position ); float tl = clamp((${(L / 2).toFixed(4)} - transformed.x) / ${L.toFixed(4)}, 0., 1.); transformed.z += uAmp * ${(L * .5).toFixed(4)} * pow(tl, 1.5) * sin(uPh - tl * 4.2); transformed.x *= 1. - .05 * abs(sin(uPh - tl * 4.2)) * tl;`); };
+  const mat = new THREE.MeshLambertMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: .46, side: THREE.DoubleSide, fog: false }); const uBl = { value: 0 }; let lidTex = null;
+  if (M.lid) { lidTex = M.lid.tex || (M.lid.tex = new THREE.CanvasTexture(M.lid.canvas)); lidTex.colorSpace = THREE.SRGBColorSpace; lidTex.flipY = tex.flipY; lidTex.anisotropy = 4; if (sp.hue) { const vk = 'v' + sp.hue; if (!M.lid[vk]) { const c = document.createElement('canvas'); c.width = M.lid.canvas.width; c.height = M.lid.canvas.height; c.getContext('2d').drawImage(M.lid.canvas, 0, 0); hueRotate(c, sp.hue); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.flipY = tex.flipY; t.anisotropy = 4; M.lid[vk] = t; } lidTex = M.lid[vk]; } }   // the same picture with the eyeballs painted over: the blink fades each eye into it
+  const E = !!lidTex;
+  mat.onBeforeCompile = sh => { wave(sh); if (!E) return; Object.assign(sh.uniforms, { uBl, uLidMap: { value: lidTex } });
+    sh.fragmentShader = 'uniform float uBl; uniform sampler2D uLidMap;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n vec3 lidC = texture2D(uLidMap, vMapUv).rgb; vec3 lidL = lidC; diffuseColor.rgb = mix(diffuseColor.rgb, lidL, uBl);').replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance = mix(totalEmissiveRadiance, lidL * emissive, uBl);'); };
+  const body = new THREE.Mesh(M.geo, mat); body.frustumCulled = false; g.add(body);
+  let glows = null;
+  const mkGlow = () => { glows = [[.025, 0xff9d00, .85], [.011, 0xffe36b, 1]].map(([off, col, kk]) => { const gm = new THREE.MeshBasicMaterial({ color: col, side: THREE.BackSide, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, fog: false }); gm.userData.k = kk;
+    gm.onBeforeCompile = sh => { wave(sh); sh.vertexShader = sh.vertexShader.replace('#include <project_vertex>', 'transformed += normalize( normal ) * ' + off.toFixed(3) + ';\n#include <project_vertex>\n gl_Position.z += .004 * gl_Position.w;'); };
+    const h = new THREE.Mesh(M.geo, gm); h.frustumCulled = false; h.visible = false; h.renderOrder = 6; g.add(h); return h; }); };
+  const setGlow = v => { if (v > .01 && !glows) mkGlow(); if (glows) for (const h of glows) { h.visible = v > .01; h.material.opacity = v * h.material.userData.k; } };
+  let bp = -1, bt = rand(.5, 4); const pose = (dt, o) => { if (E) { bt -= dt; if (bp < 0 && bt <= 0) bp = 0; if (bp >= 0) { bp += dt / .3; uBl.value = Math.sin(Math.min(1, bp) * Math.PI) ** .7; if (bp >= 1) { bp = -1; bt = rand(1.8, 5); uBl.value = 0; } } if (window.__blink !== undefined) uBl.value = window.__blink; } if (!o) return; const boost = Math.min(o.boost || 0, 2), scared = boost > .8 || o.wiggle > 0; uPh.value = o.wph || 0; uAmp.value = (.17 + .07 * boost) * (scared ? 1.25 : 1) * 1.1; };
+  const proxy = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); proxy.scale.set(M.hx * .95, M.hy * .9, M.hz * .9); proxy.userData.pickOnly = true; g.add(proxy);
+  const mats = { get emissiveIntensity() { return mat.emissiveIntensity; }, set emissiveIntensity(v) { mat.emissiveIntensity = v; } };
+  return { openEyes() { }, seek() { }, group: g, body: { rotation: { y: 0 }, material: mats }, tail: { rotation: { y: 0 } }, hx: M.hx, hy: M.hy, hz: M.hz, blink: null, model3d: true, update: pose, setGlow, setBlink: v => { uBl.value = v; }, bounds: new THREE.Box3(new THREE.Vector3(-M.hx, -M.hy, -M.hz), new THREE.Vector3(M.hx, M.hy, M.hz)) };
+}
+const buildAnyModel = sp => (MODEL3D[sp.model3d].static ? buildStaticFish(sp) : buildModelFish(sp));
 function modelVariant(baseIdx, deg) {   // the same 3D model with its colours turned by `deg` degrees: a species of its own, created on demand
   const b = SPECIES[baseIdx], key = b.model3d, hue = (((Math.round((b.hue || 0) + deg)) % 360) + 360) % 360, id = 'm_' + key + (hue ? '_h' + hue : ''), k = SPECIES.findIndex(q => q.id === id); if (k >= 0) return k;
   const sp = { id, model3d: key, len: b.len, hue }; SPECIES.push(sp); makeModelThumb(sp); return SPECIES.length - 1;
@@ -341,7 +409,7 @@ function modelVariant(baseIdx, deg) {   // the same 3D model with its colours tu
 function buildModelFish(sp) {
   const M = MODEL3D[sp.model3d], tex = sp.hue ? M.hueTex(sp.hue) : M.tex, g = new THREE.Group(), holder = new THREE.Group(), root = SkeletonUtils.clone(M.obj), mats = [], skinned = [];
   holder.add(root); holder.rotation.y = Math.PI / 2; holder.scale.set(M.k * .88, M.k, M.k); holder.position.set(-M.ctr.z * M.k, -M.ctr.y * M.k, M.ctr.x * M.k); g.add(holder);   // +Z -> +X (the game's forward), centred on the origin
-  const eyeU = M.eye ? { uBlink: { value: 0 }, uEye: { value: new THREE.Vector3(M.eye.u, M.eye.v, M.eye.r) }, uLid: { value: new THREE.Color().setRGB(M.eye.lid[0], M.eye.lid[1], M.eye.lid[2], THREE.SRGBColorSpace) } } : null;   // the Unity fish blink by turning their eye picture into the colour of the body next to it
+  const eyeU = M.eye ? { uBlink: { value: 0 }, uEye: { value: new THREE.Vector3(M.eye.u, M.eye.v, M.eye.r) }, uLid: { value: (lid => new THREE.Color().setRGB(lid[0], lid[1], lid[2], THREE.SRGBColorSpace))(sp.hue ? hueRGB(M.eye.lid, sp.hue) : M.eye.lid) } } : null;   // the Unity fish blink by turning their eye picture into the colour of the body next to it
   root.traverse(m => { if (m.isMesh) { m.frustumCulled = false; m.material = new THREE.MeshLambertMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: .46, alphaTest: M.cut, side: THREE.DoubleSide, fog: false }); mats.push(m.material); if (m.isSkinnedMesh) skinned.push(m);
     if (eyeU) m.material.onBeforeCompile = sh => { Object.assign(sh.uniforms, eyeU);
       sh.fragmentShader = 'uniform float uBlink; uniform vec3 uEye; uniform vec3 uLid;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n vec2 eD = vMapUv - uEye.xy; float eyeM = smoothstep(uEye.z, uEye.z * .8, length(eD)) * uBlink; float eyeL = smoothstep(uEye.z * .13, 0., abs(eD.y + uEye.z * .05)) * smoothstep(uEye.z, uEye.z * .6, abs(eD.x)) * 0. + smoothstep(uEye.z * .12, 0., abs(eD.y + uEye.z * .08)) * smoothstep(uEye.z * .95, uEye.z * .5, abs(eD.x)) * uBlink;\n diffuseColor.rgb = mix(diffuseColor.rgb, uLid, eyeM); diffuseColor.rgb = mix(diffuseColor.rgb, uLid * .55, eyeL * .8);').replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance = mix(totalEmissiveRadiance, uLid * emissive, eyeM);'); }; } });
@@ -353,7 +421,8 @@ function buildModelFish(sp) {
   const rest = [...SP, ...EYE, ...FIN.map(f => f.b)].map(b => [b, b.quaternion.clone(), b.scale.clone()]);
   const ex = { wide: 0, sleepy: 0, flare: 0, bend: 0, blinkT: rand(1, 4), bp: -1 }, qa = new THREE.Quaternion(), ea = new THREE.Euler();
   const addRot = (b, x, y, z) => { ea.set(x, y, z); qa.setFromEuler(ea); b.quaternion.multiply(qa); };
-  const mixer = new THREE.AnimationMixer(root); if (M.clip) { const act = mixer.clipAction(M.clip); act.play(); act.time = Math.random() * M.clip.duration; } mixer.update(0);
+  const mixer = new THREE.AnimationMixer(root); let act0 = null; if (M.clip) { act0 = mixer.clipAction(M.clip); act0.play(); act0.time = Math.random() * M.clip.duration; } mixer.update(0);
+  const seek = t => { if (act0) { act0.time = t; mixer.update(0); } };   // jump the swim clip to a moment (thumbnails use the start: a random moment can catch the eye mid-blink, which shows as a dark hole)
   const pose = (dt, o) => {   // swim clip + a travelling body wave + bend into turns + fins + eyes (blink, wide, sleepy)
     for (const [b, q, s] of rest) { b.quaternion.copy(q); b.scale.copy(s); }
     mixer.update(dt);
@@ -383,18 +452,18 @@ function buildModelFish(sp) {
   const setGlow = v => { if (v > .01 && !glows) mkGlow(); if (glows) for (const h of glows) { h.visible = v > .01; h.material.opacity = v * h.material.userData.k; } };
   const mat = { get emissiveIntensity() { return mats[0].emissiveIntensity; }, set emissiveIntensity(v) { for (const m of mats) m.emissiveIntensity = v; } };
   const openEyes = () => { for (const [b, q, s2] of rest) if (EYE.includes(b)) { b.quaternion.copy(q); b.scale.copy(s2); } };   // for thumbnails: the swim clip can be caught mid-blink
-  return { openEyes, group: g, body: { rotation: { y: 0 }, material: mat }, tail: { rotation: { y: 0 } }, hx: M.hx, hy: M.hy, hz: M.hz, blink: null, model3d: true, update: pose, setGlow, bounds: new THREE.Box3(new THREE.Vector3(-M.hx, -M.hy, -M.hz), new THREE.Vector3(M.hx, M.hy, M.hz)) };
+  return { openEyes, seek, group: g, body: { rotation: { y: 0 }, material: mat }, tail: { rotation: { y: 0 } }, hx: M.hx, hy: M.hy, hz: M.hz, blink: null, model3d: true, update: pose, setGlow, bounds: new THREE.Box3(new THREE.Vector3(-M.hx, -M.hy, -M.hz), new THREE.Vector3(M.hx, M.hy, M.hz)) };
 }
 let thumbR = null;   // one renderer for all the thumbnails (a new one for each of 30 models would run out of WebGL contexts)
 function makeModelThumb(sp) {   // a small side-view picture for the UI (target boards, intro cards)
   const M = MODEL3D[sp.model3d], r = thumbR || (thumbR = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })); r.setPixelRatio(1); r.setSize(200, 160, false); r.setClearColor(0x000000, 0);
   const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xdff4ff, 0x335577, 1.6)); const dl = new THREE.DirectionalLight(0xffffff, 2.4); dl.position.set(2, 3, 4); sc.add(dl);
-  const b = buildModelFish(sp); sc.add(b.group); b.update(.45); b.openEyes(); b.group.rotation.y = -.25;
+  const b = buildAnyModel(sp); sc.add(b.group); b.seek(0); b.update(0); b.openEyes(); b.group.rotation.y = -.25;
   const cam = new THREE.PerspectiveCamera(28, 200 / 160, .05, 20); cam.position.set(0, 0, M.len * 2.1); cam.lookAt(0, 0, 0); r.render(sc, cam);
   THUMB[sp.id] = r.domElement.toDataURL('image/png');
 }
 function buildFish(sp) {
-  if (sp.model3d) return buildModelFish(sp);
+  if (sp.model3d) return buildAnyModel(sp);
   const art = FISHART[sp.id], g = new THREE.Group();
   const mat = new THREE.MeshPhongMaterial({ map: art.tex, alphaMap: art.mask, emissiveMap: art.tex, emissive: 0xffffff, emissiveIntensity: .46, alphaTest: .5, shininess: 24, specular: 0x1a2430, side: THREE.DoubleSide, fog: false });
   const uWag = { value: 0 };
@@ -525,6 +594,7 @@ function makeThumbs() {
     const need = Math.max(size.x / (200 / 160), size.y) * 1.25;
     cam.position.set(0, 0, need / (2 * Math.tan(THREE.MathUtils.degToRad(14))) + size.z * .5); cam.lookAt(0, 0, 0);
     r.render(sc, cam); THUMB[it.id] = r.domElement.toDataURL('image/png');
+    r.setSize(640, 512, false); r.render(sc, cam); THUMB[it.id + '_big'] = r.domElement.toDataURL('image/png'); r.setSize(200, 160, false);   // a large copy for the first-time pop-ups
     sc.remove(it.obj);
   }
   r.dispose(); r.forceContextLoss();
@@ -1232,6 +1302,9 @@ function tubeUpdate(dt) {
     }
   } else if (tube.state === 'hold') {   // waiting for room in the tank: lid closed, no shaking
     tubePose(0, 0); tube.glow.material.opacity = .25 + .1 * Math.sin(now * 2.2);
+    // stuck: the tank is full of decoys, every fish the targets need waits in a later wave, so nobody can make room. The decoys this wave still holds move to the end of the next wave, so that wave's held target fish come out first
+    tube.starve = tubeStarved() ? (tube.starve || 0) + dt : 0;
+    if (tube.starve >= (G.cfg.stuckDelay || 2.5) && G.cfg.autoPump !== false && G.waves.length && tube.cur && tube.cur.specs.length && !G.things.some(o => o.tubeP)) { G.waves[0].specs.push(...tube.cur.specs.splice(0)); tube.starve = 0; tube.state = 'out'; tube.t = 0; return; }
     if (t > .5 && G.things.reduce((n, o) => n + (o.kind === 'fish' && o.alive && !o.gone ? 1 : 0), 0) < FISH_CAP - 1) { tube.state = 'emit'; tube.t = 0; tube.em = 0; }
   } else if (tube.state === 'out') {   // a last shiver and it settles
     tubePose(Math.sin(t * 60) * .03 * Math.max(0, 1 - t / .3), 0); if (t >= .6) { tube.state = 'idle'; tube.cur = null; tube.lastT = now; }
@@ -1242,6 +1315,8 @@ function themeUpdate(dt, t) {
   const g = themeG[curTheme]; if (!g) return; emitT += dt; if (emitT > .3) { emitT = 0; for (const p of g.userData.emit) burstFx.emit(p, 0xffffff, 2, .22); }
   if (g.userData.gem) g.userData.gem.rotation.y += dt * 1.6;
 }
+let lvPending = 0;   // a level whose "LEVEL N" animation waits for the first-time pop-up to close
+function startLvIntro() { if (!lvPending || !G || G.level !== lvPending) { lvPending = 0; return; } window.__lvIntro = { t0: performance.now(), n: lvPending }; lvPending = 0; }
 function newLevel(L) {
   window.__hudFadeT0 = undefined; window.__hudInT0 = performance.now();
   clearWorld(); ovClear(); gid++;
@@ -1251,30 +1326,36 @@ function newLevel(L) {
   const pool = shuffle(Array.from({ length: BASE_N }, (_, i) => i)), isBig = i => (SPECIES[i].len || 0) >= .8;
   const smallAll = pool.filter(i => !isBig(i)), bigAll = pool.filter(i => isBig(i));
   const nb = Math.min(bigAll.length, L < 3 ? 0 : L < 8 ? 1 : 2);
+  const fk = Array.isArray(cfg.fishKeys) && cfg.fishKeys.length ? cfg.fishKeys.map(kk => MODEL_IDX[kk]).filter(i => i !== undefined) : null;   // a test level can name its fish (level 61: the Tripo set, one of each)
   const only = cfg.onlyFish ? MODEL_IDX[cfg.onlyFish] : undefined;   // a test level can use one 3D model for every fish
   const step = 360 / Math.max(1, k), nd3 = Math.max(0, cfg.typesTotal - k);   // a 3D-model level: the targets are the model in k evenly spaced colours, the decoy species are in-between colours
-  const targetTypes = only !== undefined ? Array.from({ length: k }, (_, i) => modelVariant(only, Math.round(i * step))) : smallAll.slice(0, k);
-  const baseDecoys = only !== undefined ? Array.from({ length: nd3 }, (_, i) => modelVariant(only, Math.round((i + .5) * step))) : smallAll.slice(k, k + (cfg.typesTotal - k - nb)).concat(bigAll.slice(0, nb));
+  const targetTypes = fk ? fk.slice(0, k) : only !== undefined ? Array.from({ length: k }, (_, i) => modelVariant(only, Math.round(i * step))) : smallAll.slice(0, k);
+  const baseDecoys = fk ? fk.slice(k) : only !== undefined ? Array.from({ length: nd3 }, (_, i) => modelVariant(only, Math.round((i + .5) * step))) : smallAll.slice(k, k + (cfg.typesTotal - k - nb)).concat(bigAll.slice(0, nb));
   // 1~2 of the decoy species are colour variants of a target species (same body, different colours)
   const looks = shuffle(targetTypes.slice()).slice(0, Math.min(cfg.look, baseDecoys.length)).map(tt => variantOf(tt, (Math.random() < .5 ? 1 : -1) * cfg.shift));
   const decoyTypes = looks.concat(baseDecoys.slice(looks.length));
   const multi = targetTypes.slice(); const counts = {}; multi.forEach(t => counts[t] = (counts[t] || 0) + 1);
   const spawn = [];
-  const bt = cfg.bounty ? targetTypes[k - 1] : null;   // one target species per bounty level needs only 1 fish, which is made hard to spot / catch
-  for (const t in counts) { const isB = bt !== null && +t === bt; for (let i = 0; i < counts[t] * (isB ? 1 : cfg.per); i++) spawn.push({ kind: 'fish', type: +t, bounty: isB ? cfg.bounty : null }); }
-  if (cfg.bounty === 'camo') { const cv = variantOf(bt, Math.random() < .5 ? 20 : -20); for (let i = 0; i < 8; i++) spawn.push({ kind: 'fish', type: cv }); }   // look-alikes: same body and texture, colours only a little off
+  // bounty tanks (up to 2 kinds in a level, each a different target species that needs just 1 fish, made hard to spot / catch): the last target species
+  const bKinds = cfg.bounty || [], bTypes = bKinds.map((kd, i) => targetTypes[k - 1 - i]);
+  // fish per target tank: one entry per target species. A bounty species always needs 1; the other species take the level's tank sizes in random order
+  const sizes = cfg.tanks ? cfg.tanks.slice() : Array(k).fill(cfg.per);
+  bTypes.forEach(() => { const j = sizes.indexOf(1); if (j >= 0) sizes.splice(j, 1); else sizes.pop(); });
+  const sizeQ = shuffle(sizes), perMap = {}; let sqi = 0; targetTypes.forEach(t => { perMap[t] = bTypes.includes(t) ? 1 : (sizeQ[sqi++] ?? cfg.per); });
+  for (const t in counts) { const bi = bTypes.indexOf(+t); for (let i = 0; i < counts[t] * perMap[+t]; i++) spawn.push({ kind: 'fish', type: +t, bounty: bi < 0 ? null : bKinds[bi] }); }
+  bTypes.forEach((bt2, bi) => { if (bKinds[bi] === 'camo') { const cv = variantOf(bt2, Math.random() < .5 ? 20 : -20); for (let i = 0; i < 8; i++) spawn.push({ kind: 'fish', type: cv }); } });   // look-alikes: same body and texture, colours only a little off
   // decoys: only the non-target species, spread evenly
-  const remArr = shuffle(multi); if (bt !== null) { remArr.splice(remArr.indexOf(bt), 1); remArr.splice(Math.min(2, remArr.length), 0, bt); }
+  const remArr = shuffle(multi); bTypes.forEach(bt2 => remArr.splice(remArr.indexOf(bt2), 1)); bTypes.forEach((bt2, bi) => remArr.splice(bi === 0 ? Math.min(2, remArr.length) : Math.min(remArr.length, Math.max(5, remArr.length - 2)), 0, bt2));   // the bounty tanks come after the first two; a second one comes near the end
   // fish tube (L7+): part of the fish (targets AND decoys) wait in the tube and are pumped in as waves - every 2~3 finished sets. Some waves carry the LAST fish of a target set, so the player must wait for / hunt the new wave.
   const waves = [];
   if (cfg.tube) {
-    if (cfg.tubeWaves && cfg.tubeWaves.length) cfg.tubeWaves.forEach(w => waves.push({ t: Math.max(1, w.afterTanks | 0), specs: [], hold: w.holdLast !== false }));   // waves set in the level file
+    if (cfg.tubeWaves && cfg.tubeWaves.length) cfg.tubeWaves.forEach(w => waves.push({ t: Math.max(1, w.afterTanks | 0), specs: [], hold: w.holdLast !== false, holdN: Math.max(1, w.holdFish | 0) }));   // waves set in the level file
     else {
       let c = 2 + (Math.random() < .5 ? 0 : 1); while (c <= cfg.goal - 2) { waves.push({ t: c, specs: [] }); c += 2 + (Math.random() < .5 ? 0 : 1); }
       if (!waves.length) waves.push({ t: Math.min(2, cfg.goal - 1), specs: [] });
     }
     const used = new Set();
-    for (const w of waves) { let j = w.t; while (j < remArr.length && (remArr[j] === bt || used.has(remArr[j]))) j++; if (j >= remArr.length) continue; const ty = remArr[j], at = spawn.findIndex(x => x.type === ty && !x.bounty); if (at < 0 || cfg.per < 2 || w.hold === false) continue; used.add(ty); spawn.splice(at, 1); w.specs.push({ kind: 'fish', type: ty, tgt: true }); }
+    for (const w of waves) for (let h = 0; h < (w.holdN || 1); h++) { let j = w.t; while (j < remArr.length && (bTypes.includes(remArr[j]) || used.has(remArr[j]))) j++; if (j >= remArr.length) break; const ty = remArr[j], at = spawn.findIndex(x => x.type === ty && !x.bounty); used.add(ty); if (at < 0 || perMap[ty] < 2 || w.hold === false) continue; spawn.splice(at, 1); w.specs.push({ kind: 'fish', type: ty, tgt: true }); }   // each wave holds back the last fish of holdN target species (1 unless the level file says more)
   }
   const bigN = {}, nextDecoy = () => { for (;;) { const ty = decoyTypes[di++ % decoyTypes.length]; if (isBig(ty)) { bigN[ty] = (bigN[ty] || 0) + 1; if (bigN[ty] > 1) continue; } return { kind: 'fish', type: ty }; } };
   let di = 0, extra = cfg.tube ? (cfg.tubeExtra != null ? Math.max(0, cfg.decoys - cfg.tubeExtra) : Math.max(0, Math.min(cfg.decoys, TUBE_INIT - spawn.length))) : Math.max(0, Math.min(cfg.decoys, FISH_CAP - spawn.length));   // the tank starts with at most TUBE_INIT (tube levels) / FISH_CAP fish
@@ -1287,7 +1368,7 @@ function newLevel(L) {
   for (let i = 0; i < cfg.jelly; i++) spawn.push({ kind: 'jelly' });
   for (let i = 0; i < cfg.squid; i++) spawn.push({ kind: 'squid' });
 
-  G = { waves, level: L, cfg, id: gid, status: 'play', mistakes: 0, hintUntil: 0, completed: 0, goalShown: 0, bounty: cfg.bounty ? { type: bt, kind: cfg.bounty } : null, remaining: remArr, targets: Array(NT).fill(null), backup: [], things: [], t0: U.uTime.value };
+  G = { waves, level: L, cfg, id: gid, status: 'play', mistakes: 0, hintUntil: 0, completed: 0, goalShown: 0, bounty: bTypes.length ? bTypes.map((t, i) => ({ type: t, kind: bKinds[i] })) : null, perMap, remaining: remArr, targets: Array(NT).fill(null), backup: [], things: [], t0: U.uTime.value };
   // spawn with spacing
   const placed = [];
   for (const s of shuffle(spawn)) {
@@ -1322,10 +1403,10 @@ function newLevel(L) {
   renderBackup(); buildTargetsDom();
   for (let i = 0; i < NT; i++) assignTarget(i, true);
   $('backup').style.visibility = cfg.backup ? '' : 'hidden'; $('bHint').style.display = cfg.hint ? '' : 'none'; $('bClear').style.display = cfg.clear ? '' : 'none'; $('bTank').style.display = cfg.tank ? '' : 'none';   // early levels: no Backup strip and no boosters yet
-  const intro = [[cfg.backup, 'iBackup', 'backup'], [cfg.hint, 'iHint', 'hint'], [cfg.tank, 'iTank', 'tank'], [cfg.clear, 'iClear', 'clear'], [cfg.squid, 'iSquid', 'squid'], [cfg.swarm, 'iSwarm', 'swarm'], [cfg.clams, 'iClam', 'clam']].find(x => x[0] && !save[x[1]]);
-  introOn = false; paused = false; hideOverlays(); kick(-4); Snd.bgmStart(); Snd.play('levelstart'); if (L >= 2) { window.__lvIntro = { t0: performance.now(), n: L }; window.__lvShown = false; window.__lvPop = 0; } else { window.__lvIntro = undefined; window.__lvShown = true; }   // (level 1 has none: the camera tutorial is enough) Snd.play('start');   // (painted by the Phaser UI: paintLevelIntro in src/ui/panels.ts)
+  const intro = [[cfg.backup, 'iBackup', 'backup'], [cfg.hint, 'iHint', 'hint'], [cfg.tank, 'iTank', 'tank'], [cfg.clear, 'iClear', 'clear'], [cfg.squid, 'iSquid', 'squid'], [cfg.swarm, 'iSwarm', 'swarm'], [cfg.clams, 'iClam', 'clam'], [cfg.tube, 'iPump', 'pump']].find(x => x[0] && !save[x[1]]);
+  introOn = false; paused = false; hideOverlays(); kick(-4); Snd.bgmStart(); Snd.play('levelstart'); lvPending = 0; if (L >= 2) { window.__lvShown = !!intro; window.__lvPop = 0; if (intro) { window.__lvIntro = undefined; lvPending = L; } else window.__lvIntro = { t0: performance.now(), n: L }; } else { window.__lvIntro = undefined; window.__lvShown = true; }   // (level 1 has none: the camera tutorial is enough) Snd.play('start');   // (painted by the Phaser UI: paintLevelIntro in src/ui/panels.ts)
   save.last = L; persist(); refreshHintBtn();
-  if (intro) { save[intro[1]] = 1; persist(); const gi = gid; setTimeout(() => { if (gi === gid && G.status === 'play' && !paused) showIntro(intro[2]); }, 1100); }
+  if (intro) { save[intro[1]] = 1; persist(); const gi = gid; setTimeout(() => { if (gi === gid && G.status === 'play' && !paused) showIntro(intro[2]); }, 900); }
 }
 
 function spawnThing(s, pos, idx) {
@@ -1581,7 +1662,7 @@ function squidUpdate(o, dt, t, age) {
   if (o.inkT <= 0 && age > 1) { sprayInk(o); o.inkT = rand(13, 19); o.dash = .9; o.wp = randomPoint(o); o.wpT = rand(6, 10); o.dir.lerp(dTmp.subVectors(o.wp, o.pos).normalize(), .8).normalize(); }
 }
 const CLAM_COOL = 6, CLAM_R = .95;
-const perOf = type => (G.bounty && G.bounty.type === type) ? 1 : G.cfg.per;   // a bounty target needs just one fish
+const perOf = type => (G.perMap && G.perMap[type] != null) ? G.perMap[type] : G.cfg.per;   // fish a target tank needs: 1 to 3 (a bounty target needs just one)
 function needSet() { return new Set(G.targets.filter(t => t && !t.done && t.count < perOf(t.type)).map(t => t.type)); }
 function clamAvailable(c) { return c.state === 'open'; }
 function clamUpdate(o, dt, t) {
@@ -1619,7 +1700,7 @@ function clamCapture(o, f) {
 function tapClam(o) {   // opening costs a few taps; no penalty, the tank is left alone
   if (!o.alive || G.status !== 'play' || o.state !== 'closed') return;
   o.taps--; o.shake = 1; const P = o.pos.clone(); P.y += .3; burstFx.emit(P, 0xffffff, 6, .9); Snd.play('ui'); kick(.5); drawPips(o.parts, o.taps, G.cfg.clamTaps);
-  if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) { }
+  vib(12);
   if (o.taps > 0) return;
   const f = o.fish; o.state = 'cool'; o.cool = CLAM_COOL; o.fish = null; burstFx.emit(P, 0xff9ad9, 14, 1.2); burstFx.emit(P, 0xffe27a, 10, 1);
   if (f) { f.locked = false; f.clam = null; f.immune = U.uTime.value + CLAM_COOL; f.group.visible = true; f.pos.copy(P); f.group.position.copy(P); f.scale = .0001; f.group.scale.setScalar(.0001); f.spawnAt = U.uTime.value - G.t0; f.boost = 2.4; const mates = G.things.filter(q => q.kind === 'fish' && q.alive && !q.locked && q !== f && q.scale > .5 && q.pos.distanceTo(P) > 1.5); const m = mates.length ? pick(mates) : null; f.wp = m ? m.pos.clone().add(new THREE.Vector3(rand(-.5, .5), rand(-.3, .3), rand(-.5, .5))) : randomPoint(f); f.wp.y = clamp(f.wp.y, FLOOR_Y + .6, WATER_Y - .5); f.wpT = 6; f.dir.subVectors(f.wp, P).normalize(); }
@@ -1691,14 +1772,17 @@ function feedUpdate(dt) {
   });
   feed.mesh.instanceMatrix.needsUpdate = true;
   if (live) feed.c.set(sx / live, WATER_Y - .5, sz / live); else if (left) feed.c.set(feed.hx, WATER_Y - .5, feed.hz);
-  if ((!live && !left) || feed.t > FEED_MAX) { feed.on = false; feed.mesh.visible = false; feed.hand.visible = false; G.nextFeed = U.uTime.value - G.t0 + rand(...G.cfg.feedGap); for (const o of G.things) if (o.kind === 'fish') o.wpT = 0; }
+  if ((!live && !left) || feed.t > FEED_MAX) { feed.on = false; feed.mesh.visible = false; feed.hand.visible = false; evCool(); G.nextFeed = U.uTime.value - G.t0 + rand(...G.cfg.feedGap); for (const o of G.things) if (o.kind === 'fish') o.wpT = 0; }
 }
 
 /* ---- startle: from level 10 a rock now and then plops into the tank and the whole school bolts - fast chaos is an event, not the normal state ---- */
 // only one big event at a time: random event (pearl, conga...), feeding, falling rock, swarm, tube wave, tutorial
-function eventsIdle() { return !EVT.cur && !feed.on && !rock && !swarm.on && tube.state !== 'rumble' && tube.state !== 'emit' && tube.state !== 'out' && !introOn && !guide.on; }
+// after ANY event (random event, feeding, the falling rock, the swarm) ends, nothing else starts for 8-10 s
+function evCool() { if (G) G.evFree = U.uTime.value - G.t0 + rand(8, 10); }
+const evFreeNow = () => U.uTime.value - G.t0 >= (G.evFree || 0);
+function eventsIdle() { return evFreeNow() && !EVT.cur && !feed.on && !rock && !swarm.on && tube.state !== 'rumble' && tube.state !== 'emit' && tube.state !== 'out' && !introOn && !guide.on; }
 let rock = null;
-function rockClear() { if (rock) { fishRoot.remove(rock); rock.geometry.dispose(); rock.material.dispose(); rock = null; } }
+function rockClear() { if (rock) { evCool(); fishRoot.remove(rock); rock.geometry.dispose(); rock.material.dispose(); rock = null; } }
 function startleUpdate(dt) {
   if (!G || G.status !== 'play' || !G.cfg.startle) return;
   if (!rock && U.uTime.value - G.t0 > G.nextStartle && eventsIdle()) {
@@ -1745,7 +1829,7 @@ function evStart(kind) {
   EVT.cur = { kind, m, t: 0, d, st, bt: 0 };
   for (const o of m) { o.evOn = kind !== 'drop'; o.evTight = kind === 'squabble' || kind === 'waltz' || kind === 'conga'; } return true;
 }
-function evEnd() { const e = EVT.cur; if (!e) return; for (const o of e.m) { o.evOn = false; o.evTight = false; o.evPin = null; o.wpT = 0; } evItemClear(); EVT.cur = null; G.nextEv = U.uTime.value - G.t0 + rand(...G.cfg.evGap); }
+function evEnd() { const e = EVT.cur; if (!e) return; for (const o of e.m) { o.evOn = false; o.evTight = false; o.evPin = null; o.wpT = 0; } evItemClear(); EVT.cur = null; G.nextEv = U.uTime.value - G.t0 + rand(...G.cfg.evGap); evCool(); }
 function dropUpdate(e, dt) {   // something is thrown in: the school bolts away, drifts back to look at it, the pearl floats up and a few fish head-butt it back and forth, then it pops and they scatter
   const st = e.st, me = evItem; e.m = e.m.filter(evOk); if (!me) { evEnd(); return; }
   if (st.ph === 0) { st.vy -= 13 * dt; me.position.y += st.vy * dt; me.rotation.y += dt * 4;
@@ -1781,7 +1865,7 @@ function dropUpdate(e, dt) {   // something is thrown in: the school bolts away,
 function evUpdate(dt) {
   if (!G || G.status !== 'play' || dt <= 0) return; const now = U.uTime.value - G.t0, e = EVT.cur;
   if (!e) {
-    if (G.cfg.evKinds.length && now > G.nextEv && tube.state !== 'rumble' && tube.state !== 'emit' && tube.state !== 'out' && !swarm.on && !feed.on && !rock && !introOn && !guide.on) { const pool = G.cfg.evKinds.filter(k => k !== G.lastEv && (k !== 'drop' || now - (G.lastDrop === undefined ? -1e9 : G.lastDrop) > 80)), k = pick(pool.length ? pool : G.cfg.evKinds); if (evStart(k)) { G.lastEv = k; if (k === 'drop') G.lastDrop = now; } else G.nextEv = now + 2; } return; }   // the pearl game is long, so at most once every ~80 s, and never the same event twice in a row
+    if (G.cfg.evKinds.length && now > G.nextEv && evFreeNow() && tube.state !== 'rumble' && tube.state !== 'emit' && tube.state !== 'out' && !swarm.on && !feed.on && !rock && !introOn && !guide.on) { const pool = G.cfg.evKinds.filter(k => k !== G.lastEv && (k !== 'drop' || now - (G.lastDrop === undefined ? -1e9 : G.lastDrop) > 80)), k = pick(pool.length ? pool : G.cfg.evKinds); if (evStart(k)) { G.lastEv = k; if (k === 'drop') G.lastDrop = now; } else G.nextEv = now + 2; } return; }   // the pearl game is long, so at most once every ~80 s, and never the same event twice in a row
   e.t += dt; if (e.kind === 'drop') { dropUpdate(e, dt); return; }
   e.m = e.m.filter(o => { if (!o.evOn || !evOk(o) || o.boost > 2.6) { o.evOn = false; o.evTight = false; o.evPin = null; o.wpT = 0; return false; } return true; });
   if (e.t > e.d || e.m.length < 2) { evEnd(); return; }
@@ -1860,10 +1944,10 @@ function swarmMat(art) {   // grey, lit; the tail sways in the vertex shader, ea
   return m;
 }
 function swarmStart() {
-  if (!SWARM.geo) return; swarmClear(); const L = G.level, N = 500, D = Math.min(26, 18 + (L - 9) * 1.3);
+  if (!SWARM.geo) return; swarmClear(); const N = 500, D = 18;   // fixed: 500 fish, each out for 18 s
   const small = []; for (let i = 0; i < BASE_N; i++) if (!((SPECIES[i].len || 0) >= .8) && FISHART[SPECIES[i].id]) small.push(i); const types = shuffle(small).slice(0, 2);
   const house = makeSwarmHouse(Math.atan2(cam.position.z, cam.position.x) + (Math.random() < .5 ? -1 : 1) * rand(.75, .95)), H = house.userData.mouth.clone();   // every school comes out of its own cave
-  Object.assign(swarm, { on: true, t: 0, house, D, H, th0: Math.atan2(H.z, H.x), sgn: Math.random() < .5 ? 1 : -1, w: .75 + (L - 9) * .03, ph: [rand(0, 6.28), rand(0, 6.28), rand(0, 6.28)], N, spread: 3 });
+  Object.assign(swarm, { on: true, t: 0, house, D, H, th0: Math.atan2(H.z, H.x), sgn: Math.random() < .5 ? 1 : -1, w: .9, ph: [rand(0, 6.28), rand(0, 6.28), rand(0, 6.28)], N, spread: 3 });
   const live = G.things.filter(o => o.kind === 'fish' && o.alive && !o.big), needL = live.filter(o => G.need && G.need.has(o.type)), pickAnchor = () => (needL.length && Math.random() < .55 ? pick(needL) : pick(live));   // half of the swarm clings to the fish you are looking for
   types.forEach((ty, k) => { const art = FISHART[SPECIES[ty].id], n = k ? N >> 1 : N - (N >> 1);
     const mat = swarmMat(art);
@@ -1882,10 +1966,10 @@ function swarmPath(u, out) {   // the leader's trajectory u seconds after leavin
 function swarmFit(v) { const r = Math.hypot(v.x, v.z), lim = R - .3; if (r > lim) { v.x *= lim / r; v.z *= lim / r; } v.y = clamp(v.y, FLOOR_Y + .25, WATER_Y - .25); }   // keep every swarm fish inside the glass and under the surface
 function swarmUpdate(dt) {
   if (!G || G.status !== 'play') return; const now = U.uTime.value - G.t0;
-  if (!swarm.on) { if (G.cfg.swarm && tube.state !== 'rumble' && tube.state !== 'emit' && now > G.nextSwarm && !EVT.cur && !feed.on && !rock && !introOn && !guide.on && !camTutBusy()) swarmStart(); return; }
+  if (!swarm.on) { if (G.cfg.swarm && tube.state !== 'rumble' && tube.state !== 'emit' && now > G.nextSwarm && evFreeNow() && !EVT.cur && !feed.on && !rock && !introOn && !guide.on && !camTutBusy()) swarmStart(); return; }
   swarm.t += dt; const S = swarm, T = S.t, tot = S.D + S.spread + .5;
   if (S.house) { const ci = clamp(T / .5, 0, 1), co = clamp((tot - T) / .6, 0, 1), k = Math.min(ci, co); S.house.scale.setScalar(Math.max(.001, 1.3 * k * k * (3 - 2 * k))); }   // the cave pops up before the school, and sinks away after it
-  if (T > tot) { swarmClear(); G.nextSwarm = now + rand(...G.cfg.swarmGap); return; }
+  if (T > tot) { swarmClear(); evCool(); G.nextSwarm = now + rand(...G.cfg.swarmGap); return; }
   for (const f of S.fish) {
     const u = T - f.d; if (u <= 0 || u >= S.D) { _swS.setScalar(0); _swM.compose(_sw.set(0, -9, 0), _swQ.identity(), _swS); f.m.setMatrixAt(f.i, _swM); continue; }
     swarmPath(u, _sw); swarmPath(u + .06, _sw2); const k = 1 + .3 * Math.sin(1.3 * u + f.ph), vis = Math.min(1, u / .5, (S.D - u) / .5);
@@ -2777,9 +2861,10 @@ function updateShocks(dt) {
 function nudgeBig(o) {
   if (!o.alive || G.status !== 'play') return;
   o.wiggle = 1; o.boost = Math.max(o.boost, .9); const P = o.pos.clone(); burstFx.emit(P, 0x9fe8ff, 18, 1.4); burstFx.emit(P, 0xffffff, 8, .9);
-  scatter(P, 1.35, true); Snd.play('ui'); kick(.8); if (navigator.vibrate) try { navigator.vibrate(14); } catch (e) { }
+  scatter(P, 1.35, true); Snd.play('ui'); kick(.8); vib(14);
 }
 function pickThing(o, booster = false) {   // booster: the Clear Tank booster catches the fish for the player (no combo, no tap sound)
+  if (guide.on && !booster && o.kind === 'fish' && --guide.left <= 0) { guide.on = false; save.g1 = 1; persist(); }   // the "Tap a fish" guide ends after the first two taps on a fish
   if (o.kind === 'clam') { tapClam(o); return; } if (o.locked) return;
   if (o.big) { nudgeBig(o); return; }
   if (!G.cfg.backup && !(o.kind === 'fish' && G.targets.some(t => t && t.type === o.type && t.count < perOf(t.type) && !t.done))) {   // level 1 has no Backup: a wrong tap only sends the fish darting off
@@ -2796,7 +2881,7 @@ function pickThing(o, booster = false) {   // booster: the Clear Tank booster ca
   scatter(wp.clone(), o.kind === 'obstacle' ? 1.2 : .9, true);
   let ti = -1;
   if (o.kind === 'fish') ti = G.targets.findIndex(t => t && t.type === o.type && t.count < perOf(t.type) && !t.done);
-  if (ti >= 0) { if (!booster) { Snd.play('ftap'); G.lastTapP = wp.clone(); comboHit(from); } if (guide.on && --guide.left <= 0) { guide.on = false; save.g1 = 1; persist(); } giveToTarget(ti, from, FD, fsz); return; }
+  if (ti >= 0) { if (!booster) { Snd.play('ftap'); G.lastTapP = wp.clone(); comboHit(from); } giveToTarget(ti, from, FD, fsz); return; }
   G.combo = 0; G.mistakes++; Snd.play(o.kind === 'obstacle' ? 'junk' : 'ftap'); 
   // wrong -> backup
   const item = { id: o.id, type: o.type, junk: o.kind === 'obstacle', landed: false, res: null }; let slotIdx;
@@ -2806,13 +2891,13 @@ function pickThing(o, booster = false) {   // booster: the Clear Tank booster ca
   } else { G.backup.push(item); slotIdx = G.backup.length - 1; }
   renderBackup();
   const slotEl = $('backup').querySelectorAll('.slot')[slotIdx]; const gi = gid;
-  if (navigator.vibrate) try { navigator.vibrate(item.junk ? [40, 30, 40] : 25); } catch (e) { }
+  vib(item.junk ? [40, 30, 40] : 25);
   const sp = makeSprite(o.kind === 'fish' ? 'fish' : 'obs', o.id, o.type);
   flySprite(sp, from, slotEl, { size0: fsz, dur: 760, delay: FD, mode: 'backup', onland: () => {
     if (gi !== gid) return; Snd.play('tobackup'); item.res = sp; item.landed = true; renderBackup(); G.targets.forEach((t, ti) => { if (t) pullFromBackup(ti); });   // a target may already be waiting for this fish
     const b = $('backup'); b.classList.remove('danger'); void b.offsetWidth; b.classList.add('danger');
     if (G.backup.length >= BACKUP_MAX && G.status === 'play' && G.backup.every(it => it.landed)) {   // (when the last fish has landed: fast taps can fill the strip while earlier fish are still flying)
-      if (!G.playOnUsed) { G.status = 'playon'; setTimeout(() => { if (gi === gid && G.status === 'playon') { paused = true; showOnly('ovPlayOn'); } }, 500); }   // once per level: offer Play On before the tank breaks
+      if (!G.playOnUsed) { G.status = 'playon'; setTimeout(() => { if (gi === gid && G.status === 'playon') { paused = true; setPoFish(); showOnly('ovPlayOn'); } }, 500); }   // once per level: offer Play On before the tank breaks
       else loseNow();
     }
   } });
@@ -2828,7 +2913,8 @@ function saveWin() {   // stars and the next level are saved when the level is w
   const m = G.mistakes, st = m <= 3 ? 3 : m <= 6 ? 2 : 1;
   save.stars[G.level] = Math.max(save.stars[G.level] || 0, st); save.unlocked = Math.max(save.unlocked, Math.min(MAX_LV, G.level + 1)); persist();
 }
-function showLose() { showOnly('ovLose'); Snd.bgmStop(); Snd.play('lose'); }
+function setPoFish() { const ids = SPECIES.map((s, i) => i).filter(i => THUMB[SPECIES[i].id] && SPECIES[i].model3d && !SPECIES[i].hue); const k = ids.length ? ids[(Math.random() * ids.length) | 0] : -1; for (const id of ['poFish', 'loFish']) { const im = $(id); if (im) im.src = k >= 0 ? THUMB[SPECIES[k].id] : ''; } }
+function showLose() { setPoFish(); showOnly('ovLose'); Snd.bgmStop(); Snd.play('lose'); }
 let paused = false, rsTimer = null;
 let introOn = false;
 function introIcon(kind) {   // small drawn icons (no emoji)
@@ -2845,37 +2931,45 @@ function introIcon(kind) {   // small drawn icons (no emoji)
   return c.toDataURL('image/png');
 }
 const INTRO = {
-  backup: { spot: '#backup', title: 'Backup Slots', text: () => 'Wrong taps land here. 7 full = you lose!' },
-  hint: { spot: '#bHint', title: 'Hint booster', text: () => 'Shows the fish you need.' },
-  tank: { spot: '#bTank', title: 'Clear Tank booster', text: () => 'Fills one target tank for you.' },
-  clear: { spot: '#bClear', title: 'Clear Backup booster', text: () => 'Sends the Backup fish back to the tank.' },
+  backup: { spot: '#backup', title: 'Backup Slots', text: () => 'Wrong fish land here. When all 7 slots are full, you lose!' },
+  goal: { spot: '#targets', title: '', text: () => 'Fill the tanks with the fish shown above' },
+  hint: { spot: '#bHint', pic: 'ui/bf/ic_hint.png', booster: true, title: 'Hint', text: () => 'Show the fish you need' },
+  tank: { spot: '#bTank', pic: 'ui/bf/ic_net.png', booster: true, title: 'Clear Tank', text: () => 'Fill the target tank' },
+  clear: { spot: '#bClear', pic: 'ui/bf/ic_clear.png', booster: true, title: 'Clear Backup', text: () => 'Send the Backup fish back to the tank' },
   feed: { rib: 'NEW EVENT', tag: 'EVENT', ev: true, img: 'hand', title: 'Feeding Time', text: () => 'Food drops in and the fish crowd the surface. Wait for them to spread out.' },
-  swarm: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', icon: () => THUMB[SPECIES[(swarm.meshes.length ? 0 : 3)].id], title: 'Fish Swarm', text: () => 'A huge school sweeps through and hides the tank. Wait for it to pass!' },
-  squid: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', img: 'squid', title: 'Squid', text: () => "It sprays ink that hides fish. Don't tap it: it takes 3 Backup slots!" },
-  clam: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', img: 'clam', title: 'Hungry Clam', text: n => `It grabs a fish you need. Tap it once to free the fish.` } };
+  swarm: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', school: true, title: 'Fish Swarm', text: () => 'A huge school hides the tank. Wait for it to pass!' },
+  squid: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', img: 'squid', title: 'Squid', text: () => 'It sprays ink over the fish. Tapping it fills 3 Backup slots!' },
+  pump: { rib: 'NEW MECHANIC', tag: 'PIPE', icon: () => THUMB[SPECIES[0].id], title: 'Fish Pipe', text: () => 'More fish are pumped in through the pipe as you clear tanks.' },
+  clam: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', img: 'clam', title: 'Hungry Clam', text: n => 'It grabs a fish you need. Tap it to free the fish.' } };
 function showSpot(d) {   // no separate pop-up: dim the screen and light up the real UI element, with a short tip beside it
   const rs = [...document.querySelectorAll(d.spot)].map(e => e.getBoundingClientRect()), r = { left: Math.min(...rs.map(q => q.left)), top: Math.min(...rs.map(q => q.top)), right: Math.max(...rs.map(q => q.right)), bottom: Math.max(...rs.map(q => q.bottom)) }; r.width = r.right - r.left; r.height = r.bottom - r.top; const pad = 6, box = $('spotBox'), tip = $('spotTip');
   box.style.left = (r.left - pad) + 'px'; box.style.top = (r.top - pad) + 'px'; box.style.width = (r.width + pad * 2) + 'px'; box.style.height = (r.height + pad * 2) + 'px';
   box.style.borderRadius = Math.min(26, r.height / 2 + pad) + 'px';
-  $('spotT').textContent = d.title; $('spotP').textContent = d.text(); $('spotOv').classList.add('show');
+  $('spotT').textContent = d.title; $('spotP').textContent = d.text(); $('spotOv').dataset.kind = d.booster ? 'booster' : 'board'; $('spotOv').dataset.sel = d.spot; $('spotPic').src = d.pic ? new URL(d.pic, document.baseURI).href : ''; $('spotOv').classList.add('show');
   const A = $('app').getBoundingClientRect(), tw = Math.min(270, A.width - 20); tip.style.width = tw + 'px'; tip.style.left = Math.max(A.left + 10, Math.min(A.right - tw - 10, r.left + r.width / 2 - tw / 2)) + 'px';   // the tip stays inside the game column
   tip.style.top = (r.bottom + pad + 16) + 'px'; tip.classList.toggle('arrR', r.left + r.width / 2 > A.left + A.width * .8);
   const cx = r.left + r.width / 2 - parseFloat(tip.style.left); tip.style.setProperty('--ax', Math.max(18, Math.min(tw - 18, cx)) + 'px');
 }
+function makeSchool(done) {   // a school of fish all swimming the same way, drawn from the fish thumbnails
+  const ids = SPECIES.map((s, i) => i).filter(i => THUMB[SPECIES[i].id] && SPECIES[i].model3d && !SPECIES[i].hue).slice(0, 3), srcs = ids.map(i => THUMB[SPECIES[i].id]), imgs = [], cv = document.createElement('canvas'); cv.width = 720; cv.height = 440;
+  const spots = [[100, 30, 95, 0], [100, 330, 95, 1], [190, 110, 110, 2], [190, 240, 110, 0], [300, 20, 100, 1], [300, 180, 120, 2], [300, 340, 100, 0], [420, 100, 125, 1], [420, 250, 125, 2], [520, 175, 150, 0]];
+  let n = 0; srcs.forEach((u, k) => { const im = new Image(); im.onload = () => { if (++n === srcs.length) { const g = cv.getContext('2d'); for (const [x, y, w, k2] of spots) { const f = imgs[k2 % imgs.length]; g.drawImage(f, x, y, w, w * f.height / f.width); } const px = g.getImageData(0, 0, cv.width, cv.height), d = px.data; for (let i = 0; i < d.length; i += 4) { const l = (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11) * .5 + 20; d[i] = l; d[i + 1] = l; d[i + 2] = l + 6; } g.putImageData(px, 0, 0); done(cv.toDataURL('image/png')); } }; im.src = u; imgs[k] = im; });
+}
 function showIntro(k) {
   const d = INTRO[k];
-  if (d.spot) { introOn = true; paused = true; hideOverlays(); showSpot(d); Snd.play('ui'); return; } $('introRib').textContent = d.rib; $('introTag').textContent = d.tag; $('introTag').classList.toggle('ev', !!d.ev); $('introTitle').textContent = d.title; $('introTxt').textContent = d.text(G.cfg.clamTaps); $('introImg').src = d.icon ? d.icon() : (THUMB[d.img] || '');
+  if (d.spot) { introOn = true; paused = true; hideOverlays(); showSpot(d); Snd.play('ui'); return; } $('introRib').textContent = d.rib; $('introTag').textContent = d.tag; $('introTag').classList.toggle('ev', !!d.ev); $('introTitle').textContent = d.title; $('introTxt').textContent = d.text(G.cfg.clamTaps); $('introImg').src = d.pic ? new URL(d.pic, document.baseURI).href : d.icon ? d.icon() : (THUMB[d.img + '_big'] || THUMB[d.img] || ''); if (d.school) { $('introImg').src = ''; makeSchool(u => { $('introImg').src = u; }); } $('ovIntro').dataset.kind = d.booster ? 'booster' : 'feature'; $('introLv').textContent = G ? 'Level ' + G.level : '';
   introOn = true; paused = true; showOnly('ovIntro'); Snd.play('ui');
 }
-$('bIntro').onclick = () => { introOn = false; paused = false; hideOverlays(); };
-$('spotOv').onclick = () => { introOn = false; paused = false; hideOverlays(); };
+$('bIntro').onclick = () => { introOn = false; paused = false; hideOverlays(); startLvIntro(); };
+$('spotOv').onclick = () => { introOn = false; paused = false; hideOverlays(); startLvIntro(); };
 function openPause() { if (!G || G.status !== 'play' || paused || introOn) return; paused = true; showOnly('ovPause'); }
 function closePause() { paused = false; hideOverlays(); }
 $('pauseBtn').onclick = openPause;
-$('bResume').onclick = closePause;
-for (const id of ['bReset']) { const b = $(id); let armed = 0; b.onclick = () => {   // two taps: the first asks, the second wipes saved progress + intro flags and reloads
-  if (!armed) { armed = 1; b.textContent = 'Tap again to erase all'; setTimeout(() => { armed = 0; b.textContent = '↺ Reset progress'; }, 3000); return; }
-  resetting = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) { } location.reload(); }; }
+$('bResume').onclick = closePause; $('bXPause').onclick = closePause;
+$('bSnd').onclick = () => { Snd.init(); Snd.setMuted(!save.muted); syncSound(); if (!save.muted) Snd.play('ui'); };
+$('bMus').onclick = () => { Snd.init(); Snd.setMusic(!!save.noMusic); if (!save.noMusic) Snd.bgmStart(); };
+$('bVib').onclick = () => { save.noVib = !save.noVib; persist(); if (!save.noVib) vib(30); };
+$('bReset').onclick = () => { resetting = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) { } location.reload(); };   // developer tool: one tap wipes the saved progress and the first-time pop-up flags
 $('bRestart1').onclick = () => {
   const b = $('bRestart1');
   if (!rsTimer) { b.textContent = 'Tap again to restart'; rsTimer = setTimeout(() => { rsTimer = null; b.textContent = 'Restart level'; }, 2500); return; }
@@ -3009,11 +3103,11 @@ function camTutUpdate() {
 }
 function guideUpdate() {
   camTutUpdate();
-  const bar = $('goalMsg'); if (bar) { const on = !!G && G.level === 1 && G.status === 'play' && !paused && !introOn; bar.classList.toggle('show', on); if (on) { const r = $('backup').getBoundingClientRect(); bar.style.top = (r.top + r.height / 2 - 22) + 'px'; } }
+  const bar = $('goalMsg'); if (bar) { const on = !!G && G.level === 1 && G.status === 'play' && !paused && !introOn && guide.on; bar.classList.toggle('show', on); if (on) { const r = $('backup').getBoundingClientRect(); bar.style.top = (r.top + r.height / 2 - 22) + 'px'; } }
   const h = $('guideHand'); if (!h) return;
   if (!guide.on || !G || G.status !== 'play' || paused || tutI >= 0 || introOn) { h.classList.remove('show'); return; }
   if (!guide.tgt || !guide.tgt.alive || guide.tgt.locked || !G.need.has(guide.tgt.type)) {
-    let best = null, bd = 1e9; for (const o of G.things) { if (o.kind !== 'fish' || !o.alive || o.locked || !G.need.has(o.type)) continue; const d = o.pos.distanceTo(cam.position); if (d < bd) { bd = d; best = o; } } guide.tgt = best;
+    let best = null, bd = 1e9; for (const pass of [0, 1]) { for (const o of G.things) { if (o.kind !== 'fish' || !o.alive || o.locked || !G.need.has(o.type)) continue; if (pass === 0 && projectToClient(o.group.getWorldPosition(_gp)).y > innerHeight * .62) continue; const d = o.pos.distanceTo(cam.position); if (d < bd) { bd = d; best = o; } } if (best) break; } guide.tgt = best;
   }
   const o = guide.tgt; if (!o) { h.classList.remove('show'); return; }
   const p = projectToClient(o.group.getWorldPosition(_gp)); h.style.left = (p.x - 18) + 'px'; h.style.top = (p.y + 8) + 'px'; h.classList.add('show'); o.hvT = 1;
@@ -3210,7 +3304,7 @@ function frame(now) {
 }
 
 /* ============================== boot ============================== */
-loadModels().then(loadUnity).then(prepModelArt).then(loadTankArt).then(() => { fitDecor(); makeThumbs(); document.querySelectorAll('.fishy[data-ic=fish]').forEach(e => { e.innerHTML = `<img src="${THUMB[SPECIES[0].id]}" style="height:54px">`; }); resize(); newLevel(Math.min(save.last || 1, save.unlocked)); requestAnimationFrame(frame); if (PLAYTEST) parent.postMessage({ type: 'ff-ready' }, '*'); });
+loadModels().then(loadUnity).then(prepModelArt).then(loadTripo).then(loadTankArt).then(() => { fitDecor(); makeThumbs(); document.querySelectorAll('.fishy[data-ic=fish]').forEach(e => { e.innerHTML = `<img src="${THUMB[SPECIES[0].id]}" style="height:54px">`; }); resize(); newLevel(Math.min(save.last || 1, save.unlocked)); requestAnimationFrame(frame); if (PLAYTEST) parent.postMessage({ type: 'ff-ready' }, '*'); });
 
 // level editor Play button: the editor posts { type: 'ff-play', level, seed }
 function hashSeed(v) { let h = 2166136261; for (const ch of String(v)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -3222,6 +3316,6 @@ if (PLAYTEST) addEventListener('message', e => {
   if (useSeed) { Math.random = seeded(hashSeed(d.seed)); newLevel(lv); }
   Math.random = useSeed ? seeded(hashSeed(d.seed)) : ORIG_RANDOM; newLevel(lv);
 });
-window.__ff = { buildModelFish, THUMB, SPECIES, newLevel, feed, feedStart, themeG, tankG: tank, MODEL3D, UNITY, celebrate, flySprite, makeSprite, completeTarget, giveToTarget, ov, tankFx, ovFx, onTap, renderer, scene, ringFx, sprayInk, themeBoxes, colPush, tube, tubeStart, applyCam, projectToClient, pullFromBackup, swarm, swarmStart, swarmUpdate, assignTarget, get item() { return evItem; }, nowT: () => U.uTime.value - G.t0, EVT, evStart, evEnd, comboHit, guide, startleUpdate, spawnThing, LENS, lensToContent, lensToScreen, lensClientToContent, lensContentToClient, pickAtDbg: (x, y) => pickAt(x, y, 1e9), pickAtRay: (x, y) => { const r = canvas.getBoundingClientRect(); raycaster.setFromCamera(new THREE.Vector2(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1), cam); return pickAtRay(); },
+window.__ff = { THREE, FBXLoader, modelVariant, makeModelThumb, buildModelFish, THUMB, SPECIES, newLevel, feed, feedStart, themeG, tankG: tank, MODEL3D, UNITY, celebrate, flySprite, makeSprite, completeTarget, giveToTarget, ov, tankFx, ovFx, onTap, renderer, scene, ringFx, sprayInk, themeBoxes, colPush, tube, tubeStart, applyCam, projectToClient, pullFromBackup, swarm, swarmStart, swarmUpdate, assignTarget, get item() { return evItem; }, nowT: () => U.uTime.value - G.t0, EVT, evStart, evEnd, comboHit, guide, startleUpdate, spawnThing, LENS, lensToContent, lensToScreen, lensClientToContent, lensContentToClient, pickAtDbg: (x, y) => pickAt(x, y, 1e9), pickAtRay: (x, y) => { const r = canvas.getBoundingClientRect(); raycaster.setFromCamera(new THREE.Vector2(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1), cam); return pickAtRay(); },
   pickStats: () => { pickRender(); const r = canvas.getBoundingClientRect(), out = {}; for (let y = 0; y < PICK.h; y++) for (let x = 0; x < PICK.w; x++) { const i = (y * PICK.w + x) * 4, id = PICK.buf[i] + PICK.buf[i + 1] * 256; if (!id) continue; const o = out[id] || (out[id] = { n: 0, x: 0, y: 0 }); o.n++; o.x += x; o.y += y; }
     return Object.entries(out).map(([id, o]) => ({ kind: PICK.map.get(+id)?.kind, id: +id, n: o.n, cx: r.left + o.x / o.n / PICK.w * r.width, cy: r.top + (PICK.h - 1 - o.y / o.n) / PICK.h * r.height })); }, PICKMAP: PICK.map, glassWater, showLose, tapClam, feed, inks, FISHART, cam, renderer, ov, surfaceSplash, waterBurst, miniSplash, boxEls: () => boxEls, get G() { return G; }, pickThing, orbit, newLevel, SPECIES, THUMB, scatter, onTap, missTap, hint, save, openLevels, showTut };

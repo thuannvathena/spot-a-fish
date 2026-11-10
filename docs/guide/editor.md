@@ -14,7 +14,7 @@ Source: `game/editor/` (`main.js`, `template.html`, `build.mjs`). `npm run build
 - **Collections** (Organiser tab) order levels. **Export levels.json** downloads the collection as one file; put it at `game/src/levels.json` and rebuild to ship those levels in the game. The published game does not read the editor's folder by itself.
 - **Reference level (1-15)** (`refLevel`): a few internal rules are not level fields yet (which random events appear, how many big fish swim around, how far look-alike colours are shifted). The level borrows them from the built-in level with that number. Auto-fill sets it from Difficulty (Easy 3, Medium 8, Hard 13).
 - The preview is a 3D sketch (cylinder tank, dots for fish) and does not show real fish positions.
-- Known limits of this version: the game uses only the first bounty tank in the list; the logo is a text placeholder until the official Athena asset is added; no simulation (level C).
+- Known limits of this version: a level can have at most 2 bounty tanks (one of each kind); the logo is a text placeholder until the official Athena asset is added; no simulation (level C).
 
 ## 1. What a level is
 
@@ -23,7 +23,7 @@ Spot A Fish levels are **parameter sets, not hand-placed layouts**. Fish positio
 | Group | Field (file key) | Label in editor | Notes |
 |---|---|---|---|
 | Goal | `goal` | Target tanks | Number of target tanks |
-| Goal | `per` | **Fish per tank** | 1, 2 or 3; same for every normal tank |
+| Goal | `per` | **Fish per tank** | 1, 2 or 3; same for every normal tank. A level file can instead list `tanks`, the fish of each tank (e.g. `[1,1,2,3]`); then `goal` is its length |
 | Goal | `bounty[]` | Bounty tanks | List of ×1 tanks, each `tiny`, `camo` or `fast`. They appear after the first 2 tanks |
 | Fish | `species` | Species | Default `2 × goal` (target species + decoy species) |
 | Fish | `decoyFish` | Decoy fish | Extra non-target fish |

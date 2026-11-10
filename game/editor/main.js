@@ -12,8 +12,8 @@ const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === 
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { } };
 const getP = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
 const setP = (o, p, v) => { const ks = p.split('.'); let a = o; ks.slice(0, -1).forEach(k => { if (a[k] == null || typeof a[k] !== 'object') a[k] = /^\d+$/.test(ks[ks.indexOf(k) + 1]) ? [] : {}; a = a[k]; }); a[ks[ks.length - 1]] = v; };
-const DIFF = ['Easy', 'Medium', 'Hard'], STATUS = ['Draft', 'Ready', 'Retired'], CATS = ['Tutorial', 'Normal', 'Bounty', 'Boss'], BOUNTY = ['tiny', 'camo', 'fast'];
-const REF_BY_DIFF = { Easy: 3, Medium: 8, Hard: 13 };
+const DIFF = ['Easy', 'Medium', 'Hard', 'Very Hard'], STATUS = ['Draft', 'Ready', 'Retired'], CATS = ['Tutorial', 'Normal', 'Bounty', 'Boss'], BOUNTY = ['tiny', 'camo', 'fast'];
+const REF_BY_DIFF = { Easy: 3, Medium: 8, Hard: 13, 'Very Hard': 13 };
 
 /* ---------- storage ---------- */
 const sortLv = a => a.slice().sort((x, y) => String(x.id).localeCompare(String(y.id), undefined, { numeric: true }));
@@ -63,8 +63,9 @@ function nextId() { let n = 1; while (S.levels.some(l => l.id === 'L' + String(n
 
 /* ---------- validation and stats ---------- */
 function stats(lv) {
-  const goal = lv.goal | 0, per = lv.per | 0, hasB = Array.isArray(lv.bounty) && lv.bounty.length > 0, tube = !!(lv.tube && lv.tube.enabled);
-  const tf = Math.max(0, goal * per - (hasB ? per - 1 : 0) + (hasB && lv.bounty[0] === 'camo' ? 8 : 0)), decoy = lv.decoyFish | 0;
+  const goal = lv.goal | 0, per = lv.per | 0, bn = Array.isArray(lv.bounty) ? lv.bounty.length : 0, tube = !!(lv.tube && lv.tube.enabled), hasT = Array.isArray(lv.tanks) && lv.tanks.length > 0;
+  const base = hasT ? lv.tanks.reduce((a, b) => a + b, 0) : goal * per - bn * (per - 1);   // a level file may list the fish of every tank (a bounty tank is a tank with 1 fish)
+  const tf = Math.max(0, base + (Array.isArray(lv.bounty) ? lv.bounty.filter(b => b === 'camo').length * 8 : 0)), decoy = lv.decoyFish | 0;
   const extraT = lv.tube && typeof lv.tube.extraFish === 'number' ? lv.tube.extraFish : null;
   const extra = tube ? (extraT != null ? Math.max(0, decoy - extraT) : Math.max(0, Math.min(decoy, TUBE_INIT - tf))) : Math.max(0, Math.min(decoy, FISH_CAP - tf));
   return { tf, decoy, start: tf + extra, pumped: tube ? Math.max(0, decoy - extra) : 0, tube, total: tf + decoy };
@@ -74,17 +75,19 @@ function checks(lv) {
   if (!lv.id) w.push('Id is missing'); if (!lv.name) w.push('Name is missing');
   if (lv.id && S.levels.filter(l => l.id === lv.id).length > 1) w.push('Duplicate id: ' + lv.id);
   if (!num(lv.goal) || lv.goal < 1) w.push('Target tanks must be at least 1');
-  if (![1, 2, 3].includes(lv.per)) w.push('Fish per tank must be 1, 2 or 3');
+  if (Array.isArray(lv.tanks) && lv.tanks.length) { if (lv.tanks.length !== lv.goal) w.push(`Tank sizes list has ${lv.tanks.length} tanks but the level has ${lv.goal}`); if (lv.tanks.some(n => ![1, 2, 3].includes(n))) w.push('Every tank holds 1, 2 or 3 fish'); }
+  else if (![1, 2, 3].includes(lv.per)) w.push('Fish per tank must be 1, 2 or 3');
   if (!s.tube && s.total > FISH_CAP) w.push(`Total fish ${s.total} is above the limit ${FISH_CAP}; extra decoys are dropped in game`);
   if (s.tube && s.start > TUBE_INIT) w.push(`Start fish ${s.start} is above the tube-level limit ${TUBE_INIT}`);
-  if (num(lv.species) && lv.species < lv.goal * 2) w.push(`Species ${lv.species} is less than 2 x target tanks (${lv.goal * 2})`);
+  if (num(lv.species) && lv.species < lv.goal + 2) w.push(`Species ${lv.species} is less than target tanks + 2 (${lv.goal + 2})`);
   if (num(lv.species) && lv.species > SPECIES_MAX) w.push(`Species ${lv.species} is more than the ${SPECIES_MAX} available`);
   if (lv.goal > CATCHABLE) w.push(`Target tanks ${lv.goal} is more than the ${CATCHABLE} catchable species`);
   const waves = (lv.tube && lv.tube.waves) || [];
   waves.forEach((v, i) => { if (v.afterTanks > lv.goal) w.push(`Wave ${i + 1}: after ${v.afterTanks} tanks, but the level has only ${lv.goal}`); });
   if (waves.length && !s.tube) w.push('Waves are set but the tube is off');
   if ((lv.bounty || []).length && lv.goal < 2) w.push('Bounty tank needs at least 2 normal tanks first');
-  if ((lv.bounty || []).length > 1) w.push('More than one bounty tank: the game uses only the first one for now');
+  if ((lv.bounty || []).length > 2) w.push('More than 2 bounty tanks: the game uses only the first 2');
+  if (new Set(lv.bounty || []).size !== (lv.bounty || []).length) w.push('Each bounty kind can appear only once in a level');
   return w;
 }
 
@@ -149,7 +152,7 @@ function renderCenter() {
     <label class="f"><small>Seed for Play (optional)</small><input type="text" id="seed" placeholder="empty = random" value="${esc(S.seed)}"></label>
     <div style="display:flex;align-items:center"><button class="pr" id="bAuto" title="Fills species, decoys, obstacles and tube from the built-in rules (placeholder rule)">Auto-fill</button></div></div></div>
    <div class="sec"><h3 class="t">Fish and tanks</h3><div class="grid">
-    ${num('Species', 'species', lv, { min: 1, max: 40 })}${num('Decoy fish', 'decoyFish', lv, { min: 0, max: 200 })}${sel('Look-alike level', 'look', lv, [[0, '0 none'], [1, '1 some'], [2, '2 close']], { t: 'num' })}
+    ${num('Species', 'species', lv, { min: 1, max: 40 })}${num('Decoy fish', 'decoyFish', lv, { min: 0, max: 200 })}${sel('Look-alike level', 'look', lv, [[0, '0 none'], [1, '1 some'], [2, '2 close'], [3, '3 very close']], { t: 'num' })}
     ${num('Fish size', 'sizeK', lv, { min: 0.5, max: 3, step: 0.05 })}${num('Fish speed', 'speedK', lv, { min: 0.3, max: 3, step: 0.05 })}
     <div class="f"><small>Bounty tanks (x1)</small>${(lv.bounty || []).map((b, i) => `<span>${esc(b)} <a href="#" data-rmb="${i}" class="mu">remove</a></span>`).join(', ') || '<span class="mu">none</span>'}
      <select id="addB"><option value="">+ add bounty</option>${BOUNTY.map(b => `<option>${b}</option>`).join('')}</select></div></div></div>
@@ -287,6 +290,7 @@ root.addEventListener('change', e => {
     if (k === 'id' && v !== lv.id) { v = S.levels.some(l => l !== lv && l.id === v) ? freeId(v) : v; S.renameFrom = lv.id; }
     if (v === null && k.startsWith('tube.extraFish')) delete lv.tube.extraFish; else if (v === null && k === 'theme') delete lv.theme; else setP(lv, k, v);
     if (k === 'id') S.cur = lv.id;
+    if (k === 'goal' || k === 'per') delete lv.tanks;   // the list of tank sizes no longer matches: fall back to goal x per
   }, k === 'id' || k === 'difficulty' || k === 'goal' || k === 'per' || k.startsWith('tube.waves') && false);
   if (k === 'id' && oldId !== S.cur && S.renameFrom) { const from = S.renameFrom; S.renameFrom = null; S.store.deleteLevel(from).then(() => S.store.saveLevel(level())).then(() => { S.cols.forEach(c => { c.levels = c.levels.map(x => x === from ? S.cur : x); S.store.saveCollection(c); }); S.dirty = false; renderAll(); status(`Renamed ${from} to ${S.cur}`); }); }
 });

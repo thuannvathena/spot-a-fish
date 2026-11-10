@@ -28,3 +28,9 @@ fish-packs/
 fish-assets/
 fish-assets.zip
 New Win Anim.mov
+
+# assets from another team project (Bubble Fish): reference only, never publish; pick single files into public/ui instead
+Added Assets/Assets from Bubble Fish/
+
+# Bubble Fish pieces used as TEMPORARY placeholders for the new pop-ups: replace with newly generated art before any release
+public/ui/bf/

@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { paintBFAnim, paintGuideBF, paintSpotBF } from './bf';
 import { BR, FONT, T, Layer, R, Zones, brass, fontPx, glass, hex, hexCss, inRect, opacityOf, pearl, plate, porthole, recess, rectOf, rivet, shown, starfish } from './kit';
 
 // Painters: each one mirrors a group of hidden HTML elements (see src/ui/kit.ts) into Phaser drawings and touch zones.
@@ -149,7 +150,7 @@ export function paintTools(L: Layer, c: Ctx) {
         porthole(g, cx, cy + dy, rad, { thick: 4.5, glass: off ? 0x5a7c99 : 0x1f7cc8 });
         const p = parseFloat(el.style.getPropertyValue('--p')) || 0;
         if (p > 0.5) { g.fillStyle(0x000a1e, 0.6).slice(cx, cy + dy, rad - 5.5, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * p) / 100, false).fillPath(); }
-        ICONS[id](g, cx, cy + dy);
+        { const ks = r.w / 44; g.save(); g.translateCanvas(cx, cy + dy); g.scaleCanvas(ks, ks); ICONS[id](g, 0, 0); g.restore(); }   // the icons are drawn for a 44 px button and grow with it
         const glow = el.classList.contains('glow');
         if (glow) { const k = 0.5 + 0.5 * Math.sin(t * 6); g.lineStyle(4, T.amber, 0.6 + 0.4 * k).strokeCircle(cx, cy + dy, rad + 3 + 3 * k); }
         const cnt = el.querySelector('.cnt'), cr = rectOf(cnt, c.o);
@@ -181,6 +182,7 @@ function button(L: Layer, c: Ctx, z: Zones, key: string, el: HTMLElement) {
 }
 export function paintOverlay(L: Layer, c: Ctx) {
     const ov = document.querySelector('.overlay.show') as HTMLElement | null;
+    if (paintBFAnim(L, c, ov)) return;   // the pop-ups drawn from the painted pieces (src/ui/bf.ts), with their pop in / out
     if (!ov) return;
     c.modal = true;
     const z = c.ovZones, g = L.g;
@@ -231,7 +233,7 @@ export function paintOverlay(L: Layer, c: Ctx) {
                 if (lock) { g.fillStyle(0x8a9bb0, 1).fillRoundedRect(cx - rad, cy - rad * 0.6, rad * 2, rad * 1.5, 6); g.lineStyle(1.5, 0x5d7088, 1).strokeRoundedRect(cx - rad, cy - rad * 0.6, rad * 2, rad * 1.5, 6); g.lineStyle(3, 0x4a5d75, 1); g.beginPath(); g.arc(cx, cy - rad * 0.02, rad * 0.3, Math.PI, 0, false); g.strokePath(); g.fillStyle(0x4a5d75, 1).fillRoundedRect(cx - rad * 0.38, cy - rad * 0.02, rad * 0.76, rad * 0.62, 4); g.fillStyle(0xdbe6f2, 1).fillCircle(cx, cy + rad * 0.26, rad * 0.1); }   // a drawn padlock
                 else { pearl(g, cx, cy, rad, { glow: cur ? T.amber : undefined }); L.text(kk + 'n', cx, cy + 1, num, { size: fontPx(b, 23) * 0.9, color: hexCss(T.deep) }); }
                 if (!lock) for (let st2 = 0; st2 < 3; st2++) starfish(g, cx + (st2 - 1) * rad * 0.78, br.y + br.h - rad * 0.28, rad * 0.3, { hollow: st2 >= earned, rot: (st2 - 1) * 0.3 });
-                z.add(kk, br, { click: click(b) });
+                z.add(kk, br, { click: () => { if ((window as unknown as { __lvDrag?: boolean }).__lvDrag) return; click(b)(); } });   // a drag that scrolled the list is not a tap on a level
             }
         } else walk(e);
     });
@@ -240,34 +242,7 @@ export function paintOverlay(L: Layer, c: Ctx) {
 }
 
 /* ---------- spotlight tutorial: dim the screen, light the real control, short tip ---------- */
-export function paintSpot(L: Layer, c: Ctx) {
-    const sp = document.getElementById('spotOv');
-    if (!sp || !sp.classList.contains('show')) return;
-    c.modal = true;
-    const g = L.g, box = rectOf(document.getElementById('spotBox'), c.o), tip = document.getElementById('spotTip'), tr = rectOf(tip, c.o), t = c.scene.time.now / 1000;
-    if (box) {
-        const rad = parseFloat((document.getElementById('spotBox') as HTMLElement).style.borderRadius) || 16, k = 0.5 + 0.5 * Math.sin(t * 5.7);
-        g.fillStyle(T.deeper, 0.78);
-        g.fillRect(0, 0, c.w, Math.max(0, box.y)).fillRect(0, box.y + box.h, c.w, Math.max(0, c.h - box.y - box.h)).fillRect(0, box.y, Math.max(0, box.x), box.h).fillRect(box.x + box.w, box.y, Math.max(0, c.w - box.x - box.w), box.h);
-        { const rr = Math.min(rad, box.w / 2, box.h / 2);   // the corners of the hole are round too, so the lit control does not sit in a bright square
-          for (const [cx0, cy0, ox, oy, a0, a1] of [[box.x + rr, box.y + rr, box.x, box.y, -Math.PI / 2, -Math.PI], [box.x + box.w - rr, box.y + rr, box.x + box.w, box.y, 0, -Math.PI / 2], [box.x + box.w - rr, box.y + box.h - rr, box.x + box.w, box.y + box.h, Math.PI / 2, 0], [box.x + rr, box.y + box.h - rr, box.x, box.y + box.h, Math.PI, Math.PI / 2]] as [number, number, number, number, number, number][]) {
-              g.beginPath(); g.moveTo(ox, oy); g.lineTo(cx0 + Math.cos(a0) * rr, cy0 + Math.sin(a0) * rr); g.arc(cx0, cy0, rr, a0, a1, true); g.closePath(); g.fillPath(); } }
-        g.lineStyle(10 + 6 * k, T.aqua, 0.16 + 0.12 * k).strokeRoundedRect(box.x - 4, box.y - 4, box.w + 8, box.h + 8, rad + 4);
-        g.lineStyle(3 + 2 * k, k > 0.5 ? T.foam : T.aqua, 1).strokeRoundedRect(box.x, box.y, box.w, box.h, rad);
-    } else g.fillStyle(T.deeper, 0.78).fillRect(0, 0, c.w, c.h);
-    if (tip && tr) {
-        const ax = parseFloat(tip.style.getPropertyValue('--ax')) || tr.w / 2;
-        g.fillStyle(BR.mid, 1).fillTriangle(tr.x + ax - 9, tr.y + 1, tr.x + ax + 9, tr.y + 1, tr.x + ax, tr.y - 11);
-        g.fillStyle(T.deep, 0.97).fillTriangle(tr.x + ax - 7, tr.y + 2, tr.x + ax + 7, tr.y + 2, tr.x + ax, tr.y - 8);
-        brass(g, tr, 18); glass(g, { x: tr.x + 4, y: tr.y + 4, w: tr.w - 8, h: tr.h - 8 }, 14, { tint: T.deep, alpha: 0.97, rim: BR.dk, rimA: 0.6, hi: 0.1, shadow: false });
-        const b = document.getElementById('spotT'), p = document.getElementById('spotP'), ok = tip.querySelector('.spotok');
-        const br = rectOf(b, c.o), pr = rectOf(p, c.o), okr = rectOf(ok, c.o);
-        if (b && br) L.text('spT', br.x + br.w / 2, br.y + br.h / 2, lerpTxt(b), { size: fontPx(b, 21), color: hexCss(T.amber), stroke: hexCss(T.deeper), sw: 4 });
-        if (p && pr) L.text('spP', pr.x + pr.w / 2, pr.y + pr.h / 2, lerpTxt(p), { size: fontPx(p, 16), stroke: hexCss(T.deeper), sw: 2, wrap: pr.w + 4 });
-        if (ok && okr) L.text('spK', okr.x + okr.w / 2, okr.y + okr.h / 2, lerpTxt(ok), { size: 13, alpha: 0.8 });
-    }
-    c.spotZones.add('spot', { x: 0, y: 0, w: c.w, h: c.h }, { click: click(sp) });
-}
+export function paintSpot(L: Layer, c: Ctx) { paintSpotBF(L, c); }   // the highlight guides are drawn from the painted pieces (src/ui/bf.ts)
 
 
 /* ---------- level start: "LEVEL N" floats on the water, swirls and squeezes into a water bubble (the 3D orb, drawn in game/src/main.js), which flies into the level badge; the number then appears in the badge with a glint of ripples and bubbles ---------- */
@@ -280,7 +255,8 @@ export function paintLevelIntro(L: Layer, c: Ctx) {
     const I = w.__lvIntro;
     if (I) {
         const open = document.querySelector('.overlay.show, #spotOv.show');
-        if (open) { I.t0 += 16; }   // a pop-up (a new obstacle, the pause menu) is open: wait until it closes
+        const dtw = Math.min(250, now - ((I as { last?: number }).last ?? now)); (I as { last?: number }).last = now;
+        if (open) { I.t0 += dtw; }   // a pop-up (a new feature, the settings) is open: the animation stands still until it closes
         else {
             const t = (now - I.t0) / 1000, sx0 = c.w / 2, sy0 = c.h * 0.36;
             if (t > LV_T.arrive + 1.4) { w.__lvIntro = undefined; w.__lvShown = true; }
@@ -341,21 +317,8 @@ export function paintMessages(L: Layer, c: Ctx) {
         plate(g, tr, tr.h / 2, T.coral, { border: BR.hi, bw: 2, edge: BR.lo, edgeH: 4, gloss: T.coralL, alpha: a });
         L.text('toast', tr.x + tr.w / 2, tr.y + tr.h / 2 - 1, lerpTxt(toast), { size: fontPx(toast, 26), stroke: hexCss(T.coralD), sw: 4, alpha: a });
     }
-    const gm = document.getElementById('goalMsg'), gr = rectOf(gm, c.o);
-    if (gm && gr && gm.classList.contains('show')) {
-        glass(g, gr, gr.h / 2, { tint: T.deeper, alpha: 0.78, rim: BR.hi, rimA: 0.85, hi: 0.12 });
-        L.text('goalMsg', gr.x + gr.w / 2, gr.y + gr.h / 2, lerpTxt(gm), { size: fontPx(gm, 17), stroke: '#031a38', sw: 3, wrap: gr.w });
-    }
+    paintGuideBF(L, c);   // level 1: the "Tap a fish" board and the hand
     const hint = document.getElementById('hint'), hr = rectOf(hint, c.o);
     if (hint && hr && opacityOf(hint) > 0.02) L.text('hint', hr.x + hr.w / 2, hr.y + hr.h / 2, lerpTxt(hint), { size: 13, color: '#e6f7ff', stroke: '#001e46', sw: 3, alpha: opacityOf(hint) });
-    const ct = document.getElementById('camTut'), cm = document.getElementById('camMsg'), cmr = rectOf(cm, c.o);
-    if (ct && cm && cmr && ct.classList.contains('show')) {
-        const tt = c.scene.time.now / 1000, bob = Math.sin(tt * 1.7) * 5, sway = Math.sin(tt * 1.05) * 4, fl = 0.86 + 0.14 * Math.sin(tt * 2.3);   // the words drift like something floating on the water, with no frame
-        L.text('camMsg', cmr.x + cmr.w / 2 + sway, cmr.y + cmr.h / 2 + bob, lerpTxt(cm), { size: fontPx(cm, 22), stroke: '#0a3c6e', sw: 6, wrap: cmr.w + 40, alpha: fl });
-        ct.querySelectorAll('.cg i').forEach((d, k) => { const r = rectOf(d, c.o); if (r) { g.fillStyle(0xffffff, 0.55).fillCircle(r.x + r.w / 2, r.y + r.h / 2, r.w / 2); g.lineStyle(3, 0xffffff, 1).strokeCircle(r.x + r.w / 2, r.y + r.h / 2, r.w / 2); void k; } });
-        const arr = ct.querySelector('.cg .arr'), ar = rectOf(arr, c.o); if (arr && ar) L.text('camArr', ar.x + ar.w / 2, ar.y + ar.h / 2, lerpTxt(arr), { size: fontPx(arr, 38) });
-    }
-    const gh = document.getElementById('guideHand'), ghr = rectOf(gh, c.o);
-    if (gh && ghr && shown(gh)) L.text('hand', ghr.x + ghr.w / 2, ghr.y + ghr.h / 2, lerpTxt(gh), { size: fontPx(gh, 44), alpha: opacityOf(gh) });
 }
 export { FONT, hex, inRect };
