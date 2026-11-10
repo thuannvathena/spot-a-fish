@@ -28,6 +28,7 @@
     },
     "backup": false,
     "hint": false,
+    "tank": false,
     "clear": false,
     "eventGap": [
       6,
@@ -77,6 +78,7 @@
     },
     "backup": true,
     "hint": false,
+    "tank": false,
     "clear": false,
     "eventGap": [
       6,
@@ -126,6 +128,7 @@
     },
     "backup": true,
     "hint": false,
+    "tank": false,
     "clear": false,
     "eventGap": [
       6,
@@ -175,6 +178,7 @@
     },
     "backup": true,
     "hint": true,
+    "tank": false,
     "clear": false,
     "eventGap": [
       6,
@@ -224,7 +228,8 @@
     },
     "backup": true,
     "hint": true,
-    "clear": true,
+    "tank": true,
+    "clear": false,
     "eventGap": [
       6,
       10
@@ -275,6 +280,7 @@
     },
     "backup": true,
     "hint": true,
+    "tank": true,
     "clear": true,
     "eventGap": [
       6,
@@ -324,6 +330,7 @@
     },
     "backup": true,
     "hint": true,
+    "tank": true,
     "clear": true,
     "eventGap": [
       5,
@@ -375,6 +382,7 @@
     },
     "backup": true,
     "hint": true,
+    "tank": true,
     "clear": true,
     "eventGap": [
       5,
@@ -424,6 +432,7 @@
     },
     "backup": true,
     "hint": true,
+    "tank": true,
     "clear": true,
     "eventGap": [
       5,
@@ -475,6 +484,7 @@
     },
     "backup": true,
     "hint": true,
+    "tank": true,
     "clear": true,
     "eventGap": [
       5,
@@ -524,6 +534,7 @@
     },
     "backup": true,
     "hint": true,
+    "tank": true,
     "clear": true,
     "eventGap": [
       5,
@@ -575,6 +586,7 @@
     },
     "backup": true,
     "hint": true,
+    "tank": true,
     "clear": true,
     "eventGap": [
       5,
@@ -624,6 +636,7 @@
     },
     "backup": true,
     "hint": true,
+    "tank": true,
     "clear": true,
     "eventGap": [
       5,
@@ -675,6 +688,7 @@
     },
     "backup": true,
     "hint": true,
+    "tank": true,
     "clear": true,
     "eventGap": [
       5,
@@ -726,6 +740,7 @@
     },
     "backup": true,
     "hint": true,
+    "tank": true,
     "clear": true,
     "eventGap": [
       5,

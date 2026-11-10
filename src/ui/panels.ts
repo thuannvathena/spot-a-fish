@@ -135,13 +135,14 @@ type Icon = (g: Phaser.GameObjects.Graphics, x: number, y: number) => void;
 const line = (g: Phaser.GameObjects.Graphics, w: number, col: number, pts: [number, number][]) => { g.lineStyle(w, col, 1); g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach((p) => g.lineTo(p[0], p[1])); g.strokePath(); };
 const ICONS: Record<string, Icon> = {
     bHint: (g, x, y) => { g.lineStyle(2.4, A, 1).strokeCircle(x, y - 3, 6.5); line(g, 2.4, A, [[x - 3.5, y + 7], [x + 3.5, y + 7]]); line(g, 2.4, A, [[x - 2, y + 10.5], [x + 2, y + 10.5]]); line(g, 2.4, A, [[x - 2.5, y + 3], [x - 2.5, y - 1], [x + 2.5, y - 1], [x + 2.5, y + 3]]); },
+    bTank: (g, x, y) => { g.lineStyle(2.4, A, 1).strokeRoundedRect(x - 8.5, y - 6, 17, 12, 3.5); line(g, 2.6, 0x7dffa8, [[x - 4, y + 0.5], [x - 1, y + 3.5], [x + 4.5, y - 3]]); },
     bClear: (g, x, y) => { line(g, 2.6, A, [[x, y + 4], [x, y - 7]]); line(g, 2.6, A, [[x - 5, y - 2], [x, y - 7], [x + 5, y - 2]]); line(g, 2.6, 0xffe27a, [[x - 8, y + 8], [x + 8, y + 8]]); }
 };
 export function paintTools(L: Layer, c: Ctx) {
     const g = L.gt, t = c.scene.time.now / 1000, fade = (window as unknown as { __toolA?: number }).__toolA ?? 1;   // the boosters fade away while the camera is being moved and come back when it stops
     g.setAlpha(fade);
     if (fade < 0.02) return;
-    for (const id of ['bHint', 'bClear']) {   // (the camera up / down buttons are gone: two-finger drag moves the view)
+    for (const id of ['bHint', 'bTank', 'bClear']) {   // (the camera up / down buttons are gone: two-finger drag moves the view)
         const el = document.getElementById(id); if (!el) continue;
         const r = rectOf(el, c.o); if (!r || r.w < 4 || !shown(el)) continue;
         const cx = r.x + r.w / 2, cy = r.y + r.h / 2, rad = r.w / 2, press = c.zones.pressed === id, dy = press ? 3 : 0, off = el.classList.contains('off');
@@ -302,6 +303,33 @@ export function paintLevelIntro(L: Layer, c: Ctx) {
         for (let k = 0; k < 2; k++) { const q = clamp01((pk - k * 0.16) / 0.9); if (q > 0 && q < 1) g.lineStyle(2.4 - k * 0.8, 0xe6fbff, 0.85 * (1 - q)).strokeCircle(bx, by, br * (1 + 1.5 * (1 - Math.pow(1 - q, 2.2)))); }
         for (let k = 0; k < 7; k++) { const q = clamp01((pk - 0.04 * k) / 0.95); if (q <= 0 || q >= 1) continue; const ang = k * 0.9 + 0.5, d = br * (0.7 + 1.2 * q), r = (2 + (k % 3)) * (1 - 0.3 * q), px = bx + Math.cos(ang) * d, py = by + Math.sin(ang) * d - q * 14, al = (1 - q) * 0.95; g.fillStyle(0xbff4ff, 0.22 * al).fillCircle(px, py, r); g.lineStyle(1.4, 0xffffff, al).strokeCircle(px, py, r); g.fillStyle(0xffffff, al).fillCircle(px - r * 0.3, py - r * 0.3, Math.max(0.6, r * 0.25)); }
     }
+}
+
+/* ---------- win: "LEVEL COMPLETE" bursts out of the bubble the fish made, floats like the level-start words, then the water takes the screen ---------- */
+export function paintWinText(L: Layer, c: Ctx) {
+    const w = window as unknown as { __winText?: { t0: number } }, I = w.__winText; if (!I) return;
+    const t = (performance.now() - I.t0) / 1000, g = L.g, cx = c.w / 2, cy = c.h * 0.36, bob = Math.sin(t * 1.8) * 4, fade = 1 - clamp01((t - 1.72) / 0.28);
+    if (fade <= 0) return;
+    // the burst: a ring, a soft glow and drops / bubbles flying outward with a little arc
+    const k = clamp01(t / 0.9), ek = 1 - Math.pow(1 - k, 2.4);
+    g.fillStyle(0xbff4ff, 0.14 * (1 - k) * fade).fillCircle(cx, cy, 30 + 100 * ek);
+    for (let i = 0; i < 16; i++) {
+        const ang = i * 2.399 + 0.4, sp = 0.55 + ((i * 37) % 10) / 14, q = clamp01(t / (0.55 + sp * 0.35)), r = 20 + 170 * sp * (1 - Math.pow(1 - q, 2)), px = cx + Math.cos(ang) * r, py = cy + Math.sin(ang) * r * 0.7 + 60 * q * q, rad = (2.6 + (i % 4) * 1.4) * (1 - 0.4 * q), al = (1 - q) * fade;
+        if (al <= 0) continue; g.fillStyle(0xbff4ff, 0.24 * al).fillCircle(px, py, rad); g.lineStyle(1.5, 0xffffff, al).strokeCircle(px, py, rad); g.fillStyle(0xffffff, al).fillCircle(px - rad * 0.3, py - rad * 0.3, Math.max(0.7, rad * 0.25));
+    }
+    // confetti: small bits of paper thrown up with the words, tumbling and fluttering down
+    for (let i = 0; i < 46; i++) {
+        const sd = i * 12.9898, rnd = (k: number) => { const v = Math.sin(sd + k * 78.233) * 43758.5453; return v - Math.floor(v); }, st = rnd(1) * 0.12, q = t - st; if (q <= 0) continue;
+        const life = 1.5 + rnd(2) * 0.6, f = q / life; if (f >= 1) continue;
+        const ang = -Math.PI / 2 + (rnd(3) - 0.5) * 2.5, sp = 150 + rnd(4) * 260, vx = Math.cos(ang) * sp, vy = Math.sin(ang) * sp, px = cx + vx * q * (1 - 0.35 * f) + Math.sin(q * 5 + i) * 8, py = cy + vy * q + 330 * q * q * 0.5, w = 5 + rnd(5) * 4, h = 3 + rnd(6) * 3, rot = q * (4 + rnd(7) * 8) + i, flip = Math.abs(Math.cos(q * (5 + rnd(8) * 6) + i));
+        const col = [0xff7ab8, 0xffd75a, 0x7fe3ff, 0xa88bff, 0x8cf08a, 0xffffff][i % 6], al = (1 - Math.max(0, (f - 0.7) / 0.3)) * Math.min(1, q / 0.1);
+        const ca = Math.cos(rot), sa = Math.sin(rot), hw = w / 2, hh = (h / 2) * (0.25 + 0.75 * flip), pts = [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]].map(([x, y]) => new Phaser.Math.Vector2(px + x * ca - y * sa, py + x * sa + y * ca));
+        g.fillStyle(col, 0.95 * al).fillPoints(pts, true);
+    }
+    const back = (u: number) => 1 + 2.70158 * Math.pow(u - 1, 3) + 1.70158 * Math.pow(u - 1, 2), part = (d: number) => { const u = clamp01((t - d) / 0.4); return u <= 0 ? 0.001 : Math.max(0.001, back(u)); };
+    const size1 = Math.min(46, c.w * 0.1), size2 = Math.min(54, c.w * 0.12);
+    L.text('winT1', cx, cy - size1 * 0.55 + bob, 'LEVEL', { size: size1, color: '#ffffff', stroke: '#0a3c6e', sw: 8, alpha: fade }).setScale(part(0)).setRotation(Math.sin(t * 9) * 0.07 * (1 - clamp01(t / 0.7)));
+    L.text('winT2', cx, cy + size2 * 0.5 + bob, 'COMPLETE', { size: size2, color: '#ffe27a', stroke: '#8a4a0a', sw: 9, alpha: fade }).setScale(part(0.1)).setRotation(Math.sin(t * 9 + 1) * -0.07 * (1 - clamp01(t / 0.7)));
 }
 
 /* ---------- messages: toast, goal message, hints, camera tutorial, pointing hand ---------- */

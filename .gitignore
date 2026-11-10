@@ -19,3 +19,12 @@ SpotAFish_UnityProject/
 Lose Anim.mov
 __pycache__/
 game/src/fishicons.js
+win animation idea.mov
+
+# one folder per Unity fish with its source files (made by scripts/unity-fish-pack.py; Unity material, never publish)
+fish-packs/
+
+# local-only: one-fish Unity source bundles and the win reference clip (never publish)
+fish-assets/
+fish-assets.zip
+New Win Anim.mov

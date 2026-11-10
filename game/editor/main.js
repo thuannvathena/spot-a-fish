@@ -164,7 +164,7 @@ function renderRight() {
     <h3 style="margin-top:8px">Waves ${waves.length ? '' : '(empty = random, like the built-in levels)'}</h3>
     ${waves.map((w, i) => `<div class="grid" style="margin-bottom:4px">${num('Wave ' + (i + 1) + ' after tanks', `tube.waves.${i}.afterTanks`, lv, { min: 1, max: 30 })}<div class="f"><small>Hold last fish</small><input type="checkbox" data-k="tube.waves.${i}.holdLast" data-t="bool" ${w.holdLast !== false ? 'checked' : ''}> <a href="#" data-rmw="${i}" class="mu">remove</a></div></div>`).join('')}
     <button id="bAddW">Add wave</button></div>
-   <details class="sec"><summary>Boosters, events, theme</summary><div class="grid">${tog('Backup', 'backup', lv)}${tog('Hint', 'hint', lv)}${tog('Clear Backup', 'clear', lv)}${tog('Feeding', 'feed', lv)}${tog('Startle', 'startle', lv)}
+   <details class="sec"><summary>Boosters, events, theme</summary><div class="grid">${tog('Backup', 'backup', lv)}${tog('Hint', 'hint', lv)}${tog('Clear Tank', 'tank', lv)}${tog('Clear Backup', 'clear', lv)}${tog('Feeding', 'feed', lv)}${tog('Startle', 'startle', lv)}
     ${sel('Theme', 'theme', lv, [['', 'Auto'], [0, '1'], [1, '2'], [2, '3'], [3, '4'], [4, '5']], { t: 'optnum' })}</div>
     <div class="grid" style="margin-top:6px">${pair('Event gap', 'eventGap', lv)}${pair('Feed gap', 'feedGap', lv)}${pair('Swarm gap', 'swarmGap', lv)}${pair('Startle gap', 'startleGap', lv)}</div></details>
    <div class="sec" id="chk"></div>
@@ -231,7 +231,7 @@ function autoFill() {
   edit(lv => {
     const ref = REF_BY_DIFF[lv.difficulty] || 8, C = defaultsFor(ref), goal = Math.max(1, lv.goal | 0);
     Object.assign(lv, { refLevel: ref, species: goal * 2, decoyFish: Math.max(6, Math.round(4 + goal * goal * 0.75)), look: C.look, sizeK: C.sizeK, speedK: C.speedK, urchin: C.urchin, jelly: C.jelly, squid: C.squid, clam: C.clams, swarm: !!C.swarm,
-      backup: C.backup, hint: C.hint, clear: C.clear, feed: !!C.feed, startle: !!C.startle, eventGap: C.evGap, feedGap: C.feedGap, swarmGap: C.swarmGap, startleGap: C.startleGap });
+      backup: C.backup, hint: C.hint, tank: C.tank, clear: C.clear, feed: !!C.feed, startle: !!C.startle, eventGap: C.evGap, feedGap: C.feedGap, swarmGap: C.swarmGap, startleGap: C.startleGap });
     lv.tube = { enabled: !!C.tube, autoPumpWhenStuck: true, stuckDelaySec: 2.5 };
   }, true);
   status('Auto-fill used the built-in rules (placeholder). Edit any field by hand.');

@@ -13,7 +13,7 @@ export function defaultsFor(L) {
   // gentle ramp: levels 1-2 need 1 fish per tank, 3-4 need 2, from 5 on 3; a slow calm school at first, fast swimming only comes later as a mechanic
   const per = L <= 2 ? 1 : L <= 4 ? 2 : 3; if (L <= 2) goal = L === 1 ? 4 : 5; else if (L <= 4) goal = 4;
   // species in the tank = 2 x goal: `goal` target species + `goal` decoy species, of which 1~2 are colour look-alikes of a target
-  const C = { goal, per, backup: L >= 2, hint: L >= 4, clear: L >= 5, sizeK: L <= 3 ? 1.7 : L <= 6 ? 1.5 : L <= 9 ? 1.35 : 1.25, speedK: L <= 3 ? .72 : L <= 6 ? .82 : L <= 9 ? .9 : 1, boostK: L <= 3 ? .5 : L <= 6 ? .7 : 1, dash: L >= 9, startle: L >= 10, tube: L >= 7, swarm: L >= 9, swarmGap: L < 12 ? [28, 40] : [20, 30], bounty: L >= 6 && (L % 2 === 0 || L === 15) ? (L === 15 ? 'fast' : ['tiny', 'camo', 'fast'][(L / 2 | 0) % 3]) : null, evKinds: L < 2 ? ['squabble', 'waltz', 'conga', 'drop'] : L < 4 ? ['squabble', 'waltz', 'conga', 'drop'] : L < 7 ? ['squabble', 'waltz', 'conga', 'swirl', 'drop'] : ['squabble', 'waltz', 'conga', 'swirl', 'hide', 'drop'], evGap: L < 7 ? [6, 10] : [5, 8], startleGap: L < 13 ? [26, 38] : [18, 28], typesTotal: goal * 2, obstacles: obs, decoys: decoy, look: L < 3 ? 0 : L < 8 ? 1 : 2, shift: Math.max(55, 168 - L * 8),
+  const C = { goal, per, backup: L >= 2, hint: L >= 4, tank: L >= 5, clear: L >= 6, sizeK: L <= 3 ? 1.7 : L <= 6 ? 1.5 : L <= 9 ? 1.35 : 1.25, speedK: L <= 3 ? .72 : L <= 6 ? .82 : L <= 9 ? .9 : 1, boostK: L <= 3 ? .5 : L <= 6 ? .7 : 1, dash: L >= 9, startle: L >= 10, tube: L >= 7, swarm: L >= 9, swarmGap: L < 12 ? [28, 40] : [20, 30], bounty: L >= 6 && (L % 2 === 0 || L === 15) ? (L === 15 ? 'fast' : ['tiny', 'camo', 'fast'][(L / 2 | 0) % 3]) : null, evKinds: L < 2 ? ['squabble', 'waltz', 'conga', 'drop'] : L < 4 ? ['squabble', 'waltz', 'conga', 'drop'] : L < 7 ? ['squabble', 'waltz', 'conga', 'swirl', 'drop'] : ['squabble', 'waltz', 'conga', 'swirl', 'hide', 'drop'], evGap: L < 7 ? [6, 10] : [5, 8], startleGap: L < 13 ? [26, 38] : [18, 28], typesTotal: goal * 2, obstacles: obs, decoys: decoy, look: L < 3 ? 0 : L < 8 ? 1 : 2, shift: Math.max(55, 168 - L * 8),
     squid: L < 3 ? 0 : L < 12 ? 1 : 2, clams: L < 6 ? 0 : L < 12 ? 1 : 2, clamTaps: 1, feed: L >= 3, feedGap: L < 10 ? [24, 34] : [18, 26] };
   const only = { 3: 'squid', 6: 'clam', 9: 'swarm' }[L];   // the level that introduces an obstacle shows that obstacle alone
   if (only) { C.obstacles = 0; C.squid = only === 'squid' ? 1 : 0; C.clams = only === 'clam' ? 1 : 0; C.swarm = only === 'swarm'; }
@@ -42,6 +42,7 @@ export function cfgFromLevel(lv, L) {
   if (Array.isArray(lv.bounty)) C.bounty = lv.bounty[0] || null;   // the game currently shows at most one bounty tank
   if (typeof lv.backup === 'boolean') C.backup = lv.backup;
   if (typeof lv.hint === 'boolean') C.hint = lv.hint;
+  if (typeof lv.tank === 'boolean') C.tank = lv.tank;
   if (typeof lv.clear === 'boolean') C.clear = lv.clear;
   if (pair(lv.eventGap)) C.evGap = lv.eventGap;
   if (typeof lv.feed === 'boolean') C.feed = lv.feed;
@@ -75,7 +76,7 @@ export function levelToJson(L) {
     species: C.typesTotal, decoyFish: C.decoys, look: C.look, sizeK: C.sizeK, speedK: C.speedK,
     urchin: C.urchin, jelly: C.jelly, squid: C.squid, clam: C.clams, swarm: !!C.swarm,
     tube: { enabled: !!C.tube, autoPumpWhenStuck: true, stuckDelaySec: 2.5 },
-    backup: C.backup, hint: C.hint, clear: C.clear,
+    backup: C.backup, hint: C.hint, tank: C.tank, clear: C.clear,
     eventGap: C.evGap, feed: !!C.feed, feedGap: C.feedGap, swarmGap: C.swarmGap, startle: !!C.startle, startleGap: C.startleGap
   };
 }

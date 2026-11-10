@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { BR, DPR, Layer, R, Zones, T, hexCss, inRect, porthole, rectOf } from '../ui/kit';
-import { Ctx, GameState, levelPop, paintLevelIntro, paintMessages, paintOverlay, paintSpot, paintTargets, paintTools } from '../ui/panels';
+import { Ctx, GameState, levelPop, paintLevelIntro, paintMessages, paintWinText, paintOverlay, paintSpot, paintTargets, paintTools } from '../ui/panels';
 
 // The whole game UI, drawn by Phaser. The Three.js game keeps writing its state into hidden HTML elements
 // (layout, classes, text); every frame this scene mirrors them (see src/ui/panels.ts) and forwards taps to them.
@@ -9,7 +9,13 @@ const UI30 = /[?&]ui30=0/.test(location.search) ? false : matchMedia('(pointer:c
 
 /** how many px of blur the frosted lose screen has right now (same curve as the CSS on the 3D canvases: rises quickly at first, then slowly to 9 px) */
 function wetBlurPx(): number {
-    const w = window as unknown as { __wetT0?: number; __wetDur?: number }; if (!w.__wetT0) return 0;
+    const w = window as unknown as { __wetT0?: number; __wetDur?: number; __wetWin?: number };
+    if (w.__wetWin) {   // the water that closes the win sequence: frost in quickly, hold, clear slowly (same curve as the CSS on the 3D canvases)
+        const u = Math.min(1, (performance.now() - w.__wetWin) / 2600), pts: [number, number][] = [[0, 0], [0.18, 9], [0.48, 9], [1, 0]];
+        for (let i = 1; i < pts.length; i++) if (u <= pts[i][0]) return pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * ((u - pts[i - 1][0]) / (pts[i][0] - pts[i - 1][0]));
+        return 0;
+    }
+    if (!w.__wetT0) return 0;
     const u = Math.min(1, (performance.now() - w.__wetT0) / 1000 / Math.max(0.5, w.__wetDur ?? 3)), pts: [number, number][] = [[0, 0], [0.25, 2], [0.85, 8], [1, 9]];
     for (let i = 1; i < pts.length; i++) if (u <= pts[i][0]) return pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * ((u - pts[i - 1][0]) / (pts[i][0] - pts[i - 1][0]));
     return 9;
@@ -60,6 +66,8 @@ export class Hud extends Phaser.Scene {
         const G = ff()?.G;
         const c: Ctx = { scene: this, o, w: o.width, h: o.height, G, zones: this.zBase, ovZones: this.zOv, spotZones: this.zSpot, hits: [], modal: false };
         for (const l of [this.base, this.ovl, this.spot, this.msg]) l.begin();
+        { const w = window as unknown as { __hudFadeT0?: number; __hudInT0?: number }, now = performance.now();   // the top row, the plates and the boosters fade out when the win sequence starts and back in with the next level
+          const al = w.__hudFadeT0 ? 1 - Math.min(1, (now - w.__hudFadeT0) / 450) : w.__hudInT0 ? Math.min(1, (now - w.__hudInT0) / 600) : 1; this.cameras.main.setAlpha(al); }
         { const px = wetBlurPx(), cam = this.cameras.main;   // the lose sequence frosts the screen: the base layer blurs together with the 3D scene
           if (px < 0.3) { if (this.blurCtl) this.blurCtl.setActive(false); }
           else { if (!this.blurCtl) this.blurCtl = cam.filters.internal.addBlur(2, 0, 0, 1, 0xffffff, 10) as Phaser.Filters.Blur; this.blurCtl.setActive(true); this.blurCtl.x = px; this.blurCtl.y = px; } }
@@ -72,7 +80,7 @@ export class Hud extends Phaser.Scene {
             paintOverlay(this.ovl, c);
             paintSpot(this.spot, c);
         }
-        paintMessages(this.msg, c); paintLevelIntro(this.msg, c);
+        paintMessages(this.msg, c); paintLevelIntro(this.msg, c); paintWinText(this.msg, c);
         for (const l of [this.base, this.ovl, this.spot, this.msg]) l.end();
         for (const z of [this.zBase, this.zOv, this.zSpot]) z.end();
         this.hits = c.hits; this.modal = c.modal;
