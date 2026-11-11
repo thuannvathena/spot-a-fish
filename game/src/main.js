@@ -3699,6 +3699,13 @@ const LOADER = (() => {   // the loading screen: the bar follows the real loadin
   };
 })();
 const LS = x => v => { LOADER.step(x); return v; };
+(function prefetchAll() {   // the loaders below run one after another; the files they need are all asked for at once here, so the downloads overlap and the loaders find them in the cache
+  const base = document.baseURI, get = u => fetch(new URL(u, base)).catch(() => { });
+  get('models/unity/eyes.json'); get('models/unity/swarm_fish.glb'); get('models/blue_white_babe/model.fbx'); get('models/blue_white_babe/Full.png');
+  fetch(new URL('models/unity/list.json', base)).then(r => r.json()).then(l => l.forEach(f => get('models/unity/' + f))).catch(() => { });
+  TRIPO.forEach(n => { get('models/tripo/' + n + '/model.fbx'); get('models/tripo/' + n + '/tex.jpg'); });
+  ['target_back', 'target_front', 'backup_back', 'backup_front', 'bubble_orb', 'bubble'].forEach(n => get('ui/tanks/' + n + '.png'));
+})();
 const SAFE = f => v => Promise.resolve().then(() => f(v)).catch(e => { console.warn('loading step failed', e); });   // a step that fails or hangs must not freeze the loading screen
 const CAP = (f, ms) => v => Promise.race([SAFE(f)(v), new Promise(r => setTimeout(r, ms))]);
 CAP(loadModels, 20000)().then(LS(.2)).then(v => new Promise(r => setTimeout(() => r(v), 30))).then(CAP(loadUnity, 20000)).then(v => { LOADER.fish(); return v; }).then(LS(.5)).then(v => new Promise(r => setTimeout(() => r(v), 30))).then(CAP(prepModelArt, 15000)).then(LS(.65)).then(v => new Promise(r => setTimeout(() => r(v), 30))).then(CAP(loadTripo, 20000)).then(LS(.85)).then(CAP(loadTankArt, 15000)).then(LS(.9)).then(() => new Promise(r => setTimeout(r, 30))).then(() => { fitDecor(); LOADER.step(.95); }).then(() => new Promise(r => setTimeout(r, 30))).then(() => { makeThumbs(); LOADER.step(.99); }).then(() => LOADER.done()).then(() => { document.querySelectorAll('.fishy[data-ic=fish]').forEach(e => { e.innerHTML = `<img src="${THUMB[SPECIES[0].id]}" style="height:54px">`; }); resize(); newLevel(Math.min(save.last || 1, save.unlocked)); requestAnimationFrame(frame); if (PLAYTEST) parent.postMessage({ type: 'ff-ready' }, '*'); });

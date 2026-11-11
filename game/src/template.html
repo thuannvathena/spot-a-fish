@@ -347,7 +347,7 @@ body.wetwin #bg3d,body.wetwin #bgpic,body.wetwin #c,body.wetwin>canvas,body.wetw
 <div id="load"><div class="rays"></div><canvas class="lg" width="760" height="680"></canvas><img id="lgsrc" src="ui/load/logo.png" alt="Spot A Fish" style="display:none"><div class="lgt" style="display:none">SPOT A FISH</div><div class="bar"><div class="fl"></div><img class="bfish" src="ui/load/barfish.png" alt=""></div><div class="tx">Spotting fish<i>...</i></div></div>
 </div>
 <script>(function(){ window.__fr=[]; var l=performance.now(); (function f(){ var n=performance.now(); window.__fr.push(n-l); l=n; if(window.__fr.length<400) requestAnimationFrame(f); })(); })();</script>
-<script>(function(){ var n=0, t=setInterval(function(){ n++; var up=!!(window.__ff&&window.__ff.G); if(up){ try{ sessionStorage.removeItem('ff-wd'); }catch(e){} } var l=document.getElementById('load'); if(!l){ clearInterval(t); return; } if(n===14&&!up){ try{ if(!sessionStorage.getItem('ff-wd')){ sessionStorage.setItem('ff-wd','1'); location.reload(); return; } }catch(e){} } if(n>=24){ l.remove(); clearInterval(t); } },1000); })();</script>
+<script>(function(){ var n=0, t=setInterval(function(){ n++; var up=!!(window.__ff&&window.__ff.G); var l=document.getElementById('load'); if(!l||up){ clearInterval(t); if(l&&up) l.remove(); return; } if(n>=120){ l.remove(); clearInterval(t); } },1000); })();</script>
 <script>/*BUNDLE*/</script>
 </body>
 </html>

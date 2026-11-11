@@ -2,7 +2,14 @@
 
 Every published version stays playable at its own URL. The [landing page](https://thuannvathena.github.io/spot-a-fish/) lists them all.
 
-## v0.3.0 <Badge type="tip" text="Live" />
+## v0.3.1 <Badge type="tip" text="Live" />
+
+Changes since v0.3.0.
+
+- **Loading:** the page no longer reloads itself in the middle of loading on a slow connection (a 14 s watchdog did that), and loading is faster: every model and picture is requested at once while the loaders run one after another.
+- **Booster buttons** are bigger (82 px).
+
+## v0.3.0
 
 Changes since v0.2.0.
 
