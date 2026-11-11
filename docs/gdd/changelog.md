@@ -2,7 +2,14 @@
 
 Every published version stays playable at its own URL. The [landing page](https://thuannvathena.github.io/spot-a-fish/) lists them all.
 
-## v0.3.1 <Badge type="tip" text="Live" />
+## v0.3.2 <Badge type="tip" text="Live" />
+
+Changes since v0.3.1.
+
+- **Loading on slow connections:** files are now fetched a few at a time in the order the loaders need them (before, 100+ requests at once shared the bandwidth, so the background, logo and first models finished last and the bar stayed at 0).
+- The landing page's Play Now button opens `/demo/` (latest), which is now republished with every release.
+
+## v0.3.1
 
 Changes since v0.3.0.
 

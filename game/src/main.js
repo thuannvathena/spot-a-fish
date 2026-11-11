@@ -3699,8 +3699,11 @@ const LOADER = (() => {   // the loading screen: the bar follows the real loadin
   };
 })();
 const LS = x => v => { LOADER.step(x); return v; };
-(function prefetchAll() {   // the loaders below run one after another; the files they need are all asked for at once here, so the downloads overlap and the loaders find them in the cache
-  const base = document.baseURI, get = u => fetch(new URL(u, base)).catch(() => { });
+(function prefetchAll() {   // files are asked for in the order the loaders need them, only a few at a time, so the first ones finish first (asking for everything at once shares the bandwidth and makes all of them finish last)
+  const base = document.baseURI, q = [];
+  let active = 0;
+  const pump = () => { while (active < 6 && q.length) { const u = q.shift(); active++; fetch(new URL(u, base)).then(r => r.arrayBuffer()).catch(() => { }).then(() => { active--; pump(); }); } };
+  const get = u => { q.push(u); pump(); };
   get('models/unity/eyes.json'); get('models/unity/swarm_fish.glb'); get('models/blue_white_babe/model.fbx'); get('models/blue_white_babe/Full.png');
   fetch(new URL('models/unity/list.json', base)).then(r => r.json()).then(l => l.forEach(f => get('models/unity/' + f))).catch(() => { });
   TRIPO.forEach(n => { get('models/tripo/' + n + '/model.fbx'); get('models/tripo/' + n + '/tex.jpg'); });
