@@ -168,7 +168,7 @@ function renderRight() {
     ${waves.map((w, i) => `<div class="grid" style="margin-bottom:4px">${num('Wave ' + (i + 1) + ' after tanks', `tube.waves.${i}.afterTanks`, lv, { min: 1, max: 30 })}<div class="f"><small>Hold last fish</small><input type="checkbox" data-k="tube.waves.${i}.holdLast" data-t="bool" ${w.holdLast !== false ? 'checked' : ''}> <a href="#" data-rmw="${i}" class="mu">remove</a></div></div>`).join('')}
     <button id="bAddW">Add wave</button></div>
    <details class="sec"><summary>Boosters, events, theme</summary><div class="grid">${tog('Backup', 'backup', lv)}${tog('Hint', 'hint', lv)}${tog('Clear Tank', 'tank', lv)}${tog('Clear Backup', 'clear', lv)}${tog('Feeding', 'feed', lv)}${tog('Startle', 'startle', lv)}
-    ${sel('Theme', 'theme', lv, [['', 'Auto'], [0, '1'], [1, '2'], [2, '3'], [3, '4'], [4, '5']], { t: 'optnum' })}</div>
+    ${sel('Theme', 'theme', lv, [['', 'Auto'], [0, '1 Aquarium hall'], [1, '2 Lagoon'], [2, '3 Sunset reef'], [3, '4 Deep sea'], [4, '5 Kelp forest'], [5, '6 Atlantis']], { t: 'optnum' })}</div>
     <div class="grid" style="margin-top:6px">${pair('Event gap', 'eventGap', lv)}${pair('Feed gap', 'feedGap', lv)}${pair('Swarm gap', 'swarmGap', lv)}${pair('Startle gap', 'startleGap', lv)}</div></details>
    <div class="sec" id="chk"></div>
    <div class="sec"><h3 class="t">Simulation</h3><div class="tbd">Later (check level C). Win-rate estimate and what counts as "difficult" are _TBD_.</div></div>`;

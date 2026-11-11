@@ -14,7 +14,7 @@ export const rectOf = (el: Element | null | undefined, o: DOMRect): R | null => 
     const r = el.getBoundingClientRect();
     return r.width > 0 || r.height > 0 ? { x: r.left - o.left, y: r.top - o.top, w: r.width, h: r.height } : null;
 };
-export const shown = (el: Element | null | undefined): boolean => !!el && getComputedStyle(el).display !== 'none';
+export const shown = (el: Element | null | undefined): boolean => !!el && getComputedStyle(el).display !== 'none' && (el as HTMLElement).dataset?.locked !== '1';   // a locked booster keeps its place in the row (Hint, Clear Tank, Clear Backup from left to right) but is not drawn
 export const opacityOf = (el: Element): number => { const v = parseFloat(getComputedStyle(el).opacity); return isNaN(v) ? 1 : v; };
 export const fontPx = (el: Element, fallback = 16): number => { const v = parseFloat(getComputedStyle(el).fontSize); return isNaN(v) ? fallback : v; };
 export const hex = (css: string, fallback = 0xffffff): number => {
@@ -38,6 +38,7 @@ export interface TextOpts { sh?: number; size?: number; color?: string; stroke?:
 export class Layer {
     readonly g: Phaser.GameObjects.Graphics;
     readonly gt: Phaser.GameObjects.Graphics;   // a second graphics for the booster buttons, so they can fade as a whole
+    readonly gu: Phaser.GameObjects.Graphics;   // drawn above the layer's pictures (the booster cooldown pie, rings)
     private texts = new Map<string, { t: Phaser.GameObjects.Text; sig: string }>();
     private imgs = new Map<string, Phaser.GameObjects.Image>();
     private nines = new Map<string, Phaser.GameObjects.NineSlice>();
@@ -47,9 +48,10 @@ export class Layer {
     constructor(private scene: Phaser.Scene, private depth: number, private onNew: (o: Phaser.GameObjects.GameObject) => void = () => { }) {
         this.g = scene.add.graphics().setDepth(depth); onNew(this.g);
         this.gt = scene.add.graphics().setDepth(depth + 0.05); onNew(this.gt);
+        this.gu = scene.add.graphics().setDepth(depth + 0.3); onNew(this.gu);
     }
 
-    begin() { this.g.clear(); this.gt.clear(); this.used.clear(); }
+    begin() { this.g.clear(); this.gt.clear(); this.gu.clear(); this.used.clear(); }
 
     end() {
         this.texts.forEach((v, k) => { if (!this.used.has('t' + k)) v.t.setVisible(false); });

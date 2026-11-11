@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { paintBFAnim, paintGuideBF, paintSpotBF } from './bf';
+import { paintBFAnim, paintGuideBF, paintSpotBF, paintToastBF } from './bf';
 import { BR, FONT, T, Layer, R, Zones, brass, fontPx, glass, hex, hexCss, inRect, opacityOf, pearl, plate, porthole, recess, rectOf, rivet, shown, starfish } from './kit';
 
 // Painters: each one mirrors a group of hidden HTML elements (see src/ui/kit.ts) into Phaser drawings and touch zones.
@@ -9,6 +9,7 @@ export interface Ctx { scene: Phaser.Scene; o: DOMRect; w: number; h: number; G?
 
 const click = (el: Element) => () => (el as HTMLElement).click();
 const lerpTxt = (el: Element) => (el.textContent ?? '').trim();
+
 // text with <br> as line breaks (innerText would skip the hidden model elements)
 const multiline = (el: Element) => Array.from(el.childNodes).map((n) => (n.nodeName === 'BR' ? '\n' : (n.textContent ?? ''))).join('').trim();
 const A = 0xffffff;
@@ -97,7 +98,7 @@ function aquarium(g: Phaser.GameObjects.Graphics, r: R, a: number, t: number, se
 
 /* ---------- target tanks ---------- */
 export function paintTargets(L: Layer, c: Ctx) {
-    const g = L.g, t = c.scene.time.now / 1000;
+    const g = L.g, t = c.scene.time.now / 1000, wp = (window as unknown as { __whirl?: Record<number, unknown> }).__whirl ?? {};
     document.querySelectorAll('#targets .target').forEach((el, i) => {
         const root = rectOf(el, c.o); if (!root) return;
         const a = opacityOf(el);
@@ -105,6 +106,8 @@ export function paintTargets(L: Layer, c: Ctx) {
         if (a < 0.02) return;
         c.hits.push(root);
         void baseR;   // no brass base under the tank any more
+        const whirl = !!wp[i];   // a tank being cleared: its tank AND its plate are one twisted mesh drawn in the 3D overlay (tankFx in game/src/main.js), so nothing is drawn here
+        if (whirl) return;
         if (aR) {
             if (!(window as unknown as { __tank3d?: boolean }).__tank3d) aquarium(g, aR, a, t, i);   // the 3D tank in the overlay replaces this flat drawing
             // collected fish (thumbnails sit in the slots)
@@ -123,7 +126,7 @@ export function paintTargets(L: Layer, c: Ctx) {
             if (bEl) {
                 const tx = L.text(`tg${i}n`, 0, cy + 1, lerpTxt(bEl), { size: 23, color: '#ffffff', stroke: '#0c5b8e', sw: 4, alpha: a });
                 const im = sig && sig.getAttribute('src') ? L.image(`tg${i}sig`, sig.getAttribute('src')!, { x: 0, y: 0, w: 400, h: bodyH * 1.06 }, { alpha: a }) : false;
-                const iw = im ? im.displayWidth : 0, gap = im ? 6 : 0, x0 = bR.x + (bR.w - (iw + gap + tx.width)) / 2;
+                const iw = im ? im.displayWidth : 0, gap = im ? 6 : 0, x0 = bR.x + (bR.w - (iw + gap + tx.width) ) / 2;
                 if (im) im.setPosition(x0 + iw / 2, cy);
                 tx.setPosition(x0 + iw + gap + tx.width / 2, cy + 1);
             }
@@ -141,18 +144,34 @@ const ICONS: Record<string, Icon> = {
 };
 export function paintTools(L: Layer, c: Ctx) {
     const g = L.gt, t = c.scene.time.now / 1000, fade = (window as unknown as { __toolA?: number }).__toolA ?? 1;   // the boosters fade away while the camera is being moved and come back when it stops
-    g.setAlpha(fade);
+    g.setAlpha(fade); L.gu.setAlpha(fade);
     if (fade < 0.02) return;
     for (const id of ['bHint', 'bTank', 'bClear']) {   // (the camera up / down buttons are gone: two-finger drag moves the view)
         const el = document.getElementById(id); if (!el) continue;
+        const lockLv = (el as HTMLElement).dataset.lockLv;
+        if (lockLv && getComputedStyle(el).display !== 'none') {   // not unlocked yet: a grey button with a padlock and the level that opens it, nothing to tap
+            const rl = rectOf(el, c.o); if (!rl || rl.w < 4) continue; const lx = rl.x + rl.w / 2, ly = rl.y + rl.h / 2, lr = rl.w / 2;
+            if (L.pic('bt' + id, 'nw_btn_round_grey', { x: lx - lr, y: ly - lr, w: lr * 2, h: lr * 2 }, { alpha: fade })) {
+                const lz = lr * 0.9; L.pic('bi' + id, 'nw_lock', { x: lx - lz * 0.4, y: ly - lz * 0.5, w: lz * 0.8, h: lz }, { alpha: fade });
+            }
+            L.text('lk' + id, lx, ly + lr + 13, `Level ${lockLv}`, { size: 14, color: '#ffffff', stroke: '#0c3a6e', sw: 4, alpha: fade });
+            c.hits.push(rl); continue;
+        }
         const r = rectOf(el, c.o); if (!r || r.w < 4 || !shown(el)) continue;
         const cx = r.x + r.w / 2, cy = r.y + r.h / 2, rad = r.w / 2, press = c.zones.pressed === id, dy = press ? 3 : 0, off = el.classList.contains('off');
-        porthole(g, cx, cy + dy, rad, { thick: 4.5, glass: off ? 0x5a7c99 : 0x1f7cc8 });
-        const p = parseFloat(el.style.getPropertyValue('--p')) || 0;
-        if (p > 0.5) { g.fillStyle(0x000a1e, 0.6).slice(cx, cy + dy, rad - 5.5, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * p) / 100, false).fillPath(); }
-        { const ks = r.w / 44; g.save(); g.translateCanvas(cx, cy + dy); g.scaleCanvas(ks, ks); ICONS[id](g, 0, 0); g.restore(); }   // the icons are drawn for a 44 px button and grow with it
+        const IC: Record<string, string> = { bHint: 'nw_ic_hint', bTank: 'nw_ic_net', bClear: 'nw_ic_back' }, shade = off ? 0.55 : 1;
+        if (L.pic('bt' + id, 'nw_btn_round', { x: cx - rad, y: cy + dy - rad, w: rad * 2, h: rad * 2 }, { alpha: fade * shade })) {   // the painted round button and its icon (public/ui/new); drawn as before when the pictures are missing
+            const isz = rad * 2 * 0.62; L.pic('bi' + id, IC[id], { x: cx - isz / 2, y: cy + dy - isz / 2 - rad * 0.04, w: isz, h: isz }, { alpha: fade * shade });
+            const p = parseFloat(el.style.getPropertyValue('--p')) || 0;
+            if (p > 0.5) { L.gu.fillStyle(0x000a1e, 0.6).slice(cx, cy + dy, rad - 3, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * p) / 100, false).fillPath(); }
+        } else {
+            porthole(g, cx, cy + dy, rad, { thick: 4.5, glass: off ? 0x5a7c99 : 0x1f7cc8 });
+            const p = parseFloat(el.style.getPropertyValue('--p')) || 0;
+            if (p > 0.5) { g.fillStyle(0x000a1e, 0.6).slice(cx, cy + dy, rad - 5.5, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * p) / 100, false).fillPath(); }
+            { const ks = r.w / 44; g.save(); g.translateCanvas(cx, cy + dy); g.scaleCanvas(ks, ks); ICONS[id](g, 0, 0); g.restore(); }   // the icons are drawn for a 44 px button and grow with it
+        }
         const glow = el.classList.contains('glow');
-        if (glow) { const k = 0.5 + 0.5 * Math.sin(t * 6); g.lineStyle(4, T.amber, 0.6 + 0.4 * k).strokeCircle(cx, cy + dy, rad + 3 + 3 * k); }
+        if (glow) { const k = 0.5 + 0.5 * Math.sin(t * 6); L.gu.lineStyle(4, T.amber, 0.6 + 0.4 * k).strokeCircle(cx, cy + dy, rad + 3 + 3 * k); }
         const cnt = el.querySelector('.cnt'), cr = rectOf(cnt, c.o);
         if (cnt && cr && id === 'bClear') {
             plate(g, cr, 9, T.coral, { border: T.foam, bw: 2, gloss: T.coralL });
@@ -246,8 +265,11 @@ export function paintSpot(L: Layer, c: Ctx) { paintSpotBF(L, c); }   // the high
 
 
 /* ---------- level start: "LEVEL N" floats on the water, swirls and squeezes into a water bubble (the 3D orb, drawn in game/src/main.js), which flies into the level badge; the number then appears in the badge with a glint of ripples and bubbles ---------- */
-export const LV_T = { float: 1.5, squeeze: 2.15, arrive: 3.1 };   // seconds: the words float / swirl into the bubble / the bubble arrives (main.js uses the same times)
-const clamp01 = (u: number) => Math.max(0, Math.min(1, u)), easeOutBack = (k: number) => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2);
+export const LV_T = { float: 1.5, squeeze: 2.15, arrive: 2.65 };   // seconds: the words float / swirl into the bubble / the bubble arrives (main.js uses the same times)
+/** Hard / Super Hard levels (window.__lvTier 1 / 2): the level words, the bubble and the badge number take the tier's colour, and fish bones sit on the words */
+export const TIER = [null, { fill: '#b98aff', stroke: '#3b1a78', fx: 0xd8c0ff, bone: 'nw_lv_bone1', bw: 118 }, { fill: '#ff7a94', stroke: '#6e0f2a', fx: 0xffc0cc, bone: 'nw_lv_bone2', bw: 210 }] as const;
+export const tierOf = () => TIER[((window as unknown as { __lvTier?: number }).__lvTier ?? 0) as 0 | 1 | 2];
+const clamp01 = (u: number) => Math.max(0, Math.min(1, u));
 export function levelPop(): number { const t = (window as unknown as { __lvPop?: number }).__lvPop; return t ? clamp01((performance.now() - t) / 760) : 1; }   // 0..1 since the bubble arrived (1 = settled)
 export function paintLevelIntro(L: Layer, c: Ctx) {
     const w = window as unknown as { __lvIntro?: { t0: number; n: number }; __lvPop?: number; __lvShown?: boolean }, now = performance.now(), g = L.g;
@@ -258,33 +280,26 @@ export function paintLevelIntro(L: Layer, c: Ctx) {
         const dtw = Math.min(250, now - ((I as { last?: number }).last ?? now)); (I as { last?: number }).last = now;
         if (open) { I.t0 += dtw; }   // a pop-up (a new feature, the settings) is open: the animation stands still until it closes
         else {
-            const t = (now - I.t0) / 1000, sx0 = c.w / 2, sy0 = c.h * 0.36;
+            const t = (now - I.t0) / 1000;
             if (t > LV_T.arrive + 1.4) { w.__lvIntro = undefined; w.__lvShown = true; }
             else if (t < LV_T.squeeze) {
-                const fade = clamp01(t / 0.35), pop = t < 0.45 ? easeOutBack(clamp01(t / 0.45)) : 1;
-                let x = sx0 + Math.sin(t * 1.05) * 4, y = sy0 + Math.sin(t * 1.7) * 5, sx = pop, sy = pop, alpha = fade, rot = 0;   // the words drift like something floating on the water
-                if (t > LV_T.float) {   // they swirl faster and faster, shrink toward the middle and melt into the bubble
-                    const p = clamp01((t - LV_T.float) / (LV_T.squeeze - LV_T.float)), e = p * p * (3 - 2 * p), e2 = p * p;
-                    rot = e2 * Math.PI * 3.2; sx = sy = Math.max(0.02, (1 - e) * (1 + 0.12 * Math.sin(p * Math.PI))); alpha = 1 - clamp01((p - 0.55) / 0.45); y -= Math.sin(p * Math.PI) * 14;
-                }
-                const tx = L.text('lvIntro', x, y, `LEVEL ${I.n}`, { size: 46, color: '#ffffff', stroke: '#0a3c6e', sw: 8, alpha });
-                tx.setScale(sx, sy).setRotation(rot);
+                // the words (and the fish bones) are a flexible sheet drawn in the overlay 3D scene: see lvTitleUpdate in game/src/main.js
             }
         }
     }
     const pk = w.__lvPop ? (now - w.__lvPop) / 1000 : 9;
     if (lvl && pk < 1.2) {   // the number settles into the badge: a soft glow, two ripples spreading and a few bubbles floating up
         const bx = lvl.x + lvl.w / 2, by = lvl.y + lvl.h / 2, br = Math.min(lvl.h / 2 + 3, 26), a = 1 - pk / 1.2, e = 1 - Math.pow(1 - clamp01(pk / 1.2), 2.2);
-        g.fillStyle(0xbff4ff, 0.3 * a * a).fillCircle(bx, by, br * (1.05 + 0.5 * e)); g.fillStyle(0xffffff, 0.3 * a * a * a).fillCircle(bx, by, br * 0.95);
-        for (let k = 0; k < 2; k++) { const q = clamp01((pk - k * 0.16) / 0.9); if (q > 0 && q < 1) g.lineStyle(2.4 - k * 0.8, 0xe6fbff, 0.85 * (1 - q)).strokeCircle(bx, by, br * (1 + 1.5 * (1 - Math.pow(1 - q, 2.2)))); }
-        for (let k = 0; k < 7; k++) { const q = clamp01((pk - 0.04 * k) / 0.95); if (q <= 0 || q >= 1) continue; const ang = k * 0.9 + 0.5, d = br * (0.7 + 1.2 * q), r = (2 + (k % 3)) * (1 - 0.3 * q), px = bx + Math.cos(ang) * d, py = by + Math.sin(ang) * d - q * 14, al = (1 - q) * 0.95; g.fillStyle(0xbff4ff, 0.22 * al).fillCircle(px, py, r); g.lineStyle(1.4, 0xffffff, al).strokeCircle(px, py, r); g.fillStyle(0xffffff, al).fillCircle(px - r * 0.3, py - r * 0.3, Math.max(0.6, r * 0.25)); }
+        const tf = tierOf(), c1 = tf ? tf.fx : 0xbff4ff, c2 = tf ? tf.fx : 0xe6fbff; g.fillStyle(c1, 0.3 * a * a).fillCircle(bx, by, br * (1.05 + 0.5 * e)); g.fillStyle(0xffffff, 0.3 * a * a * a).fillCircle(bx, by, br * 0.95);
+        for (let k = 0; k < 2; k++) { const q = clamp01((pk - k * 0.16) / 0.9); if (q > 0 && q < 1) g.lineStyle(2.4 - k * 0.8, c2, 0.85 * (1 - q)).strokeCircle(bx, by, br * (1 + 1.5 * (1 - Math.pow(1 - q, 2.2)))); }
+        for (let k = 0; k < 7; k++) { const q = clamp01((pk - 0.04 * k) / 0.95); if (q <= 0 || q >= 1) continue; const ang = k * 0.9 + 0.5, d = br * (0.7 + 1.2 * q), r = (2 + (k % 3)) * (1 - 0.3 * q), px = bx + Math.cos(ang) * d, py = by + Math.sin(ang) * d - q * 14, al = (1 - q) * 0.95; g.fillStyle(c1, 0.22 * al).fillCircle(px, py, r); g.lineStyle(1.4, 0xffffff, al).strokeCircle(px, py, r); g.fillStyle(0xffffff, al).fillCircle(px - r * 0.3, py - r * 0.3, Math.max(0.6, r * 0.25)); }
     }
 }
 
 /* ---------- win: "LEVEL COMPLETE" bursts out of the bubble the fish made, floats like the level-start words, then the water takes the screen ---------- */
 export function paintWinText(L: Layer, c: Ctx) {
     const w = window as unknown as { __winText?: { t0: number } }, I = w.__winText; if (!I) return;
-    const t = (performance.now() - I.t0) / 1000, g = L.g, cx = c.w / 2, cy = c.h * 0.36, bob = Math.sin(t * 1.8) * 4, fade = 1 - clamp01((t - 1.72) / 0.28);
+    const t = (performance.now() - I.t0) / 1000, g = L.g, cx = c.w / 2, cy = c.h * 0.36, fade = 1 - clamp01((t - 1.72) / 0.28);
     if (fade <= 0) return;
     // the burst: a ring, a soft glow and drops / bubbles flying outward with a little arc
     const k = clamp01(t / 0.9), ek = 1 - Math.pow(1 - k, 2.4);
@@ -302,21 +317,13 @@ export function paintWinText(L: Layer, c: Ctx) {
         const ca = Math.cos(rot), sa = Math.sin(rot), hw = w / 2, hh = (h / 2) * (0.25 + 0.75 * flip), pts = [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]].map(([x, y]) => new Phaser.Math.Vector2(px + x * ca - y * sa, py + x * sa + y * ca));
         g.fillStyle(col, 0.95 * al).fillPoints(pts, true);
     }
-    const back = (u: number) => 1 + 2.70158 * Math.pow(u - 1, 3) + 1.70158 * Math.pow(u - 1, 2), part = (d: number) => { const u = clamp01((t - d) / 0.4); return u <= 0 ? 0.001 : Math.max(0.001, back(u)); };
-    const size1 = Math.min(46, c.w * 0.1), size2 = Math.min(54, c.w * 0.12);
-    L.text('winT1', cx, cy - size1 * 0.55 + bob, 'LEVEL', { size: size1, color: '#ffffff', stroke: '#0a3c6e', sw: 8, alpha: fade }).setScale(part(0)).setRotation(Math.sin(t * 9) * 0.07 * (1 - clamp01(t / 0.7)));
-    L.text('winT2', cx, cy + size2 * 0.5 + bob, 'COMPLETE', { size: size2, color: '#ffe27a', stroke: '#8a4a0a', sw: 9, alpha: fade }).setScale(part(0.1)).setRotation(Math.sin(t * 9 + 1) * -0.07 * (1 - clamp01(t / 0.7)));
+    // the words themselves (the painted LEVEL COMPLETE! title, bent along an arch) are drawn in the overlay 3D scene by winTitleUpdate in game/src/main.js
 }
 
 /* ---------- messages: toast, goal message, hints, camera tutorial, pointing hand ---------- */
 export function paintMessages(L: Layer, c: Ctx) {
-    const g = L.g;
-    const toast = document.getElementById('toast'), tr = rectOf(toast, c.o);
-    if (toast && tr && opacityOf(toast) > 0.02) {
-        const a = opacityOf(toast);
-        plate(g, tr, tr.h / 2, T.coral, { border: BR.hi, bw: 2, edge: BR.lo, edgeH: 4, gloss: T.coralL, alpha: a });
-        L.text('toast', tr.x + tr.w / 2, tr.y + tr.h / 2 - 1, lerpTxt(toast), { size: fontPx(toast, 26), stroke: hexCss(T.coralD), sw: 4, alpha: a });
-    }
+    const toast = document.getElementById('toast'), ta = toast ? opacityOf(toast) : 0;
+    if (toast && ta > 0.02) paintToastBF(L, c, toast, ta);
     paintGuideBF(L, c);   // level 1: the "Tap a fish" board and the hand
     const hint = document.getElementById('hint'), hr = rectOf(hint, c.o);
     if (hint && hr && opacityOf(hint) > 0.02) L.text('hint', hr.x + hr.w / 2, hr.y + hr.h / 2, lerpTxt(hint), { size: 13, color: '#e6f7ff', stroke: '#001e46', sw: 3, alpha: opacityOf(hint) });

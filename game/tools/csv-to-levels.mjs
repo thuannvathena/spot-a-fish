@@ -35,7 +35,7 @@ for (const r of rows.slice(1)) {
     species: num(r[col.types]), decoyFish: decoyStart + pumpFish, look: col.look >= 0 && r[col.look] !== '' ? num(r[col.look]) : LOOK(L), shift: SHIFT(L), sizeK: 1.4, speedK: 0.85,
     urchin: num(r[col.urchin]), jelly: num(r[col.jelly]), squid: num(r[col.squid]), clam: num(r[col.shell]), swarm: num(r[col.swarm]) > 0,
     tube: { enabled: L >= UNLOCK.tube, extraFish: pumpFish, waves: afterTanks.map(t => ({ afterTanks: t, holdLast: true, holdFish })), autoPumpWhenStuck: true, stuckDelaySec: 2.5 },
-    backup: L >= 2, hint: L >= 4, tank: L >= 7, clear: L >= 9, theme: Math.floor((L - 1) / 12),
+    backup: L >= 2, hint: L >= 4, tank: L >= 7, clear: L >= 9, theme: Math.floor((L - 1) / 10),
     events, eventGap: [8, 10], feed: L >= EVENT_UNLOCK.feed, feedGap: [24, 34], startle: L >= EVENT_UNLOCK.startle, startleGap: [26, 38], swarmGap: [30, 30]
   });
   const o = out[out.length - 1];
@@ -45,6 +45,6 @@ for (const r of rows.slice(1)) {
 // level 61: a test level for the Tripo fish (public/models/tripo): 4 target tanks of 1 fish, 8 decoys, one fish of each of the 12 kinds
 const TRIPO = ['Emerald_blue', 'Golden_Flame', 'Goldie_tot', 'Green_Orby', 'Green_finny', 'brown_stripe', 'deep_lantern_fish', 'ghostly_wave', 'golden_spot', 'golden_tide', 'goldie', 'green_beast'];
 out.push({ schema: LEVEL_SCHEMA, version: 2, id: 'L61', name: 'Tripo fish test', status: 'Draft', difficulty: 'Easy', category: 'Normal', refLevel: 61, goal: 4, per: 1, tanks: [1, 1, 1, 1], bounty: [], species: 12, decoyFish: 8, look: 0, shift: 55, sizeK: 1.4, speedK: 0.85, urchin: 0, jelly: 0, squid: 0, clam: 0, swarm: false,
-  tube: { enabled: false, extraFish: 0, waves: [], autoPumpWhenStuck: true, stuckDelaySec: 2.5 }, backup: true, hint: true, tank: true, clear: true, theme: 4, events: [], eventGap: [8, 10], feed: false, feedGap: [24, 34], startle: false, startleGap: [26, 38], swarmGap: [30, 30], fishKeys: TRIPO.map(n => 'tripo_' + n) });
+  tube: { enabled: false, extraFish: 0, waves: [], autoPumpWhenStuck: true, stuckDelaySec: 2.5 }, backup: true, hint: true, tank: true, clear: true, theme: 5, events: [], eventGap: [8, 10], feed: false, feedGap: [24, 34], startle: false, startleGap: [26, 38], swarmGap: [30, 30], fishKeys: TRIPO.map(n => 'tripo_' + n) });
 fs.writeFileSync(new URL('../src/levels.json', import.meta.url), JSON.stringify(out, null, 2) + '\n');
 console.log('wrote', out.length, 'levels');

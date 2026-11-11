@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { BR, DPR, Layer, R, Zones, T, hexCss, inRect, porthole, rectOf } from '../ui/kit';
-import { BF_FILES } from '../ui/bf';
-import { Ctx, GameState, levelPop, paintLevelIntro, paintMessages, paintWinText, paintOverlay, paintSpot, paintTargets, paintTools } from '../ui/panels';
+import { BF_FILES, NEW_FILES } from '../ui/bf';
+import { Ctx, GameState, levelPop, tierOf, paintLevelIntro, paintMessages, paintWinText, paintOverlay, paintSpot, paintTargets, paintTools } from '../ui/panels';
 
 // The whole game UI, drawn by Phaser. The Three.js game keeps writing its state into hidden HTML elements
 // (layout, classes, text); every frame this scene mirrors them (see src/ui/panels.ts) and forwards taps to them.
@@ -38,7 +38,8 @@ export class Hud extends Phaser.Scene {
 
     preload() {   // the painted UI pieces (made in the asset workflow, see docs)
         for (const n of ['ui_plate', 'ui_tube']) this.load.image(n, new URL(`ui/${n}.png`, document.baseURI).href);
-        for (const n of BF_FILES) this.load.image('bf_' + n, new URL(`ui/bf/${n}.png`, document.baseURI).href);   // the pop-up pieces
+        for (const n of BF_FILES) this.load.image('bf_' + n, new URL(`ui/bf/${n}.png`, document.baseURI).href);
+        for (const n of NEW_FILES) this.load.image('nw_' + n, new URL(`ui/new/${n}.png`, document.baseURI).href);   // the pop-up pieces
         for (const [k, f] of [['tk_back', 'backup_back'], ['tk_front', 'backup_front']]) this.load.image(k, new URL(`ui/tanks/${f}.png`, document.baseURI).href);
     }
 
@@ -77,7 +78,7 @@ export class Hud extends Phaser.Scene {
         const c: Ctx = { scene: this, o, w: o.width, h: o.height, G, zones: this.zBase, ovZones: this.zOv, spotZones: this.zSpot, hits: [], modal: false };
         for (const l of [this.base, this.ovl, this.spot, this.msg]) l.begin();
         { const w = window as unknown as { __hudFadeT0?: number; __hudInT0?: number }, now = performance.now();   // the top row, the plates and the boosters fade out when the win sequence starts and back in with the next level
-          const al = w.__hudFadeT0 ? 1 - Math.min(1, (now - w.__hudFadeT0) / 450) : w.__hudInT0 ? Math.min(1, (now - w.__hudInT0) / 600) : 1; this.cameras.main.setAlpha(al); }
+          const al = w.__hudFadeT0 ? 1 - Math.min(1, (now - w.__hudFadeT0) / 450) : w.__hudInT0 ? Math.max(0, Math.min(1, (now - w.__hudInT0) / 350)) : 1; this.cameras.main.setAlpha(al); }
         { const px = wetBlurPx(), cam = this.cameras.main;   // the lose sequence frosts the screen: the base layer blurs together with the 3D scene
           if (px < 0.3) { if (this.blurCtl) this.blurCtl.setActive(false); }
           else { if (!this.blurCtl) this.blurCtl = cam.filters.internal.addBlur(2, 0, 0, 1, 0xffffff, 10) as Phaser.Filters.Blur; this.blurCtl.setActive(true); this.blurCtl.x = px; this.blurCtl.y = px; } }
@@ -103,9 +104,14 @@ export class Hud extends Phaser.Scene {
                 const r = hole.getBoundingClientRect(), rad = parseFloat(hole.style.borderRadius) || 20;
                 st.opacity = '1'; st.clipPath = `inset(${Math.max(0, r.top)}px ${Math.max(0, window.innerWidth - r.right)}px ${Math.max(0, window.innerHeight - r.bottom)}px ${Math.max(0, r.left)}px round ${rad}px)`;
             } else {   // a pop-up: the 3D overlay (target tanks, Backup) stays as a faint picture round it, and its own area is cut out so nothing shows through the pop-up
-                const pr = (window as unknown as { __popRect?: { x: number; y: number; w: number; h: number } | null }).__popRect;
+                const pr = (window as unknown as { __popRect?: { x: number; y: number; w: number; h: number; r?: number; top?: { x: number; y: number; w: number; h: number } } | null }).__popRect;
                 st.opacity = '0.15';
-                st.clipPath = pr ? `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${pr.x}px ${pr.y}px, ${pr.x}px ${pr.y + pr.h}px, ${pr.x + pr.w}px ${pr.y + pr.h}px, ${pr.x + pr.w}px ${pr.y}px, ${pr.x}px ${pr.y}px)` : '';
+                if (pr) {   // the hole follows the rounded pop-up (a plain rectangle showed as a dark box behind its corners)
+                    const rr = Math.min(pr.r ?? 0, pr.w / 2, pr.h / 2), x1 = pr.x + pr.w, y1 = pr.y + pr.h, tp = pr.top;   // (a pop-up with a ribbon narrower than its body: the hole is the two shapes together)
+                    const body = tp ? `M${tp.x} ${tp.y}H${tp.x + tp.w}V${pr.y}H${x1}V${y1 - rr}A${rr} ${rr} 0 0 1 ${x1 - rr} ${y1}H${pr.x + rr}A${rr} ${rr} 0 0 1 ${pr.x} ${y1 - rr}V${pr.y}H${tp.x}Z`
+                        : `M${pr.x + rr} ${pr.y}H${x1 - rr}A${rr} ${rr} 0 0 1 ${x1} ${pr.y + rr}V${y1 - rr}A${rr} ${rr} 0 0 1 ${x1 - rr} ${y1}H${pr.x + rr}A${rr} ${rr} 0 0 1 ${pr.x} ${y1 - rr}V${pr.y + rr}A${rr} ${rr} 0 0 1 ${pr.x + rr} ${pr.y}Z`;
+                    st.clipPath = `path(evenodd, "M0 0H${window.innerWidth}V${window.innerHeight}H0Z ${body}")`;
+                } else st.clipPath = '';
             }
         }
         const w = window as unknown as { __hudMs?: number; __hudLast?: number }; w.__hudLast = performance.now() - t0; w.__hudMs = (w.__hudMs ?? 0) * 0.9 + w.__hudLast * 0.1;   // CPU time of the UI redraw, shown by ?fps=1
@@ -119,13 +125,15 @@ export class Hud extends Phaser.Scene {
         c.hits.push(top);
         // no frame around the top row: just the level porthole, the water gauge and the pause button
         // level: a porthole
-        const lr = Math.min(lvl.h / 2 + 3, 26), lx = lvl.x + lvl.w / 2, ly = lvl.y + lvl.h / 2;
-        porthole(g, lx, ly, lr);
+        const lr = 29, lx = lvl.x + lvl.w / 2, ly = lvl.y + lvl.h / 2;
+        const bpk = (() => { const t0 = (window as unknown as { __lvPop?: number }).__lvPop; return t0 ? (performance.now() - t0) / 1000 : 9; })(), bsp = bpk < 1.3 ? 1 + 0.3 * Math.exp(-5.5 * bpk) * Math.cos(17 * bpk) : 1, brot = bpk < 1.3 ? 0.22 * Math.exp(-5 * bpk) * Math.sin(21 * bpk) : 0, lrs = lr * bsp;   // the badge takes the hit of the arriving bubble: it swells, springs back and wobbles
+        if (!L.pic('lvBadge', 'nw_badge_level', { x: lx - lrs, y: ly - lrs, w: lrs * 2, h: lrs * 2 }, { rot: brot })) porthole(g, lx, ly, lr);   // the painted gold badge (public/ui/new)
         if ((window as unknown as { __lvShown?: boolean }).__lvShown !== false) {   // at the start of a level the badge stays empty until the bubble with the level number flies in
             const pp = levelPop(), back = (k: number) => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2), part = (d: number) => { const k = Math.max(0, Math.min(1, (pp - d) / (1 - d))); return pp >= 1 ? 1 : k <= 0 ? 0.001 : Math.max(0.001, back(k)); };
             const wob = (d: number) => (pp >= 1 ? 0 : Math.sin(Math.max(0, pp - d) * 16) * 0.16 * Math.pow(1 - pp, 1.5)), hop = (d: number) => (pp >= 1 ? 0 : -9 * Math.sin(Math.min(1, Math.max(0, (pp - d) / 0.5)) * Math.PI) * (1 - pp));   // each part springs out of the burst: a little hop, a wobble, then it settles (the word first, the number just after)
-            L.text('lvS', lx, ly - lr * 0.46 + hop(0), 'LEVEL', { size: 8, color: hexCss(T.amberL), stroke: hexCss(T.deeper), sw: 2, alpha: pp >= 1 ? 1 : Math.min(1, pp * 6) }).setScale(part(0)).setRotation(wob(0));
-            L.text('lvN', lx, ly + lr * 0.18 + hop(0.1), String(G.level), { size: 21, stroke: hexCss(T.deeper), sw: 4, alpha: pp >= 1 ? 1 : Math.min(1, Math.max(0, pp - 0.08) * 6) }).setScale(part(0.1)).setRotation(wob(0.1));
+            const tr = tierOf(), lt = L.text('lvN', lx + 0.5, ly - 1 + hop(0.1), String(G.level), { size: 28, color: tr ? tr.fill : '#ffffff', stroke: tr ? tr.stroke : hexCss(T.deeper), sw: 4, alpha: pp >= 1 ? 1 : Math.min(1, Math.max(0, pp - 0.08) * 6) });
+            const fitK = Math.min(1, (lr * 1.5) / Math.max(1, lt.width));   // 3 or 4 digits shrink to fit the blue disc (1-2 digits keep the full size)
+            lt.setScale(part(0.1) * fitK).setRotation(wob(0.1));
         }
         // progress: a glass water gauge. Starfish mark each target tank; the water rises as they are filled
         const done = G.goalShown ?? G.completed, target = Math.min(1, done / Math.max(1, G.cfg.goal));   // the gauge fills when the bubble from the finished tank arrives
@@ -147,9 +155,11 @@ export class Hud extends Phaser.Scene {
         if (pk > 0) { g.fillStyle(0xffffff, 0.35 * pk).fillRoundedRect(tube.x, tube.y, tube.w, tube.h, tube.h / 2); g.lineStyle(3, 0xffffff, 0.9 * pk).strokeRoundedRect(tube.x - 3 * pk, tube.y - 3 * pk, tube.w + 6 * pk, tube.h + 6 * pk, tube.h / 2 + 3 * pk); }
         L.text('goal', tube.x + tube.w / 2, tube.y + tube.h / 2 + 1, `${done}/${G.cfg.goal}`, { size: 18, stroke: hexCss(T.deeper), sw: 4 });   // the count sits in the middle of the gauge
         // pause: a brass valve wheel
-        const pc = { x: pause.x + pause.w / 2, y: pause.y + pause.h / 2 }, r = Math.min(pause.w, pause.h) / 2, dy = this.zBase.pressed === 'pause' ? 2 : 0;
-        porthole(g, pc.x, pc.y + dy, r, { thick: 5 });
-        const k2 = r / 19; g.fillStyle(BR.hi, 1).fillRoundedRect(pc.x - 6.5 * k2, pc.y + dy - 6.5 * k2, 4.5 * k2, 13 * k2, 2).fillRoundedRect(pc.x + 2 * k2, pc.y + dy - 6.5 * k2, 4.5 * k2, 13 * k2, 2);
+        const pc = { x: pause.x + pause.w / 2, y: pause.y + pause.h / 2 }, r = 29, dy = this.zBase.pressed === 'pause' ? 2 : 0;   // the pause button is drawn as big as the level badge
+        if (!L.pic('pauseBtn', 'nw_btn_pause', { x: pc.x - r, y: pc.y + dy - r, w: r * 2, h: r * 2 })) {   // the painted pause button (public/ui/new); the drawn valve wheel is the fallback
+            porthole(g, pc.x, pc.y + dy, r, { thick: 5 });
+            const k2 = r / 19; g.fillStyle(BR.hi, 1).fillRoundedRect(pc.x - 6.5 * k2, pc.y + dy - 6.5 * k2, 4.5 * k2, 13 * k2, 2).fillRoundedRect(pc.x + 2 * k2, pc.y + dy - 6.5 * k2, 4.5 * k2, 13 * k2, 2);
+        }
         this.zBase.add('pause', { x: pause.x - 4, y: pause.y - 4, w: pause.w + 8, h: pause.h + 8 }, { click: () => (document.getElementById('pauseBtn') as HTMLElement).click() });
     }
 
@@ -158,6 +168,6 @@ export class Hud extends Phaser.Scene {
     private backupTray(c: Ctx) {
         const { o, G } = c, bk = rectOf(document.getElementById('backup'), o);
         if (!G || !bk || !G.cfg.backup) return;   // level 1 has no Backup (the game hides the tank there)
-        c.hits.push(bk);
+        if (((window as unknown as { __bkA?: number }).__bkA ?? 1) > 0.5) c.hits.push(bk);   // faded away with the boosters while the camera moves: not tappable either
     }
 }

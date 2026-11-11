@@ -2,7 +2,20 @@
 
 Every published version stays playable at its own URL. The [landing page](https://thuannvathena.github.io/spot-a-fish/) lists them all.
 
-## v0.2.0 <Badge type="tip" text="Live" />
+## v0.3.0 <Badge type="tip" text="Live" />
+
+Changes since v0.2.0.
+
+- **Level start, in order:** the LEVEL words come first, the UI (top row, Backup, boosters) slides in while the bubble flies and has landed when it reaches the badge (the badge swells and wobbles), the first-time pop-up comes last. Hard (purple) and Super Hard (red-pink) levels from level 10 colour the words, the bubble and the number, with fish bones on the words. The words, the cheers and LEVEL COMPLETE! are painted pastel jelly lettering that ripples like water and is wrung into a spiral at the end.
+- **Boosters at the bottom, bigger (82 px),** in fixed slots (Hint, Clear Tank, Clear Backup). From level 2 all three show; a locked one is grey with a padlock and the level that opens it (4 / 7 / 9). Their first-time board sits above the button with a pointer; Backup fades with the boosters while the camera moves (and stays while a fish is still flying in).
+- **Six looks, one per 10 levels:** new 3D halls, water colours that differ more, curtains in the look's colours, pipe colour per look; the pipe fades as one block.
+- **Combo cheers** NICE! / GREAT! / SUPER! / WOW! (smaller, no x-count), a new **LEVEL COMPLETE!** title, the finished-tank swirl twists the whole tank and its plate; the win swirl hides the other fish so the orbiting ones are seen.
+- **Target tanks:** narrower, 3D water; a landing fish makes droplets that stay in the tank and leave rings. Pop-up headers curve with the ribbon; New feature pop-ups animate and show live pictures of the obstacles; the pipe message uses the cream board.
+- **Loading screen and logo:** own look (3D aquarium picture, the glossy Spot A Fish logo, a swimming 3D fish on the game's gauge, soft bubbles); it can no longer hang after a reload.
+- **Fixes:** effects stay inside the game frame, the lose blur covers the target tanks, Clear Tank is no longer wrongly grey, fish no longer hang nose-down under decor, the waltz event faces heads together, dev tools (one tap on the version: Levels, Reset, Win, Lose).
+- **Known:** the pop-up pictures from Bubble Fish are still temporary placeholders; the target tank glass picture is the old one.
+
+## v0.2.0
 
 Changes since v0.1.0.
 
