@@ -2,7 +2,14 @@
 
 Every published version stays playable at its own URL. The [landing page](https://thuannvathena.github.io/spot-a-fish/) lists them all.
 
-## v0.3.2 <Badge type="tip" text="Live" />
+## v0.3.3 <Badge type="tip" text="Live" />
+
+Changes since v0.3.2.
+
+- **Faster start:** the game now loads only what the first level needs (the Blue-white babe and 8 Unity fish, about 14 MB instead of 21 MB). The other 14 Unity fish and the 12 Tripo fish (level 61 only) load in the background while you play.
+- The "Level N" label under a locked booster is bigger.
+
+## v0.3.2
 
 Changes since v0.3.1.
 

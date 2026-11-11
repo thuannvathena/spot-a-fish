@@ -105,7 +105,7 @@ const Snd = (() => {
 
 /* ============================== species ============================== */
 // body = [length, height, width] multipliers, pat = pattern on body texture
-const SPECIES = []; let BASE_N = 0;   // the species are the 3D models (blue_white_babe and the Unity set), added by loadModels / loadUnity; BASE_N counts them once they are all in (colour variants are added after that)
+const SPECIES = []; let BASE_N = 0; const BASE = [];   // the species are the 3D models (blue_white_babe and the Unity set), added by loadModels / loadUnity; BASE_N counts them once they are all in (colour variants are added after that)
 const FISHART = {};   // id -> { tex, geo, hx, hy, hz }
 /* Fish are the supplied illustrations, "inflated" into real 3D: the alpha silhouette is turned into a puffy volume (thick in the middle,
    thin at fins and tail), the painting is mapped on both faces, and it is lit like any 3D model. */
@@ -272,9 +272,11 @@ function hoverRimTex(id) {   // a gold glowing silhouette of the fish, slightly 
   for (let k = 0; k < 28; k++) { const an = k / 28 * 6.2832, r = pad * .26; g.drawImage(t2, pad + Math.cos(an) * r, pad + Math.sin(an) * r); }
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4; return (a.rimTex = tex);
 }
-function prepModelArt() {   // flat pictures of the models (their thumbnails) for the few things that still use a picture of a fish: the swarm of small fish and the tube
-  BASE_N = SPECIES.length;
-  return Promise.all(SPECIES.map(sp => new Promise(res => { const im = new Image(); im.onload = () => { sp.img = im; try { prepFish(sp, im); } catch (e) { console.warn('no flat art for ' + sp.id, e); } res(); }; im.onerror = () => res(); im.src = THUMB[sp.id]; })));
+function artFor(list) {
+  return Promise.all(list.map(i => new Promise(res => { const sp = SPECIES[i], im = new Image(); im.onload = () => { sp.img = im; try { prepFish(sp, im); } catch (e) { console.warn('no flat art for ' + sp.id, e); } res(); }; im.onerror = () => res(); im.src = THUMB[sp.id]; }))).then(() => { for (const i of list) if (!BASE.includes(i)) BASE.push(i); BASE_N = BASE.length; });
+}
+function prepModelArt() {
+  return artFor(SPECIES.map((_, i) => i));
 }
 function variantOf(typeIdx, deg) {   // a look-alike of a species with shifted colours (created on demand)
   if (SPECIES[typeIdx].model3d) return modelVariant(typeIdx, deg);
@@ -330,15 +332,21 @@ function registerUnity(key, gltf) {
     obj: wrap, tex: map, sil, clip: null, k, ctr, hx: len / 2, hy: size.y * k / 2, hz: size.x * k / 2, len, cut: 0, eye: UNITY.eyes['fish_' + key.replace(/\D/g, '').padStart(2, '0')] || null };
   const sp = { id: 'm_' + key, model3d: key, len }; SPECIES.push(sp); MODEL_IDX[key] = SPECIES.length - 1; UNITY.keys.push(key); makeModelThumb(sp);
 }
-function loadUnity() {
+const UNITY_FIRST = ['fish_01.glb', 'fish_04.glb', 'fish_07.glb', 'fish_10.glb', 'fish_13.glb', 'fish_16.glb', 'fish_19.glb', 'fish_29.glb'];
+async function unityBatch(pick) {
+  const base = document.baseURI, list = (await (await fetch(new URL('models/unity/list.json', base))).json()).filter(pick), ld = new GLTFLoader(), before = SPECIES.length;
+  if (!UNITY.eyesP) UNITY.eyesP = fetch(new URL('models/unity/eyes.json', base)).then(r => r.json()).then(e => { UNITY.eyes = e; }).catch(e => { console.warn('no eye data: the Unity fish will not blink', e); });
+  await UNITY.eyesP;
+  await Promise.all(list.map(async f => { try { registerUnity('unity_' + f.replace(/\D+/g, ''), await ld.loadAsync(new URL('models/unity/' + f, base).href)); } catch (e) { console.warn('Unity fish ' + f + ' not loaded', e); } }));
+  UNITY.keys.sort(); return Array.from({ length: SPECIES.length - before }, (_, i) => before + i);
+}
+function loadUnity() {   // the first few Unity fish are enough to start; the rest come in the background (loadUnityRest)
   if (UNITY.p) return UNITY.p;
-  UNITY.p = (async () => {
-    const base = document.baseURI, list = await (await fetch(new URL('models/unity/list.json', base))).json(), ld = new GLTFLoader();
-    try { UNITY.eyes = await (await fetch(new URL('models/unity/eyes.json', base))).json(); } catch (e) { console.warn('no eye data: the Unity fish will not blink', e); }
-    await Promise.all(list.map(async f => { try { registerUnity('unity_' + f.replace(/\D+/g, ''), await ld.loadAsync(new URL('models/unity/' + f, base).href)); } catch (e) { console.warn('Unity fish ' + f + ' not loaded', e); } }));
-    UNITY.keys.sort(); UNITY.ready = true;
-  })();
+  UNITY.p = unityBatch(f => UNITY_FIRST.includes(f)).then(() => { UNITY.ready = true; });
   return UNITY.p;
+}
+function loadUnityRest() {
+  return loadUnity().then(() => unityBatch(f => !UNITY_FIRST.includes(f))).then(added => artFor(added));
 }
 /* ---- the Tripo fish (public/models/tripo): single static meshes without a skeleton. They swim with a bend of the whole body made in the vertex shader (the tail swings most). They are added after BASE_N is fixed, so no ordinary level draws them: only a level that lists them in `fishKeys` (level 61). ---- */
 const TRIPO = ['Emerald_blue', 'Golden_Flame', 'Goldie_tot', 'Green_Orby', 'Green_finny', 'brown_stripe', 'deep_lantern_fish', 'ghostly_wave', 'golden_spot', 'golden_tide', 'goldie', 'green_beast'], TRIPO_LEN = .62;
@@ -365,9 +373,11 @@ function scanEyeTex(img) {   // finds every eye picture on a Tripo texture (a co
   }
   return { canvas: out, n: eyes.length };
 }
-async function loadTripo() {
+let TRIPO_P = null;
+function loadTripo() { return TRIPO_P || (TRIPO_P = loadTripoNow()); }
+async function loadTripoNow() {
   const base = document.baseURI, ld = new FBXLoader(), tl = new THREE.TextureLoader();
-  await Promise.all(TRIPO.map(async n => { try {
+  for (const n of TRIPO) { await new Promise(r => setTimeout(r, 250)); await (async () => { try {
     const obj = await ld.loadAsync(new URL(`models/tripo/${n}/model.fbx`, base).href), tex = await tl.loadAsync(new URL(`models/tripo/${n}/tex.jpg`, base).href); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
     let mesh = null; obj.updateWorldMatrix(true, true); obj.traverse(m => { if (m.isMesh && !mesh) mesh = m; }); if (!mesh) throw new Error('no mesh');
     const g = mesh.geometry.clone(); g.applyMatrix4(mesh.matrixWorld); g.computeBoundingBox(); const box = g.boundingBox, size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
@@ -380,7 +390,7 @@ async function loadTripo() {
     MODEL3D['tripo_' + n] = { static: true, lid: scanEyeTex(tex.image), geo: g, tex, img, vt, len: TRIPO_LEN, hx: TRIPO_LEN / 2, hy: size.y * k / 2, hz: size.z * k / 2,
       hueTex(hue) { if (!hue) return this.tex; if (!vt[hue]) { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').drawImage(img, 0, 0); hueRotate(c, hue); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.flipY = tex.flipY; t.anisotropy = 4; vt[hue] = t; } return vt[hue]; } };
     const sp = { id: 'm_tripo_' + n, model3d: 'tripo_' + n, len: TRIPO_LEN }; SPECIES.push(sp); MODEL_IDX['tripo_' + n] = SPECIES.length - 1; makeModelThumb(sp);
-  } catch (e) { console.warn('Tripo fish ' + n + ' not loaded', e); } }));
+  } catch (e) { console.warn('Tripo fish ' + n + ' not loaded', e); } })(); }
 }
 function buildStaticFish(sp) {   // same interface as buildModelFish (swim pose, hover glow, tap proxy) for a mesh without bones
   const M = MODEL3D[sp.model3d], tex = sp.hue ? M.hueTex(sp.hue) : M.tex, g = new THREE.Group(), uPh = { value: 0 }, uAmp = { value: .2 }, L = M.len;
@@ -1217,7 +1227,7 @@ const FISH_CAP = 40, TUBE_INIT = 40;   // max fish in the tank at once (target +
 let PLAY_OVERRIDE = null;
 function levelConfig(L) {
   const C = cfgFromLevel(PLAY_OVERRIDE || LV[Math.min(L, LV.length) - 1], L);
-  C.typesTotal = Math.min(BASE_N, C.typesTotal); return C;
+  C.typesTotal = Math.min(BASE.length, C.typesTotal); return C;
 }
 
 function clearWorld() {
@@ -1414,10 +1424,11 @@ function newLevel(L) {
   window.__hudFadeT0 = undefined; const hd = L >= 2 ? HUD_DELAY_MS : 0; window.__hudInT0 = performance.now() + hd; { const gi0 = gid + 1; if (hd) setTimeout(() => { if (gid === gi0) hudIntroAnim(); }, hd); else hudIntroAnim(); } window.__lvTier = levelTier(L);   // level 2+: the LEVEL words come first, the UI slides in while the bubble flies and has landed when the bubble reaches the badge
   
   clearWorld(); ovClear(); gid++;
-  const cfg = levelConfig(L); setTheme(L, cfg.theme);
+  const cfg = levelConfig(L); if (Array.isArray(cfg.fishKeys) && cfg.fishKeys.length && !MODEL_IDX[cfg.fishKeys[0]]) { loadTripo().then(() => newLevel(L)); return; }
+  setTheme(L, cfg.theme);
   const k = cfg.goal;   // one target species per set, exactly 3 fish each - no spare target fish are ever added
   // big species (whale, shark) never become targets - they only swim around as scenery among the decoys
-  const pool = shuffle(Array.from({ length: BASE_N }, (_, i) => i)), isBig = i => (SPECIES[i].len || 0) >= .8;
+  const pool = shuffle(BASE.slice()), isBig = i => (SPECIES[i].len || 0) >= .8;
   const smallAll = pool.filter(i => !isBig(i)), bigAll = pool.filter(i => isBig(i));
   const nb = Math.min(bigAll.length, L < 3 ? 0 : L < 8 ? 1 : 2);
   const fk = Array.isArray(cfg.fishKeys) && cfg.fishKeys.length ? cfg.fishKeys.map(kk => MODEL_IDX[kk]).filter(i => i !== undefined) : null;   // a test level can name its fish (level 61: the Tripo set, one of each)
@@ -2043,7 +2054,7 @@ function swarmMat(art) {   // grey, lit; the tail sways in the vertex shader, ea
 }
 function swarmStart() {
   if (!SWARM.geo) return; swarmClear(); const N = 500, D = 18;   // fixed: 500 fish, each out for 18 s
-  const small = []; for (let i = 0; i < BASE_N; i++) if (!((SPECIES[i].len || 0) >= .8) && FISHART[SPECIES[i].id]) small.push(i); const types = shuffle(small).slice(0, 2);
+  const small = []; for (const i of BASE) if (!((SPECIES[i].len || 0) >= .8) && FISHART[SPECIES[i].id]) small.push(i); const types = shuffle(small).slice(0, 2);
   const house = makeSwarmHouse(Math.atan2(cam.position.z, cam.position.x) + (Math.random() < .5 ? -1 : 1) * rand(.75, .95)), H = house.userData.mouth.clone();   // every school comes out of its own cave
   Object.assign(swarm, { on: true, t: 0, house, D, H, th0: Math.atan2(H.z, H.x), sgn: Math.random() < .5 ? 1 : -1, w: .9, ph: [rand(0, 6.28), rand(0, 6.28), rand(0, 6.28)], N, spread: 3 });
   const live = G.things.filter(o => o.kind === 'fish' && o.alive && !o.big), needL = live.filter(o => G.need && G.need.has(o.type)), pickAnchor = () => (needL.length && Math.random() < .55 ? pick(needL) : pick(live));   // half of the swarm clings to the fish you are looking for
@@ -3683,7 +3694,7 @@ const LOADER = (() => {   // the loading screen: the bar follows the real loadin
       { const wv = t * 4.2, amp = Math.max(2, bar.clientHeight * .09); sw(fr.main, hx, hy - Math.sin(wv) * amp, 1, 0, 1.4); fr.main.hold.rotation.z = Math.cos(wv) * .16; } for (const f of fr.swim) { f.x += f.dir * f.sp * dt; if (f.x > fr.W + 80) f.dir = -1; if (f.x < -80) f.dir = 1; sw(f, f.x, fr.H * f.yf + Math.sin(t * .6 + f.ph) * 10, f.dir, f.ph, 1.0); } fr.r.render(fr.sc, fr.cam); }
     if (v >= 1 && fin) { clearInterval(iv); fin(); }
   };
-  const tick = now => { try { tick0(now); } catch (e) { if (!tick.warned) { tick.warned = true; console.warn('loading screen', e); } if (tgt >= 1 && fin) { clearInterval(iv); fin(); } } };   // one broken piece of decoration must never keep the screen up: the bar and the exit still run
+  const tick = now => { const _a = performance.now(); try { tick0(now); } catch (e) { if (!tick.warned) { tick.warned = true; console.warn('loading screen', e); } if (tgt >= 1 && fin) { clearInterval(iv); fin(); } } const _d = performance.now() - _a; window.__tk = window.__tk || { n: 0, sum: 0, max: 0 }; window.__tk.n++; window.__tk.sum += _d; window.__tk.max = Math.max(window.__tk.max, _d); };   // one broken piece of decoration must never keep the screen up: the bar and the exit still run
   const iv = setInterval(() => tick(performance.now()), 33);   // a timer, not requestAnimationFrame: the screen must finish even if the page is in the background or frames are throttled
   return {
     step(x) { tgt = Math.max(tgt, x); },
@@ -3698,20 +3709,19 @@ const LOADER = (() => {   // the loading screen: the bar follows the real loadin
     done() { tgt = 1; setTimeout(() => { if (fin) { v = 1; clearInterval(iv); fin(); } }, 9000); return new Promise(res => { let once = false; fin = () => { if (once) return; once = true; const wait = Math.max(0, 1500 - (performance.now() - t0)); setTimeout(() => { el.classList.add('pop'); setTimeout(() => { el.classList.add('out'); setTimeout(() => { el.remove(); }, 600); res(); }, 380); }, wait); }; }); }
   };
 })();
-const LS = x => v => { LOADER.step(x); return v; };
+const LS = x => v => { (window.__steps = window.__steps || []).push([x, Math.round(performance.now())]); LOADER.step(x); return v; };
 (function prefetchAll() {   // files are asked for in the order the loaders need them, only a few at a time, so the first ones finish first (asking for everything at once shares the bandwidth and makes all of them finish last)
   const base = document.baseURI, q = [];
   let active = 0;
   const pump = () => { while (active < 6 && q.length) { const u = q.shift(); active++; fetch(new URL(u, base)).then(r => r.arrayBuffer()).catch(() => { }).then(() => { active--; pump(); }); } };
   const get = u => { q.push(u); pump(); };
   get('models/unity/eyes.json'); get('models/unity/swarm_fish.glb'); get('models/blue_white_babe/model.fbx'); get('models/blue_white_babe/Full.png');
-  fetch(new URL('models/unity/list.json', base)).then(r => r.json()).then(l => l.forEach(f => get('models/unity/' + f))).catch(() => { });
-  TRIPO.forEach(n => { get('models/tripo/' + n + '/model.fbx'); get('models/tripo/' + n + '/tex.jpg'); });
+  UNITY_FIRST.forEach(f => get('models/unity/' + f));
   ['target_back', 'target_front', 'backup_back', 'backup_front', 'bubble_orb', 'bubble'].forEach(n => get('ui/tanks/' + n + '.png'));
 })();
 const SAFE = f => v => Promise.resolve().then(() => f(v)).catch(e => { console.warn('loading step failed', e); });   // a step that fails or hangs must not freeze the loading screen
 const CAP = (f, ms) => v => Promise.race([SAFE(f)(v), new Promise(r => setTimeout(r, ms))]);
-CAP(loadModels, 20000)().then(LS(.2)).then(v => new Promise(r => setTimeout(() => r(v), 30))).then(CAP(loadUnity, 20000)).then(v => { LOADER.fish(); return v; }).then(LS(.5)).then(v => new Promise(r => setTimeout(() => r(v), 30))).then(CAP(prepModelArt, 15000)).then(LS(.65)).then(v => new Promise(r => setTimeout(() => r(v), 30))).then(CAP(loadTripo, 20000)).then(LS(.85)).then(CAP(loadTankArt, 15000)).then(LS(.9)).then(() => new Promise(r => setTimeout(r, 30))).then(() => { fitDecor(); LOADER.step(.95); }).then(() => new Promise(r => setTimeout(r, 30))).then(() => { makeThumbs(); LOADER.step(.99); }).then(() => LOADER.done()).then(() => { document.querySelectorAll('.fishy[data-ic=fish]').forEach(e => { e.innerHTML = `<img src="${THUMB[SPECIES[0].id]}" style="height:54px">`; }); resize(); newLevel(Math.min(save.last || 1, save.unlocked)); requestAnimationFrame(frame); if (PLAYTEST) parent.postMessage({ type: 'ff-ready' }, '*'); });
+CAP(loadModels, 20000)().then(LS(.2)).then(v => new Promise(r => setTimeout(() => r(v), 30))).then(CAP(loadUnity, 20000)).then(v => { LOADER.fish(); return v; }).then(LS(.5)).then(v => new Promise(r => setTimeout(() => r(v), 30))).then(CAP(prepModelArt, 15000)).then(LS(.65)).then(v => new Promise(r => setTimeout(() => r(v), 30))).then(LS(.85)).then(CAP(loadTankArt, 15000)).then(LS(.9)).then(() => new Promise(r => setTimeout(r, 30))).then(() => { fitDecor(); LOADER.step(.95); }).then(() => new Promise(r => setTimeout(r, 30))).then(() => { makeThumbs(); LOADER.step(.99); }).then(() => LOADER.done()).then(() => { document.querySelectorAll('.fishy[data-ic=fish]').forEach(e => { e.innerHTML = `<img src="${THUMB[SPECIES[0].id]}" style="height:54px">`; }); resize(); newLevel(Math.min(save.last || 1, save.unlocked)); requestAnimationFrame(frame); setTimeout(() => { loadUnityRest().catch(e => console.warn('more fish', e)).then(() => new Promise(r => setTimeout(r, 2500))).then(() => loadTripo()).catch(e => console.warn('tripo', e)); }, 1500); if (PLAYTEST) parent.postMessage({ type: 'ff-ready' }, '*'); });
 
 // level editor Play button: the editor posts { type: 'ff-play', level, seed }
 function hashSeed(v) { let h = 2166136261; for (const ch of String(v)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }

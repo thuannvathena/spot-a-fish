@@ -154,7 +154,7 @@ export function paintTools(L: Layer, c: Ctx) {
             if (L.pic('bt' + id, 'nw_btn_round_grey', { x: lx - lr, y: ly - lr, w: lr * 2, h: lr * 2 }, { alpha: fade })) {
                 const lz = lr * 0.9; L.pic('bi' + id, 'nw_lock', { x: lx - lz * 0.4, y: ly - lz * 0.5, w: lz * 0.8, h: lz }, { alpha: fade });
             }
-            L.text('lk' + id, lx, ly + lr + 13, `Level ${lockLv}`, { size: 14, color: '#ffffff', stroke: '#0c3a6e', sw: 4, alpha: fade });
+            L.text('lk' + id, lx, ly + lr + 16, `Level ${lockLv}`, { size: 19, color: '#ffffff', stroke: '#0c3a6e', sw: 5, alpha: fade });
             c.hits.push(rl); continue;
         }
         const r = rectOf(el, c.o); if (!r || r.w < 4 || !shown(el)) continue;

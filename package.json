@@ -1,7 +1,7 @@
 {
   "name": "spot-a-fish",
   "private": true,
-  "version": "0.3.1",
+  "version": "0.3.3",
   "type": "module",
   "scripts": {
     "dev": "npm run spike:prepare && vite",
