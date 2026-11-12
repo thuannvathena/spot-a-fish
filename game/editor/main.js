@@ -1,7 +1,7 @@
 import { LEVEL_SCHEMA, defaultsFor } from '../src/levelcfg.js';
 import DEFAULTS from '../src/levels.json';
 import { FISH_ICONS } from '../src/fishicons.js';
-import UNITY_LIST from '../../public/models/unity/list.json';
+import FISH_LIST from '../../public/models/fish/list.json';
 
 /* ---------- constants and helpers ---------- */
 const FISH_CAP = 40, TUBE_INIT = 40, SPECIES_MAX = 23, CATCHABLE = 23, HISTORY_KEEP = 10;
@@ -156,8 +156,8 @@ function renderCenter() {
     ${num('Fish size', 'sizeK', lv, { min: 0.5, max: 3, step: 0.05 })}${num('Fish speed', 'speedK', lv, { min: 0.3, max: 3, step: 0.05 })}
     <div class="f"><small>Bounty tanks (x1)</small>${(lv.bounty || []).map((b, i) => `<span>${esc(b)} <a href="#" data-rmb="${i}" class="mu">remove</a></span>`).join(', ') || '<span class="mu">none</span>'}
      <select id="addB"><option value="">+ add bounty</option>${BOUNTY.map(b => `<option>${b}</option>`).join('')}</select></div></div></div>
-   <details class="sec"><summary>Fish in the game (${UNITY_LIST.length + 1} 3D models)</summary><div class="fishgrid">${UNITY_LIST.map(fn => { const n = parseInt(fn.match(/\d+/)[0]), ic = FISH_ICONS.find(f => f.n === n); return `<div title="Unity fish ${n}">${ic ? `<img src="${ic.src}" alt="">` : '<span style="display:block;height:46px;line-height:46px">3D</span>'}<span>#${n}</span></div>`; }).join('')}<div title="blue_white_babe"><span style="display:block;height:46px;line-height:46px">3D</span><span>babe</span></div></div>
-    <p class="mu sm">Every fish in the game is a 3D model; a level picks its species from this list at random, and look-alike decoys are the same model in other colours. The tank on the right is the real game, so you see exactly what the player sees.</p></details>`;
+   <details class="sec"><summary>Fish in the game (${FISH_LIST.length} 3D models)</summary><div class="fishgrid">${FISH_LIST.map(f => `<div title="${f.key} (${f.group})"><span style="display:block;height:46px;line-height:46px">3D</span><span>${f.key.replace(/_/g, ' ')}</span></div>`).join('')}</div>
+    <p class="mu sm">Every fish in the game is a 3D model; each level names its species (fishKeys in levels.json, written by scripts/assign-fish.py), and look-alike decoys are the same model in other colours. The tank on the right is the real game, so you see exactly what the player sees.</p></details>`;
 }
 function renderRight() {
   const el = $('cR'), lv = level(); if (!S.store || !lv) { el.innerHTML = ''; return; }
