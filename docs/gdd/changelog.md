@@ -2,7 +2,21 @@
 
 Every published version stays playable at its own URL. The [landing page](https://thuannvathena.github.io/spot-a-fish/) lists them all.
 
-## v0.3.3 <Badge type="tip" text="Live" />
+## v0.3.4 <Badge type="tip" text="Live" />
+
+Changes since v0.3.3.
+
+- **Fix (blank blue screen):** a player whose saved progress was at a high level (around level 25 and up) got a blank blue screen after loading, because the level needed more fish species than the first batch that is loaded at start. The rest of the fish are now loaded during the loading screen when the starting level is above 4, and a level waits for them if they are late.
+- **Six tank shapes, ten levels each:** cylinder (1-10), bowl (11-20), rounded box (21-30), hexagon (31-40), flower (41-50), heart (51-60); the cycle repeats after level 60. The glass, base, sand, water surface, decor, pipe, swarm, squid ink and the win swirl all follow the shape. The glass lens effect is only on the cylinder.
+- **Decor:** flat or thin pieces are gone (fans, starfish, hollow tube corals, the ship's sail, the anchor, the Atlantis dome); kelp now has body; solid pieces no longer overlap each other or stick out of the glass.
+- **Pipe:** when see-through it is drawn as its own blurred layer, so the big tank's base shows through it; it is attached to a flat part of the wall and faces along the wall.
+- **Fish movement:** far fewer fish circle or dash-spin, and the burst after a tap is slower and shorter.
+- **Fish colours:** species are dealt round by round from the colour families, so one colour no longer piles up.
+- **Combo:** the chain window is 7.5 s (was 4.5 s); the cheer word (Nice / Great / Super / Wow) appears just under the tank the fish lands in, when it lands.
+- **Boosters** are smaller (72 px) and a clam is never placed under the booster row.
+- **Sound:** a tap on a grey locked booster plays the button click; the New Feature and booster pop-ups play the open / close sounds; the water-splash sound no longer doubles the fish-to-tank and tank-complete recordings. `docs/gdd/sounds.md` lists every sound and the ones still to find.
+
+## v0.3.3
 
 Changes since v0.3.2.
 
