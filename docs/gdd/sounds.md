@@ -1,41 +1,21 @@
-# Sounds: what to find / Âm thanh cần kiếm
+# Sounds / Âm thanh
 
-**Bạn chỉ cần làm theo bảng này. / You only need this table.**
-Mỗi dòng là một âm thanh cần kiếm. Lưu file `.m4a` đặt tên theo cột "File name" rồi gửi tôi, tôi sẽ gắn vào game.
-Pri: **A** = làm trước (nghe nhiều nhất), **B** = làm sau, **C** = tuỳ chọn.
+**Trạng thái (12/11):** đã gắn xong toàn bộ file trong `Added Assets/Sound/Newly Added` (đổi sang m4a, để ở `public/sfx`). Âm nào không có file thì **không phát** (đã bỏ hết tiếng tổng hợp bằng code).
 
-| # | Pri | Tiếng Việt | English | File name | Khi nào phát |
-|---|---|---|---|---|---|
-| 1 | A | Chữ combo Nice / Great / Super / Wow | Combo words | `sfx_combo_word.m4a` | Bấm đúng cá liên tiếp |
-| 1b | A | Nốt tăng dần mỗi cá vào bể trong chain (một nốt ngắn, có cao độ rõ: giọt nước, marimba, bong bóng; khoảng 0,2-0,3 giây, nốt C5) | Combo step note: tonal, short; I pitch it up the major scale | `sfx_combo_step.m4a` | Mỗi cá vào bể đích trong chain |
-| 2 | A | Nắp ống mở | Pipe lid opens | `sfx_pipe_open.m4a` | Ống sắp thả cá |
-| 3 | A | Nắp ống đóng | Pipe lid closes | `sfx_pipe_close.m4a` | Sau khi cá ra hết |
-| 4 | A | Nước bắn | Water splash | `sfx_splash.m4a` | Cá nhảy ra khỏi mặt nước (bay lên bể đích, màn thắng), thả đá, thả ngọc trai, thả mồi, nước tràn lúc thua. Cá rơi xuống bể từ Backup dùng `sfx_fish_to_tank`; cá vào bể đích nhỏ và bể đích xong không còn tiếng splash |
-| 5 | A | Bấm vào nước, cá tản ra | Tap on water, fish scatter | `sfx_tap_water.m4a` | Bấm chỗ trống; ống bắt đầu rung |
-| 6 | A | Bấm trúng vật cản | Wrong / bad hit | `sfx_bad.m4a` | Chạm vật cản; nước tràn lúc thua |
-| 7 | A | Bấm vào con sò | Clam tapped | `sfx_clam_tap.m4a` | Mỗi lần bấm (đang dùng click nút) |
-| 8 | A | Sò đớp cá | Clam snaps shut | `sfx_clam_snap.m4a` | Cá cần tìm bơi gần sò |
-| 9 | A | Sò mở ra thả cá | Clam freed | `sfx_clam_open.m4a` | Bấm đủ số lần |
-| 10 | B | Hang bầy cá hiện ra | Swarm cave pops up | `sfx_swarm_cave.m4a` | Bắt đầu sự kiện bầy cá |
-| 11 | B | Bầy cá bơi qua | Swarm passes | `sfx_swarm_pass.m4a` | Trong lúc bầy chạy (nhẹ) |
-| 12 | B | Hai cá đánh nhau | Squabble clash | `sfx_squabble.m4a` | Sự kiện đánh nhau |
-| 13 | B | Cá xếp hàng conga / khiêu vũ | Conga / waltz | `sfx_conga_waltz.m4a` | Hai sự kiện đó |
-| 14 | B | Ngọc trai bị húc | Pearl bounce | `sfx_pearl_bounce.m4a` | Sự kiện ngọc trai |
-| 15 | B | Cá chui vào nhà | Fish hide | `sfx_hide.m4a` | Sự kiện trốn |
-| 16 | B | Tay thả mồi | Feeding hand and pellets | `sfx_feed.m4a` | Sự kiện cho ăn |
-| 17 | B | Nhím / sứa bị bấm | Urchin / jelly tapped | `sfx_obstacle_tap.m4a` | Vật cản chạy vào Backup |
-| 18 | B | Bắt được cá thưởng | Bounty fish caught | `sfx_bounty.m4a` | Cá bounty |
-| 19 | B | Chữ LEVEL N / chữ khen hiện ra | Title / cheer pop | `sfx_title_pop.m4a` | Đầu level (đang là tiếng code) |
-| 20 | B | Bóng bay vào thanh tiến độ | Gauge fill | `sfx_gauge.m4a` | Tank xong (đang là tiếng code) |
-| 21 | B | Hoàn thành bước hướng dẫn | Tutorial step done | `sfx_tutorial_ok.m4a` | Xoay, zoom, nghiêng lần đầu (đang là tiếng code) |
-| 22 | C | Banner hoàn thành / sao điểm | Result banner, stars | `sfx_result.m4a` | Màn kết quả |
-| 23 | C | Xoay, zoom bể | Camera swish | `sfx_camera.m4a` | Lúc kéo (rất nhỏ) |
-| 24 | C | Đổi hình bể | Tank shape change | `sfx_shape_change.m4a` | Mỗi 10 level |
-| 25 | C | Nền nước, bong bóng | Water ambience loop | `sfx_ambience.m4a` | Dưới nhạc nền (rất nhỏ) |
+| Âm | File | Khi nào phát |
+|---|---|---|
+| Combo | `sfx_combo_word_1..4` | Ngay lúc bấm cá đúng, từ cá thứ 2 trong chain: 1, 2, 3, 4 rồi giữ nguyên âm 4 cho đến khi gãy combo (chữ khen hiện đúng chỗ cá vừa bấm) |
+| Bấm sai | `sfx_bad` | Cá sai hoặc vật cản đáp xuống Backup; nước tràn lúc thua |
+| Bấm vào nước | `sfx_tap_water` | Bấm chỗ trống; ống bắt đầu rung |
+| Ống mở / đóng | `sfx_pipe_open` / `sfx_pipe_close` | Ống sắp thả cá / thả xong hoặc tạm giữ |
+| Nước bắn | `sfx_splash` | Cá nhảy ra khỏi mặt nước, cá rơi lại sau màn thắng, thả đá, ngọc trai chạm nước |
+| Sò | `sfx_clam_snap`, `sfx_clam_tap_open` | Sò đớp cá; mỗi lần bấm sò và lúc sò mở (dùng chung một file) |
+| Ngọc trai | `sfx_pearl_bounce` | Mỗi lần ngọc trai nảy |
+| Thanh tiến độ | `sfx_bubble_hit_gauge`, `sfx_gauge_fill` | Bóng bay trúng thanh; thanh dâng lên (trễ 0,1 s) |
+| Xoáy thắng | `sfx_win_swirl` | Lúc cá bắt đầu bơi xoắn trong màn thắng (T = 0,3 s) |
+| Rèm | `sfx_curtain_close` / `sfx_curtain_open` | Rèm đóng sau màn thắng / rèm mở sang level mới |
 
-**Đã chốt, không cần kiếm:** chạm booster khoá dùng `ui_button_click`; Clear Tank, Clear Backup và bộ đếm combo x3/x4 không cần; cá chui ra từ ống dùng `sfx_fish_spawn`; mở/đóng Pause, Levels, Play On đã có tiếng.
-
-**Đã gắn xong (đã kiểm tra khi chạy):** chạm ô booster khoá phát `ui_button_click` (không dùng được booster); pop-up New Feature và pop-up hướng dẫn booster mở phát `popopen`, đóng phát `popclose`.
+Không dùng (chưa có file): swarm, squabble, conga, hide, feed, nhím/sứa, bounty, title pop, tutorial, kết quả, camera, đổi hình bể, ambience, `sfx_combo_step`.
 
 ---
 

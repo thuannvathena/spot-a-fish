@@ -1,8 +1,8 @@
 # Game Design Document
 
-**Spot A Fish** · Game Design Document · tracks build `latest` (see [Changelog](./changelog))
+**Fishy Find** · Game Design Document · tracks build `latest` (see [Changelog](./changelog))
 
-This document describes what Spot A Fish is, how it plays, and why it is built the way it is. Every number in it (timings, formulas, sizes, colours) comes from the current code. If the two disagree, the code is right and this document has a bug.
+This document describes what Fishy Find is, how it plays, and why it is built the way it is. Every number in it (timings, formulas, sizes, colours) comes from the current code. If the two disagree, the code is right and this document has a bug.
 
 ## How to read this document
 

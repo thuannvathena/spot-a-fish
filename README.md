@@ -1,4 +1,4 @@
-# Spot A Fish
+# Fishy Find
 
 A 3D aquarium puzzle: find and tap the fish your target tanks need.
 

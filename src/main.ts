@@ -15,7 +15,7 @@ const px = () => ({ w: Math.max(1, Math.round(host.clientWidth * DPR)), h: Math.
 // so Phaser listens on #app instead: taps still reach the 3D canvas below, and Hud.ts tells the 3D side which taps belong to Phaser UI.
 const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
-    title: 'Spot A Fish',
+    title: 'Fishy Find',
     transparent: true,
     parent: 'phaser-hud',
     scale: { mode: Phaser.Scale.NONE, width: px().w, height: px().h },

@@ -38,6 +38,8 @@ export function cfgFromLevel(lv, L) {
   if (num(lv.per) && !(Array.isArray(lv.tanks) && lv.tanks.length)) C.per = lv.per;
   if (num(lv.species)) C.typesTotal = lv.species; else C.typesTotal = C.goal * 2;
   if (num(lv.decoyFish)) C.decoys = lv.decoyFish;
+  if (num(lv.startFish)) C.startFish = lv.startFish;   // fish in the tank when the level opens (targets and decoys)
+  if (num(lv.maxFish)) C.maxFish = lv.maxFish;       // all the fish of the level: what is not there at the start (maxFish - startFish) is pumped in by the pipe, no more
   if (num(lv.look)) C.look = lv.look;
   if (num(lv.sizeK)) C.sizeK = lv.sizeK;
   if (num(lv.speedK)) C.speedK = lv.speedK;
@@ -83,7 +85,7 @@ export function levelToJson(L) {
     schema: LEVEL_SCHEMA, version: 1, id: 'L' + pad, name: names[L] || 'Level ' + L,
     status: 'Ready', difficulty: L <= 4 ? 'Easy' : L <= 10 ? 'Medium' : 'Hard', category: L === 1 ? 'Tutorial' : C.bounty.length ? 'Bounty' : 'Normal',
     refLevel: L, goal: C.goal, per: C.per, bounty: C.bounty.slice(),
-    species: C.typesTotal, decoyFish: C.decoys, look: C.look, sizeK: C.sizeK, speedK: C.speedK,
+    species: C.typesTotal, decoyFish: C.decoys, startFish: C.startFish, maxFish: C.maxFish, look: C.look, sizeK: C.sizeK, speedK: C.speedK,
     urchin: C.urchin, jelly: C.jelly, squid: C.squid, clam: C.clams, swarm: !!C.swarm,
     tube: { enabled: !!C.tube, autoPumpWhenStuck: true, stuckDelaySec: 2.5 },
     backup: C.backup, hint: C.hint, tank: C.tank, clear: C.clear,

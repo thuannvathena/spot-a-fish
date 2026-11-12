@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: Spot A Fish
+  name: Fishy Find
   text: 3D aquarium puzzle prototype
   tagline: "A 3D aquarium puzzle: find and tap the fish your target tanks need."
   actions:

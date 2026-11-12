@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { BR, DPR, Layer, R, Zones, T, hexCss, inRect, porthole, rectOf } from '../ui/kit';
 import { BF_FILES, NEW_FILES } from '../ui/bf';
-import { Ctx, GameState, levelPop, tierOf, paintLevelIntro, paintMessages, paintWinText, paintOverlay, paintSpot, paintTargets, paintTools } from '../ui/panels';
+import { Ctx, GameState, levelPop, paintLevelIntro, paintMessages, paintWinText, paintOverlay, paintSpot, paintTargets, paintTools } from '../ui/panels';
 
 // The whole game UI, drawn by Phaser. The Three.js game keeps writing its state into hidden HTML elements
 // (layout, classes, text); every frame this scene mirrors them (see src/ui/panels.ts) and forwards taps to them.
@@ -99,14 +99,15 @@ export class Hud extends Phaser.Scene {
         this.ovCanvas ??= (window as unknown as { __ff?: { ov?: { canvas: HTMLCanvasElement } } }).__ff?.ov?.canvas ?? null;
         if (this.ovCanvas) {
             const st = this.ovCanvas.style, spot = document.getElementById('spotOv'), hole = document.getElementById('spotBox');
-            if (!this.modal) { st.opacity = ''; st.clipPath = ''; }
+            const ww = window as unknown as { __popA?: number }, pa = ww.__popA ?? 0; ww.__popA = 0;   // how solid the pop-up is right now (1 when fully shown; it pops in and out)
+            if (pa < 0.001 && !this.modal) { st.opacity = ''; st.clipPath = ''; }
             else if (spot && spot.classList.contains('show') && hole) {   // a highlight guide: the 3D picture (the Backup tank) shows at full strength inside the lit hole only
                 const r = hole.getBoundingClientRect(), rad = parseFloat(hole.style.borderRadius) || 20;
                 st.opacity = '1'; st.clipPath = `inset(${Math.max(0, r.top)}px ${Math.max(0, window.innerWidth - r.right)}px ${Math.max(0, window.innerHeight - r.bottom)}px ${Math.max(0, r.left)}px round ${rad}px)`;
             } else {   // a pop-up: the 3D overlay (target tanks, Backup) stays as a faint picture round it, and its own area is cut out so nothing shows through the pop-up
                 const pr = (window as unknown as { __popRect?: { x: number; y: number; w: number; h: number; r?: number; top?: { x: number; y: number; w: number; h: number } } | null }).__popRect;
-                st.opacity = '0.15';
-                if (pr) {   // the hole follows the rounded pop-up (a plain rectangle showed as a dark box behind its corners)
+                st.opacity = String(1 - 0.85 * Math.min(1, pa));   // the 3D layer fades with the pop-up; it is cut out round it only when the pop-up is solid, so nothing vanishes while the pop-up is still see-through
+                if (pr && pa > 0.97) {   // the hole follows the rounded pop-up (a plain rectangle showed as a dark box behind its corners)
                     const rr = Math.min(pr.r ?? 0, pr.w / 2, pr.h / 2), x1 = pr.x + pr.w, y1 = pr.y + pr.h, tp = pr.top;   // (a pop-up with a ribbon narrower than its body: the hole is the two shapes together)
                     const body = tp ? `M${tp.x} ${tp.y}H${tp.x + tp.w}V${pr.y}H${x1}V${y1 - rr}A${rr} ${rr} 0 0 1 ${x1 - rr} ${y1}H${pr.x + rr}A${rr} ${rr} 0 0 1 ${pr.x} ${y1 - rr}V${pr.y}H${tp.x}Z`
                         : `M${pr.x + rr} ${pr.y}H${x1 - rr}A${rr} ${rr} 0 0 1 ${x1} ${pr.y + rr}V${y1 - rr}A${rr} ${rr} 0 0 1 ${x1 - rr} ${y1}H${pr.x + rr}A${rr} ${rr} 0 0 1 ${pr.x} ${y1 - rr}V${pr.y + rr}A${rr} ${rr} 0 0 1 ${pr.x + rr} ${pr.y}Z`;
@@ -127,11 +128,12 @@ export class Hud extends Phaser.Scene {
         // level: a porthole
         const lr = 29, lx = lvl.x + lvl.w / 2, ly = lvl.y + lvl.h / 2;
         const bpk = (() => { const t0 = (window as unknown as { __lvPop?: number }).__lvPop; return t0 ? (performance.now() - t0) / 1000 : 9; })(), bsp = bpk < 1.3 ? 1 + 0.3 * Math.exp(-5.5 * bpk) * Math.cos(17 * bpk) : 1, brot = bpk < 1.3 ? 0.22 * Math.exp(-5 * bpk) * Math.sin(21 * bpk) : 0, lrs = lr * bsp;   // the badge takes the hit of the arriving bubble: it swells, springs back and wobbles
-        if (!L.pic('lvBadge', 'nw_badge_level', { x: lx - lrs, y: ly - lrs, w: lrs * 2, h: lrs * 2 }, { rot: brot })) porthole(g, lx, ly, lr);   // the painted gold badge (public/ui/new)
+        const tIdx = ((window as unknown as { __lvTier?: number }).__lvTier ?? 0) | 0;   // Hard: a purple disc, Super Hard: a red one
+        if (!L.pic('lvBadge', 'nw_badge_level' + (tIdx === 1 ? '_t1' : tIdx === 2 ? '_t2' : ''), { x: lx - lrs, y: ly - lrs, w: lrs * 2, h: lrs * 2 }, { rot: brot })) porthole(g, lx, ly, lr);   // the painted gold badge (public/ui/new)
         if ((window as unknown as { __lvShown?: boolean }).__lvShown !== false) {   // at the start of a level the badge stays empty until the bubble with the level number flies in
             const pp = levelPop(), back = (k: number) => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2), part = (d: number) => { const k = Math.max(0, Math.min(1, (pp - d) / (1 - d))); return pp >= 1 ? 1 : k <= 0 ? 0.001 : Math.max(0.001, back(k)); };
             const wob = (d: number) => (pp >= 1 ? 0 : Math.sin(Math.max(0, pp - d) * 16) * 0.16 * Math.pow(1 - pp, 1.5)), hop = (d: number) => (pp >= 1 ? 0 : -9 * Math.sin(Math.min(1, Math.max(0, (pp - d) / 0.5)) * Math.PI) * (1 - pp));   // each part springs out of the burst: a little hop, a wobble, then it settles (the word first, the number just after)
-            const tr = tierOf(), lt = L.text('lvN', lx + 0.5, ly - 1 + hop(0.1), String(G.level), { size: 28, color: tr ? tr.fill : '#ffffff', stroke: tr ? tr.stroke : hexCss(T.deeper), sw: 4, alpha: pp >= 1 ? 1 : Math.min(1, Math.max(0, pp - 0.08) * 6) });
+            const lt = L.text('lvN', lx + 0.5, ly - 1 + hop(0.1), String(G.level), { size: 23, color: '#ffffff', stroke: tIdx === 1 ? '#2a0e66' : tIdx === 2 ? '#640c1c' : hexCss(T.deeper), sw: 4.5, alpha: pp >= 1 ? 1 : Math.min(1, Math.max(0, pp - 0.08) * 6) });
             const fitK = Math.min(1, (lr * 1.5) / Math.max(1, lt.width));   // 3 or 4 digits shrink to fit the blue disc (1-2 digits keep the full size)
             lt.setScale(part(0.1) * fitK).setRotation(wob(0.1));
         }
@@ -160,6 +162,8 @@ export class Hud extends Phaser.Scene {
             porthole(g, pc.x, pc.y + dy, r, { thick: 5 });
             const k2 = r / 19; g.fillStyle(BR.hi, 1).fillRoundedRect(pc.x - 6.5 * k2, pc.y + dy - 6.5 * k2, 4.5 * k2, 13 * k2, 2).fillRoundedRect(pc.x + 2 * k2, pc.y + dy - 6.5 * k2, 4.5 * k2, 13 * k2, 2);
         }
+        { const d2 = r * 2, bw = d2 * 0.095, bh = d2 * 0.27, gap = d2 * 0.075, by = pc.y + dy;   // two small bars on the blank button: they leave the glossy bubble of the button visible
+            for (const sx of [-1, 1]) { const bx = pc.x + sx * (gap / 2 + bw / 2); L.gv.fillStyle(0x0b2a5a, 1).fillRoundedRect(bx - bw / 2 - 1.6, by - bh / 2 - 1.6, bw + 3.2, bh + 3.2, bw * 0.6); L.gv.fillStyle(0xffffff, 1).fillRoundedRect(bx - bw / 2, by - bh / 2, bw, bh, bw * 0.45); } }
         this.zBase.add('pause', { x: pause.x - 4, y: pause.y - 4, w: pause.w + 8, h: pause.h + 8 }, { click: () => (document.getElementById('pauseBtn') as HTMLElement).click() });
     }
 

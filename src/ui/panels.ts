@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { paintBFAnim, paintGuideBF, paintSpotBF, paintToastBF } from './bf';
-import { BR, FONT, T, Layer, R, Zones, brass, fontPx, glass, hex, hexCss, inRect, opacityOf, pearl, plate, porthole, recess, rectOf, rivet, shown, starfish } from './kit';
+import { BR, FONT, T, Layer, R, Zones, brass, fontPx, glass, hex, hexCss, inRect, opacityOf, pearl, plate, porthole, rectOf, rivet, shown, starfish } from './kit';
 
 // Painters: each one mirrors a group of hidden HTML elements (see src/ui/kit.ts) into Phaser drawings and touch zones.
 
@@ -118,19 +118,7 @@ export function paintTargets(L: Layer, c: Ctx) {
                 L.image(`tg${i}s${k}`, src, r, { alpha: a * opacityOf(im) });
             });
         }
-        if (bR) {
-            // the painted label plate hangs on the tank's top rim (a plain brass plate is the fallback while the picture loads)
-            if (!L.pic(`tg${i}plate`, 'ui_plate', bR, { alpha: a })) { brass(g, bR, 9, { alpha: a }); recess(g, { x: bR.x + 3.5, y: bR.y + 3.5, w: bR.w - 7, h: bR.h - 7 }, 6, 0x1a70b8, a); }
-            // the fish icon and the count form one group, centred in the plate's body (the two brackets at the bottom are not part of the body)
-            const sig = el.querySelector('.sig') as HTMLImageElement | null, bEl = el.querySelector('.board b'), bodyH = bR.h * 0.8, cy = bR.y + bodyH * 0.5 + 1;
-            if (bEl) {
-                const tx = L.text(`tg${i}n`, 0, cy + 1, lerpTxt(bEl), { size: 23, color: '#ffffff', stroke: '#0c5b8e', sw: 4, alpha: a });
-                const im = sig && sig.getAttribute('src') ? L.image(`tg${i}sig`, sig.getAttribute('src')!, { x: 0, y: 0, w: 400, h: bodyH * 1.06 }, { alpha: a }) : false;
-                const iw = im ? im.displayWidth : 0, gap = im ? 6 : 0, x0 = bR.x + (bR.w - (iw + gap + tx.width) ) / 2;
-                if (im) im.setPosition(x0 + iw / 2, cy);
-                tx.setPosition(x0 + iw + gap + tx.width / 2, cy + 1);
-            }
-        }
+        void bR;   // the sign with the fish and the count is the inner face of the hinged lid of the tank, drawn in the 3D overlay (tankFx in game/src/main.js)
     });
 }
 
@@ -161,7 +149,7 @@ export function paintTools(L: Layer, c: Ctx) {
         const cx = r.x + r.w / 2, cy = r.y + r.h / 2, rad = r.w / 2, press = c.zones.pressed === id, dy = press ? 3 : 0, off = el.classList.contains('off');
         const IC: Record<string, string> = { bHint: 'nw_ic_hint', bTank: 'nw_ic_net', bClear: 'nw_ic_back' }, shade = off ? 0.55 : 1;
         if (L.pic('bt' + id, 'nw_btn_round', { x: cx - rad, y: cy + dy - rad, w: rad * 2, h: rad * 2 }, { alpha: fade * shade })) {   // the painted round button and its icon (public/ui/new); drawn as before when the pictures are missing
-            const isz = rad * 2 * 0.62; L.pic('bi' + id, IC[id], { x: cx - isz / 2, y: cy + dy - isz / 2 - rad * 0.04, w: isz, h: isz }, { alpha: fade * shade });
+            const isz = rad * 2 * 0.54; L.pic('bi' + id, IC[id], { x: cx - isz / 2, y: cy + dy - isz / 2, w: isz, h: isz }, { alpha: fade * shade });
             const p = parseFloat(el.style.getPropertyValue('--p')) || 0;
             if (p > 0.5) { L.gu.fillStyle(0x000a1e, 0.6).slice(cx, cy + dy, rad - 3, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * p) / 100, false).fillPath(); }
         } else {
@@ -257,7 +245,7 @@ export function paintOverlay(L: Layer, c: Ctx) {
         } else walk(e);
     });
     if (card) walk(card);
-    L.text('ver', cr.x + cr.w / 2, cr.y + cr.h + 14, `Spot A Fish ${__APP_VERSION__}`, { size: 11, color: '#bfe6ff', stroke: hexCss(T.deeper), sw: 2 });   // build label, so a screenshot shows which version it is
+    L.text('ver', cr.x + cr.w / 2, cr.y + cr.h + 14, `Fishy Find ${__APP_VERSION__}`, { size: 11, color: '#bfe6ff', stroke: hexCss(T.deeper), sw: 2 });   // build label, so a screenshot shows which version it is
 }
 
 /* ---------- spotlight tutorial: dim the screen, light the real control, short tip ---------- */

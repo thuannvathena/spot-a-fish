@@ -18,7 +18,7 @@ Source: `game/editor/` (`main.js`, `template.html`, `build.mjs`). `npm run build
 
 ## 1. What a level is
 
-Spot A Fish levels are **parameter sets, not hand-placed layouts**. Fish positions are random when the game runs, so the editor edits parameters, previews them, and lets the designer play the level. It is not a grid or voxel editor.
+Fishy Find levels are **parameter sets, not hand-placed layouts**. Fish positions are random when the game runs, so the editor edits parameters, previews them, and lets the designer play the level. It is not a grid or voxel editor.
 
 | Group | Field (file key) | Label in editor | Notes |
 |---|---|---|---|

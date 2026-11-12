@@ -4,7 +4,7 @@ import type { Ctx } from './panels';
 // The pop-ups and the first-time guides drawn from the painted pieces in public/ui/bf.
 // The game screen is a fixed phone shape (9:16), so every position below is a position in the 1080 x 1920 design pictures (fake screens),
 // measured from those pictures and scaled by one number: screen width / 1080. Each pop-up still has a hidden HTML twin (game/src/template.html) that carries state and clicks.
-export const NEW_FILES = ['board_hole', 'lock', 'btn_round_grey', 'btn_round', 'ic_hint', 'ic_net', 'ic_back', 'badge_level', 'btn_pause'];   // the newly made pieces (public/ui/new): booster button + icons, level badge, pause button
+export const NEW_FILES = ['board_hole', 'lock', 'btn_round_grey', 'btn_round', 'ic_hint', 'ic_net', 'ic_back', 'badge_level', 'badge_level_t1', 'badge_level_t2', 'btn_pause'];   // the newly made pieces (public/ui/new): booster button + icons, level badge, pause button
 export const BF_FILES = ['pop_set_top', 'pop_set_mid', 'pop_set_bot', 'btn_sq_blue', 'btn_sq_grey', 'ic_sound', 'ic_music', 'ic_vib_off', 'btn_x', 'ic_restart', 'btn_green', 'btn_orange', 'btn_blue', 'btn_red', 'btn_grey', 'bar_blue', 'panel_in', 'ic_sound_off', 'ic_music_off', 'ic_vib_on', 'pic_bubble', 'spark', 'qbubble',
     'pop_base', 'pop_base_blue', 'rib_blue', 'rib_purple', 'hand', 'board', 'board_icon', 'trophy', 'ic_net', 'ic_clear', 'ic_hint', 'pic_water', 'pic_lose', 'fish_fail', 'fish_think', 'txt_levelfailed', 'hand_white', 'nf_title', 'name_squid', 'name_clam', 'name_swarm', 'name_pipe', 'name_frozen', 'fx_light', 'fx_stars', 'board_btn', 'ring'];
 export const BF_OVERLAYS = ['ovPause', 'ovPlayOn', 'ovLose', 'ovIntro'];
@@ -12,7 +12,7 @@ export const BF_OVERLAYS = ['ovPause', 'ovPlayOn', 'ovLose', 'ovIntro'];
 const click = (id: string) => () => (document.getElementById(id) as HTMLElement | null)?.click();
 const txt = (id: string) => (document.getElementById(id)?.textContent ?? '').trim();
 const attr = (id: string, a: string) => (document.getElementById(id) as HTMLElement | null)?.getAttribute(a) ?? '';
-type FF = { save?: { muted?: boolean; noMusic?: boolean; noVib?: boolean }; G?: { backup?: { type?: number; id?: string; junk?: boolean; filler?: boolean }[]; level?: number }; THUMB?: Record<string, string>; SPECIES?: { id: string }[] };
+type FF = { save?: { muted?: boolean; noMusic?: boolean; noVib?: boolean }; G?: { backup?: { type?: number; id?: string; junk?: boolean; filler?: boolean }[]; level?: number }; THUMB?: Record<string, string>; SPECIES?: { id: string }[]; cageCanvas?: (w: number, h: number, layer: string) => HTMLCanvasElement | null };
 const ff = () => ((window as unknown as { __ff?: FF }).__ff ?? {}) as FF;
 const DEV_FLAG = /[?&]dev=1/.test(location.search);   // ?dev=1 opens the developer tools at once; otherwise tap the version text 10 times in the Settings pop-up
 
@@ -28,7 +28,7 @@ const width = (str: string, size: number) => { measureCtx.font = `${size}px "Lil
 
 interface Style { fill: string; stroke: string; sw: number; sh: number; lift?: number }
 const WHITE: Style = { fill: '#ffffff', stroke: '#0d1a36', sw: 9, sh: 4 };
-const TITLE: Style = { fill: '#ffffff', stroke: '#0a1530', sw: 14, sh: 0, lift: 0.09 };   // lift: the letters sit a little high in their box, so they land in the middle of the ribbon
+const TITLE: Style = { fill: '#ffffff', stroke: '#0a1530', sw: 14, sh: 5, lift: 0.09 };   // lift: the letters sit a little high in their box, so they land in the middle of the ribbon
 const GREY: Style = { fill: '#98a3b6', stroke: '#2b3548', sw: 8, sh: 3 };
 const GREEN_TXT = '#7dff3a', RED_TXT = '#ff5a5a';
 /** a picture cut to the area that is not transparent (the small pictures have wide empty margins); the whole picture is used until the cut one is ready */
@@ -95,6 +95,7 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         if (!out) z.add(key, r, { click: onClick });
     };
     if (!out) c.modal = true;
+    (window as unknown as { __popA?: number }).__popA = Math.max((window as unknown as { __popA?: number }).__popA ?? 0, A);   // how solid the pop-up is while it pops in / out: the 3D layer behind it fades with it, and is cut out only once the pop-up is solid
     const popR = id === 'ovPause' ? D(99, 400, 882, 800) : id === 'ovPlayOn' ? D(58, 110, 965, 1280) : null;
     (window as unknown as { __popRect?: unknown }).__popRect = popR && !out ? { x: popR.x + c.o.left, y: popR.y + c.o.top, w: popR.w, h: popR.h, r: 70 * s * K, top: id === 'ovPause' ? ((q) => ({ x: q.x + c.o.left, y: q.y + c.o.top, w: q.w, h: q.h }))(D(143, 332, 778, 197)) : undefined } : null;
     const S = ff().save ?? {};
@@ -149,18 +150,21 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         arcText('pT', 'Out of space!', 543, 500, 600, TITLE, 878, 52);
         const xr = D(921, 454, 114, 120); P.pic('pX', 'bf_btn_x', { ...xr, y: xr.y + (z.pressed === 'pX' ? 2 : 0) }); add('pX', xr, click('bNoPlayOn'));
         P.nine('pPan', 'bf_panel_in', D(100, 650, 880, 380), [60, 60, 60, 60], { k: 0.9 * s });   // the inner frame sits evenly between the ribbon above and the Play on button below
-        const tk = c.scene.textures.exists('tk_back') ? c.scene.textures.get('tk_back').getSourceImage() as HTMLImageElement : null, ar = tk ? tk.width / tk.height : 2.2, tw = 780, th = tw / ar, tx = 540 - tw / 2, ty = 672;
-        P.pic('pv1', 'tk_back', D(tx, ty, tw, th));
-        const F = ff(), items = (F.G?.backup ?? []).slice(0, 7), cw = (tw * 0.9) / 7;
+        // the Backup as it looks in the game: the murky cell behind, the fish, then the steel frame and the bars in front (both pictures are drawn once from the same pieces as the game)
+        const CW = 1560, CH = 355;
+        if (!c.scene.textures.exists('tk_cage_b')) { const cb = ff().cageCanvas?.(CW, CH, 'back'), cf = ff().cageCanvas?.(CW, CH, 'front'); if (cb && cf) { c.scene.textures.addCanvas('tk_cage_b', cb); c.scene.textures.addCanvas('tk_cage_f', cf); } }
+        const cage = c.scene.textures.exists('tk_cage_b'), tk = !cage && c.scene.textures.exists('tk_back') ? c.scene.textures.get('tk_back').getSourceImage() as HTMLImageElement : null, ar = cage ? CW / CH : tk ? tk.width / tk.height : 2.2, tw = 780, th = tw / ar, tx = 540 - tw / 2, ty = 672;
+        P.pic('pv1', cage ? 'tk_cage_b' : 'tk_back', D(tx, ty, tw, th));
+        const F = ff(), items = (F.G?.backup ?? []).slice(0, 7), cw = (tw * (cage ? 0.972 : 0.9)) / 7;
         items.forEach((it, i) => {
-            const src = it.filler ? '' : ((it.junk ? F.THUMB?.[it.id ?? ''] : F.THUMB?.[F.SPECIES?.[it.type ?? 0]?.id ?? '']) ?? ''), fx = tx + tw * 0.05 + cw * i;
-            if (src) P.image('pvf' + i, src, D(fx + cw * 0.06, ty + th * 0.36 + Math.sin(t * 2 + i) * 3, cw * 0.88, th * 0.5));
+            const src = it.filler ? '' : ((it.junk ? F.THUMB?.[it.id ?? ''] : F.THUMB?.[F.SPECIES?.[it.type ?? 0]?.id ?? '']) ?? ''), fx = tx + tw * (cage ? 0.014 : 0.05) + cw * i;
+            if (src) P.image('pvf' + i, src, cage ? D(fx + cw * 0.08, ty + th * 0.2 + Math.sin(t * 2 + i) * 3, cw * 0.84, th * 0.56) : D(fx + cw * 0.06, ty + th * 0.36 + Math.sin(t * 2 + i) * 3, cw * 0.88, th * 0.5));
         });
-        P.pic('pv3', 'tk_front', D(tx, ty, tw, th));
+        P.pic('pv3', cage ? 'tk_cage_f' : 'tk_front', D(tx, ty, tw, th));
         const cap = 'Clear the tank to keep playing!', capY = (ty + th + 1025) / 2;
-        text('pL', cap, 540, capY, 780, { fill: '#2e6fb5', stroke: '#ffffff', sw: 6, sh: 0 }, Math.min(64, fit(cap, 780)));
+        text('pL', cap, 540, capY, 780, { fill: '#ffffff', stroke: '#0d2a5c', sw: 9, sh: 4 }, Math.min(64, fit(cap, 780 - 9)));
         button('pA', 'green', D(280, 1060, 520, 170), 'Play on', click('bPlayOn'), 330);
-        text('pN', 'No thanks', 540, 1290, 220, { fill: '#e8f4ff', stroke: '#0d3d7a', sw: 8, sh: 0 }); add('pNo', D(400, 1255, 280, 70), click('bNoPlayOn'));
+        text('pN', 'No thanks', 540, 1290, 220, { fill: '#e8f4ff', stroke: '#0d3d7a', sw: 8, sh: 3 }); add('pNo', D(400, 1255, 280, 70), click('bNoPlayOn'));
         return;
     }
 
@@ -169,10 +173,10 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         // everything pops in one after another (a soft overshoot, like the LEVEL words at the level start), then keeps floating a little so the pop-up never sits dead
         const age = cur ? (performance.now() - cur.t0) / 1000 : 9, pp = (d: number, dur = 0.55) => { const u = Math.max(0, Math.min(1, (age - d) / dur)); return { sc: u <= 0 ? 0.001 : backOut(u), a: Math.min(1, u * 3.2) }; };
         const sd = (x: number, y: number, w: number, h: number, sc: number, dy = 0): R => D(x + (w / 2) * (1 - sc), y + (h / 2) * (1 - sc) + dy, w * sc, h * sc);
-        const pT = pp(0.05), pN = pp(0.18), pF = pp(0.1, 0.65), pB = pp(0.32), pK = pp(0.9, 0.4);
-        P.pic('fT', 'bf_nf_title', sd(163, 238, 755, 101, pT.sc * (1 + 0.012 * Math.sin(t * 2.4)), Math.sin(t * 1.5) * 3), { alpha: pT.a });
-        if (slug && nm) P.pic('fN', 'bf_name_' + slug, sd(540 - nm.width / 2, 410, nm.width, nm.height, pN.sc * (1 + 0.025 * Math.sin(t * 2.1 + 1)), Math.sin(t * 1.7 + 0.8) * 5), { alpha: pN.a });
-        else { const tt = text('fN', title, 540, 472 + Math.sin(t * 1.7) * 5, 640, { fill: '#fee600', stroke: '#000000', sw: 8, sh: 6 }); tt.setScale(pN.sc).setAlpha(A * pN.a); }
+        const pT = pp(0.05), pN = pp(0.18), pF = pp(0.1, 0.65), pB = pp(0.32);
+        P.pic('fT', 'bf_nf_title', D(163, 226, 755, 124), { alpha: pT.a });   // 755 x 124 keeps the picture's own proportions (783 x 129); it was squashed to 755 x 101   // the title and the name stand still (no float, no pulse), they only fade in
+        if (slug && nm) P.pic('fN', 'bf_name_' + slug, D(540 - nm.width / 2, 410, nm.width, nm.height), { alpha: pN.a });
+        else { const tt = text('fN', title, 540, 472, 640, { fill: '#fee600', stroke: '#000000', sw: 8, sh: 6 }); tt.setAlpha(A * pN.a); }
         const bob = Math.sin(t * 2) * 6;
         const fv = (window as unknown as { __fv?: { on: boolean; cv: HTMLCanvasElement } }).__fv;
         if (fv && fv.on) {   // a live picture: the obstacle moves like it does in the game (game/src/main.js, FV)
@@ -180,10 +184,8 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
             P.pic('fImg', 'fvLive', sd(540 - 330, 800 - 330, 660, 660, pF.sc), { alpha: pF.a });
         } else if (img) P.image('fImg', cropped(img), sd(540 - 280, 821 - 280 + bob, 560, 560, pF.sc), { alpha: pF.a });
         P.pic('fStars', 'bf_fx_stars', D(243, 610, 592, 554), { alpha: 0.65 + 0.35 * Math.sin(t * 3) });
-        P.nine('fB', 'bf_board', sd(103, 1164, 880, 230, pB.sc, (1 - pB.sc) * 60 + Math.sin(t * 1.9) * 3), [60, 60, 60, 60], { k: (230 / 156) * s * pB.sc, alpha: pB.a });
-        boardText(L, s, 'fL', body, title, 1279, fit('Special bubbles are here! Clearing fish', 786 - WHITE.sw), 786, 70, A * pB.a, K, cx0, cy0);
-        const kk = text('fK', 'Tap to continue', 540, 1558, 392, GREY, fit('Tap to continue', 392 - GREY.sw)); kk.setScale(pK.sc * (1 + 0.035 * Math.sin(t * 3))).setAlpha(A * pK.a * (0.75 + 0.25 * Math.sin(t * 3)));
-        add('fTap', { x: 0, y: 0, w: c.w, h: c.h }, click('bIntro'));
+        boardText(L, s, 'fL', body, title, 1279, fit('Special bubbles are here! Clearing fish', 786 - WHITE.sw), 786, 70, A * pB.a, K, cx0, cy0);   // text only, no frame
+        button('fC', 'green', D(320, 1470, 440, 150), 'Continue', click('bIntro'), 300);   // a real button, in place of the line "Tap to continue"
     }
 }
 
@@ -237,10 +239,19 @@ export function paintSpotBF(L: Layer, c: Ctx) {
         L.nine('sbB', 'bf_board', D(bx, by, bw, bh), [60, 60, 60, 60], { k: (bh / 156) * s, alpha: A });
         const px = Math.max(bx + 70, Math.min(bx + bw - 70, bcx)), py = by + bh - 6;
         const pp = (x: number, y: number) => ({ x: x * s, y: (y + rise) * s });
-        { const a1 = pp(px - 34, py - 10), a2 = pp(px + 34, py - 10), a3 = pp(bcx, py + 42); g.fillStyle(0xfff3d6, A).fillTriangle(a1.x, a1.y, a2.x, a2.y, a3.x, a3.y); g.lineStyle(5 * s, 0x2e6fb5, A * 0.9).strokeTriangle(a1.x, a1.y + 6 * s, a3.x, a3.y, a2.x, a2.y + 6 * s); }
+        { const T = [{ x: px - 36, y: py - 12 }, { x: px + 36, y: py - 12 }, { x: bcx, y: py + 44 }], len = (u: { x: number; y: number }, v: { x: number; y: number }) => Math.hypot(u.x - v.x, u.y - v.y);   // the pointer is built like the board's own border (black, blue, pale, cream), on the layer above the pictures, and opens into the board: no seam
+            const la = len(T[1], T[2]), lb = len(T[0], T[2]), lc = len(T[0], T[1]), per = la + lb + lc, I = { x: (la * T[0].x + lb * T[1].x + lc * T[2].x) / per, y: (la * T[0].y + lb * T[1].y + lc * T[2].y) / per };
+            const area = Math.abs((T[1].x - T[0].x) * (T[2].y - T[0].y) - (T[2].x - T[0].x) * (T[1].y - T[0].y)) / 2, r0 = area / (per / 2), kd = bh / 156;
+            const yc = by + bh, layer = (d: number, col: number) => {   // each band is the pointer grown by d, cut flat at the board's bottom edge
+                const f = (r0 + d) / r0, V = T.map((v) => ({ x: I.x + (v.x - I.x) * f, y: I.y + (v.y - I.y) * f })), cut = (v: { x: number; y: number }) => { const t = (yc - v.y) / (V[2].y - v.y); return { x: v.x + (V[2].x - v.x) * t, y: yc }; };
+                const P = [cut(V[0]), cut(V[1]), V[2]].map((v) => pp(v.x, v.y)); L.gu.fillStyle(col, A).fillTriangle(P[0].x, P[0].y, P[1].x, P[1].y, P[2].x, P[2].y);
+                return [cut(V[0]).x, cut(V[1]).x];
+            };
+            layer(16 * kd, 0x000000); layer(11 * kd, 0x6ca6d3); layer(7 * kd, 0xbcdae2); const [cl, cr] = layer(0, 0xffffec);
+            const w1 = pp(cl + 1, yc - 17 * kd), w2 = pp(cr - 1, yc + 1); L.gu.fillStyle(0xffffec, A).fillRect(w1.x, w1.y, w2.x - w1.x, w2.y - w1.y); }
         const availT = bw - 150, size = Math.min(64, fit(body, availT));
-        boardText(L, s, 'sbL', body, '', by + 100 + rise, size, availT, 62, A, 1, 0, 0, 540);
-        tapText('Tap to continue', by + 190, 320, { fill: '#b3bcc0', stroke: '#b3bcc0', sw: 0, sh: 0 });   // the soft grey hint inside the board
+        boardText(L, s, 'sbL', body, '', by + 86 + rise, size, availT, 62, A, 1, 0, 0, 540);
+        tapText('Tap to continue', by + 168, 320, { fill: '#b3bcc0', stroke: '#b3bcc0', sw: 0, sh: 0 });   // the soft grey hint inside the board
     } else {   // the cream board under (or over) the lit control, "Tap anywhere to continue!"
         const bh = 199, below = cym < c.h * 0.55, by = below ? ((box ? box.y + box.h : cym) / s) + 70 : ((box ? box.y : cym) / s) - 70 - bh - 82;
         L.nine('sbB', 'bf_board', D(98, by, 884, bh), [60, 60, 60, 60], { k: (bh / 156) * s, alpha: A });
@@ -251,19 +262,29 @@ export function paintSpotBF(L: Layer, c: Ctx) {
 }
 
 /** level 1: the cream board with "Tap a fish" or one of the three camera hints, the hand on the fish to tap, and for the camera hints the gesture itself */
+let gmVis = false, gmT0 = 0, gmLeave = -9, gmLast: { msg: string; hi: string } | null = null, gmHand: { x: number; y: number } | null = null;
+const GM_IN = 0.38, GM_OUT = 0.3;
 export function paintGuideBF(L: Layer, c: Ctx) {
     const s = c.w / 1080, t = c.scene.time.now / 1000, D = (x: number, y: number, w: number, h: number): R => ({ x: x * s, y: y * s, w: w * s, h: h * s });
     const gm = document.getElementById('goalMsg'), ct = document.getElementById('camTut'), step = ct && ct.classList.contains('show') ? (['rot', 'zoom', 'tilt'].find((k) => ct.classList.contains(k)) ?? '') : '';
     const gh = document.getElementById('guideHand'), hand = gh && gh.classList.contains('show') ? (() => { const r = gh.getBoundingClientRect(); return { x: r.left - c.o.left + 26, y: r.top - c.o.top - 8 }; })() : null;
     const HW = 190, HH = 199, TIPX = 11, TIPY = 6;   // the white hand: size and where the fingertip is
     const CAM: Record<string, [string, string]> = { rot: ['Drag to look around', 'look around'], zoom: ['Pinch to zoom in / out', 'zoom in / out'], tilt: ['Drag with two fingers to\nmove the view up / down', 'move the view up / down'] };
-    const msg = step ? CAM[step][0] : (gm && gm.classList.contains('show') ? 'Tap a fish' : ''), hi = step ? CAM[step][1] : 'fish';
+    const want = step ? CAM[step][0] : (gm && gm.classList.contains('show') ? 'Tap a fish' : ''), wantHi = step ? CAM[step][1] : 'fish';
+    // the board pops in when the guide starts and shrinks away when it ends; changing the text from one step to the next has no animation of its own
+    if (want) { if (!gmVis) { gmVis = true; gmT0 = t; } gmLast = { msg: want, hi: wantHi }; } else if (gmVis) { gmVis = false; gmLeave = t; }
+    const leaving = !want && !!gmLast && t - gmLeave < GM_OUT, msg = want || (leaving && gmLast ? gmLast.msg : ''), hi = want ? wantHi : (gmLast ? gmLast.hi : 'fish');
+    const pIn = want ? Math.min(1, (t - gmT0) / GM_IN) : 1, back = (x: number) => 1 + 2.4 * Math.pow(x - 1, 3) + 1.4 * Math.pow(x - 1, 2);   // ease out with a little overshoot
+    const gmA = want ? Math.min(1, pIn * 2.6) : leaving ? 1 - (t - gmLeave) / GM_OUT : 0, gmK = want ? 0.55 + 0.45 * back(pIn) : leaving ? 1 - 0.22 * ((t - gmLeave) / GM_OUT) : 1;
+    const handA = want ? Math.max(0, Math.min(1, (t - gmT0 - GM_IN) / 0.25)) : leaving ? gmA : 0;   // the hand comes in after the board has settled
+    if (hand) gmHand = hand;
     if (msg) {
         const lines = msg.split('\n'), bw = Math.max(586, Math.min(900, Math.max(...lines.map((l) => width(l, 70))) + 150)), bx = 540 - bw / 2, bh = 156 + (lines.length - 1) * 64;
         const by = 470;   // the tutorial board ("Tap a fish", the camera steps) always sits up under the target tanks
-        L.nine('gmB', 'bf_board', D(bx, by, bw, bh), [60, 60, 60, 60], { k: s });
+        const ccx = 540 * s, ccy = (by + bh / 2) * s, rr0 = D(bx, by, bw, bh);
+        L.nine('gmB', 'bf_board', { x: ccx + (rr0.x - ccx) * gmK, y: ccy + (rr0.y - ccy) * gmK, w: rr0.w * gmK, h: rr0.h * gmK }, [60, 60, 60, 60], { k: s * gmK, alpha: gmA });
         const size = msg === 'Tap a fish' ? fit('Tap a fish', 238 - 9) : Math.min(fit('Tap a fish', 238 - 9), fit(lines.reduce((a, b2) => (a.length > b2.length ? a : b2), ''), bw - 110));
-        boardText(L, s, 'gm', msg, hi, by + bh / 2, size, bw - 110, 64);
+        boardText(L, s, 'gm', msg, hi, by + bh / 2, size, bw - 110, 64, gmA, gmK, ccx, ccy);
     }
     // the gesture of the camera step: a right and a left hand (the second one mirrored), moving fast, each leaving a fading white trail
     const H = (key: string, cx: number, cy: number, a = 1, flip = false, fill?: number) => L.pic(key, 'bf_hand_white', D(cx - HW / 2, cy - HH / 2, HW, HH), { alpha: a, flipX: flip, fill });
@@ -272,10 +293,11 @@ export function paintGuideBF(L: Layer, c: Ctx) {
     if (step === 'rot') trail('gsa', (tt) => [540 + 200 * Math.sin(tt * W), 1060], false);
     else if (step === 'zoom') { const dd = (tt: number) => 70 + 80 * (0.5 + 0.5 * Math.sin(tt * W)); trail('gsa', (tt) => [540 + dd(tt), 1060 + dd(tt) * 0.5], false); trail('gsb', (tt) => [540 - dd(tt), 1060 + dd(tt) * 0.5], true); }
     else if (step === 'tilt') { trail('gsa', (tt) => [630, 1060 + 130 * Math.sin(tt * W)], false); trail('gsb', (tt) => [450, 1060 + 130 * Math.sin(tt * W)], true); }
-    if (hand) {   // a tap: the hand hovers, presses down, lifts, and a ring spreads from the fingertip
+    const hnd = hand ?? (leaving && !step && handA > 0 && gmHand ? gmHand : null);   // the old hand only lingers while the board fades out; during a camera step the guide hand is gone
+    if (hnd) {   // a tap: the hand hovers, presses down, lifts, and a ring spreads from the fingertip
         const T = 1.15, u = (t % T) / T, press = u < 0.45 ? 0 : u < 0.58 ? (u - 0.45) / 0.13 : Math.max(0, 1 - (u - 0.58) / 0.12), dy = (press * 22 + Math.sin(t * 4) * 3) * s, sc = 1 - 0.06 * press;
-        L.pic('ghH', 'bf_hand_white', { x: hand.x - TIPX * s * sc, y: hand.y - TIPY * s * sc + dy, w: HW * s * sc, h: HH * s * sc });
-        if (u >= 0.58) { const r = (u - 0.58) / 0.42, d = (50 + 170 * r) * s; L.pic('ghR', 'bf_ring', { x: hand.x - d / 2, y: hand.y + 6 * s - d / 2, w: d, h: d }, { alpha: 0.9 * (1 - r) }); } else L.pic('ghR', 'bf_ring', { x: hand.x, y: hand.y, w: 1, h: 1 }, { alpha: 0 });
+        L.pic('ghH', 'bf_hand_white', { x: hnd.x - TIPX * s * sc, y: hnd.y - TIPY * s * sc + dy, w: HW * s * sc, h: HH * s * sc }, { alpha: handA });
+        if (u >= 0.58) { const r = (u - 0.58) / 0.42, d = (50 + 170 * r) * s; L.pic('ghR', 'bf_ring', { x: hnd.x - d / 2, y: hnd.y + 6 * s - d / 2, w: d, h: d }, { alpha: 0.9 * (1 - r) * handA }); } else L.pic('ghR', 'bf_ring', { x: hnd.x, y: hnd.y, w: 1, h: 1 }, { alpha: 0 });
     }
 }
 

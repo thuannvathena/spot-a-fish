@@ -39,6 +39,7 @@ export class Layer {
     readonly g: Phaser.GameObjects.Graphics;
     readonly gt: Phaser.GameObjects.Graphics;   // a second graphics for the booster buttons, so they can fade as a whole
     readonly gu: Phaser.GameObjects.Graphics;   // drawn above the layer's pictures (the booster cooldown pie, rings)
+    readonly gv: Phaser.GameObjects.Graphics;   // like gu but never faded (the booster fade sets gu's alpha, so anything that must stay put goes here: the pause bars)
     private texts = new Map<string, { t: Phaser.GameObjects.Text; sig: string }>();
     private imgs = new Map<string, Phaser.GameObjects.Image>();
     private nines = new Map<string, Phaser.GameObjects.NineSlice>();
@@ -49,9 +50,10 @@ export class Layer {
         this.g = scene.add.graphics().setDepth(depth); onNew(this.g);
         this.gt = scene.add.graphics().setDepth(depth + 0.05); onNew(this.gt);
         this.gu = scene.add.graphics().setDepth(depth + 0.3); onNew(this.gu);
+        this.gv = scene.add.graphics().setDepth(depth + 0.31); onNew(this.gv);
     }
 
-    begin() { this.g.clear(); this.gt.clear(); this.gu.clear(); this.used.clear(); }
+    begin() { this.g.clear(); this.gt.clear(); this.gu.clear(); this.gv.clear(); this.used.clear(); }
 
     end() {
         this.texts.forEach((v, k) => { if (!this.used.has('t' + k)) v.t.setVisible(false); });

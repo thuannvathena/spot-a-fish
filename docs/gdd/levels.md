@@ -18,7 +18,9 @@
 - **Bounty tanks** (tiny / camo / fast, 1 fish each, never more than one of a kind per level) appear only on L15, L25, L35, L45 and L60; L45 and L60 have two.
 - **Win rate:** the bot (`node game/tools/wr-sim.mjs`) plays each level thousands of times with a model of a player and reports the first-try win rate (no boosters, no Play On). `node game/tools/wr-tune.mjs` nudges start fish, decoy species, look-alikes and obstacles until the bot is within 3 points of the sheet. It is a **model**: the player's error rates are guesses, so use the numbers to rank levels, and fit the constants in `ERR` to real playtests when they exist.
 - **Urchin and jelly** only on Medium, Hard and Very Hard levels from L6, at most 2 of each. Easy levels before L40 and the levels that introduce a feature (L11, L16, L21, L31) have none; Easy levels from L40 can have them when the win-rate target needs it.
-- **Themes:** 5 themes, 12 levels each.
+- **Themes and tank shapes:** 6 themes and 6 tank shapes (cylinder, bowl, rounded box, hexagon, flower, heart), 10 levels each; both repeat after level 60.
+- **Which fish:** each level lists its fish in `fishKeys` of `game/src/levels.json` (the first species are the targets, the rest decoys), written by `scripts/assign-fish.py` from the 49-fish set: every level gets a different mix, and the harder the level, the more decoys of the same colour family as a target. The whale and the shark are decoys only; the sea horse appears only as a decoy (about one level in three). Only the species a level names are loaded. There is no level 61.
+- **Pipe waves** use `startFish` and `maxFish` of the level: the pipe adds `maxFish - startFish` fish in waves, so the tank never holds more than `maxFish` (a few more only while a fish is held by a clam or hidden by camouflage).
 - **Fish cap:** 40 in the tank at once.
 
 | L | Diff | Tanks (fish each) | To catch | Start fish | Pipe (waves / fish) | Species | Look-alikes | Urchin / jelly | Squid / clam / swarm | Bounty | Bot WR | Target WR | New in this level |

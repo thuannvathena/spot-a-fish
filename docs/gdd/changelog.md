@@ -2,7 +2,21 @@
 
 Every published version stays playable at its own URL. The [landing page](https://thuannvathena.github.io/spot-a-fish/) lists them all.
 
-## v0.3.4 <Badge type="tip" text="Live" />
+## v0.4.0 <Badge type="tip" text="Live" />
+
+Changes since v0.3.4. The game is now called **Fishy Find** (the repo, the Pages address and the save key keep their old names).
+
+- **49 new fish** replace the Unity, blue-white-babe and old Tripo fish: static meshes with one texture each (12 ChatGPT, 6 Codex, 31 Tripo; a whale, a shark and a sea horse that are never targets). The 60 levels got new fish mixes (`scripts/assign-fish.py`), harder levels have more look-alike colours, and level 61 is gone. Fish are slimmer and swim with a body wave in the shader. All 49 blink (32 by their texture, 17 by a lid over the eye).
+- **Fish behaviour fixes:** a fish can no longer point straight down and stay stuck on the floor or wedged between a decor piece and the glass; fish keep a wider personal space and do not pass through each other; the sea horse and the sunset puffer now swim nose first.
+- **Target tanks:** real glass boxes with depth; the lid hinges up and its inner face is an LED sign (fish picture sized by painted area, count in lit digits). The Backup is a steel holding cell with bars. Pump waves are driven by `startFish` / `maxFish` per level.
+- **Win screen:** the fish that are not chosen stay under the water by the wall, some hop in a small arc; the splash rings are thinner.
+- **Text and pictures:** "LEVEL N" digits redone from three spaced-out Gemini sheets (Normal, Hard, Super Hard; no ragged cuts), the NEW FEATURE title has its own proportions, vivid lettering with a thin dark outline, the new logo and loading bar, new level-complete and combo pictures, booster and pause icons.
+- **First-time guides:** "Tap a fish", the camera steps, the booster and New Feature pop-ups wait until the UI, the camera shot and the target lids have finished; the "Tap a fish" board pops in and fades out.
+- **Sound:** 17 recorded files are wired (see `sounds.md`); a sound with no file does not play.
+- **GDD:** overview, art and levels pages describe the new fish set; `artist-feedback.md` (and `.vi.md`) tracks the artist's list item by item.
+- **Not done:** the blink of some fish is only checked on a contact sheet (not while swimming); the Backup frame is still the code-drawn one; the new sounds have not been listened to in the game.
+
+## v0.3.4
 
 Changes since v0.3.3.
 

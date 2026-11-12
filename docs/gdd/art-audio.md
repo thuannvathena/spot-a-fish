@@ -13,7 +13,7 @@
 - Code crops to the opaque area, finds the eye (dark round area) and generates thickness. If the eye is unclear, the blink lid will not show.
 - The dark outline is generated from the fish's own colour. **Do not paint a black outline.**
 - Keep species clearly different in shape and colour: decoys include hue-rotated copies of targets, so already-similar originals make levels unfair.
-- The fish are 3D models in `public/models/` (`unity/` for the Unity set, `blue_white_babe/`). The old 2D fish pictures in `game/assets/fishes/` are no longer used by the build.
+- The fish are 49 3D models in `public/models/fish/` (source: `Fish Asset 3D/3D model`, one `model.fbx` and one `tex.jpg` each). **For a new fish:** one mesh, one texture, the eyes drawn on the texture with a dark pupil and a white highlight, the nose to +x or +z (list the file in `FACES_Z` if it faces z). The old Unity set, `blue_white_babe` and the 2D pictures are no longer used.
 
 ## A.3 Animation and expressions wanted from the artist <Badge type="warning" text="Coming soon" />
 
