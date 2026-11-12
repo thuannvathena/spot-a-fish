@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Spot A Fish</title>
+<title>Fishy Find</title>
 <style>
 
 :root{
@@ -91,7 +91,7 @@ html,body{display:flex;align-items:center;justify-content:center}
 .target .bub.b3{left:26%;animation-delay:-.9s;width:4px;height:4px;animation-duration:4s}.target .bub.b4{left:62%;animation-delay:-2.4s;width:3px;height:3px;animation-duration:3s}.target .bub.b5{left:92%;animation-delay:-.4s;width:6px;height:6px;animation-duration:4.6s}
 .target .aq .glint{top:10%;bottom:20%;left:-30%;width:14%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.35),rgba(255,255,255,0));transform:skewX(-14deg);animation:glint 5.5s ease-in-out infinite;z-index:3}
 @keyframes glint{0%,55%{left:-30%;opacity:0}62%{opacity:1}100%{left:130%;opacity:0}}
-.target .slots{position:absolute;inset:3px 0 8px 0;display:flex;justify-content:space-around;align-items:center}
+.target .slots{position:absolute;inset:3px 7% 8px 7%;display:flex;justify-content:space-around;align-items:center}
 .target .slots span{width:31%;height:40px;display:flex;align-items:center;justify-content:center}
 .target .slots img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 2px rgba(0,30,60,.45))}
 .target .slots img.gone{opacity:0}
@@ -230,7 +230,7 @@ body.wetwin #bg3d,body.wetwin #bgpic,body.wetwin #c,body.wetwin>canvas,body.wetw
 /* fx */
 .fly{position:fixed;z-index:50;pointer-events:none;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4));will-change:transform}
 .trail{position:fixed;z-index:49;pointer-events:none;border-radius:50%;border:1.5px solid rgba(255,255,255,.9);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.7),rgba(160,235,255,.25) 70%)}
-.drop{position:fixed;z-index:52;pointer-events:none;margin:-3px 0 0 -3px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff,#a8ecff 55%,#4fc3f7);box-shadow:0 0 6px rgba(160,235,255,.9)}
+.drop{position:fixed;z-index:52;pointer-events:none;margin:-2px 0 0 -2px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#eafcff 0,#eafcff 12%,#6fcdea 34%,#2597c6 100%);border:1px solid rgba(220,248,255,.55)}
 .shr{position:fixed;z-index:52;pointer-events:none;border:3px solid rgba(200,248,255,.95);border-radius:50%;opacity:0;animation:shr .65s ease-out forwards}
 @keyframes shr{0%{transform:scale(.3);opacity:1}100%{transform:scale(2.6,1.7);opacity:0;border-width:1px}}
 .rg{position:absolute;top:2px;width:14px;height:6px;margin-left:-7px;border-radius:50%;border:2px solid rgba(255,255,255,.95);animation:rg .8s ease-out forwards;z-index:3}
@@ -289,11 +289,14 @@ body.wetwin #bg3d,body.wetwin #bgpic,body.wetwin #c,body.wetwin>canvas,body.wetw
 #load .lens .gl{position:absolute;inset:0;border-radius:50%;border:9px solid #e9b84a;background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.55),rgba(160,240,250,.22) 45%,rgba(60,180,210,.28));box-shadow:inset 0 0 0 3px #fff3c4,0 8px 18px rgba(0,20,40,.45),inset 0 0 22px rgba(255,255,255,.35)}
 #load .lens .hl{position:absolute;left:112px;top:118px;width:20px;height:74px;border-radius:12px;background:linear-gradient(90deg,#c98a1f,#f6d36a 45%,#b87a14);transform:rotate(-42deg);transform-origin:50% 0;box-shadow:0 4px 8px rgba(0,20,40,.4)}
 #load .lens svg{position:absolute;left:30px;top:44px;width:90px;animation:lensfish 2.2s ease-in-out infinite}
-#load .bar{position:absolute;left:50%;bottom:12%;width:78%;transform:translateX(-50%);aspect-ratio:1100/131;background:url(ui/ui_tube.png) center/100% 100% no-repeat}
+#load{container-type:inline-size}
+#load .bar{position:absolute;left:50%;bottom:12%;width:78%;transform:translateX(-50%);aspect-ratio:1100/131}
+#load .bar .bk{position:absolute;left:2.2%;right:2.2%;top:19%;bottom:19%;border-radius:99px;background:linear-gradient(#082a5e,#0f4a96);box-shadow:inset 0 3px 7px rgba(0,0,0,.55)}   /* a dark backing under the frame, so the bright fill reads on top of it */
+#load .bar .frm{position:absolute;inset:0;background:url(ui/ui_tube.png) center/100% 100% no-repeat;z-index:2;pointer-events:none}
 #load .swim3d{position:absolute;left:0;top:50%;width:96px;height:62px;margin:-31px 0 0 -48px;pointer-events:none}
-#load .bar .fl{position:absolute;left:3%;top:22%;bottom:22%;width:0;border-radius:99px;background:linear-gradient(#a8f3ff,#37c3ee 55%,#1b8fd0);box-shadow:0 0 12px rgba(120,230,255,.7)}
+#load .bar .fl{position:absolute;left:3%;top:22%;bottom:22%;width:0;border-radius:99px;z-index:1;background:linear-gradient(#f2ff8a,#a6ee3a 45%,#38c24a);box-shadow:0 0 12px rgba(170,255,90,.75),inset 0 2px 0 rgba(255,255,255,.65)}
 #load .bar .hd{display:none}
-#load .tx{position:absolute;left:0;right:0;bottom:6.5%;text-align:center;font-size:24px;letter-spacing:1px;color:#fff;-webkit-text-stroke:3.5px #1a6aae;paint-order:stroke fill;text-shadow:0 2px 0 #1a6aae,0 0 8px rgba(5,50,110,.4)}
+#load .bar .tx{position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;font-size:max(11px,3.5cqw);letter-spacing:1px;color:#fff;-webkit-text-stroke:4px #0b2f6a;paint-order:stroke fill;text-shadow:0 2px 0 #0b2f6a;pointer-events:none}
 #load .tx i{font-style:normal;animation:dots 1.2s steps(4) infinite;display:inline-block;width:1.2em;text-align:left;overflow:hidden;vertical-align:bottom}
 #load.pop .lens{animation:lenspop .5s ease-in forwards}
 @keyframes lgin{0%{opacity:0;transform:translateX(-50%) translateY(-70px) scale(.6) rotate(-8deg)}100%{opacity:1;transform:translateX(-50%) rotate(-2deg)}}
@@ -311,7 +314,7 @@ body.wetwin #bg3d,body.wetwin #bgpic,body.wetwin #c,body.wetwin>canvas,body.wetw
 #load .lgfx .fl2{width:96%;animation:lgs 2.4s ease-in-out infinite}
 @keyframes lgl{0%,100%{opacity:.55;transform:translate(-50%,-50%) scale(1)}50%{opacity:.95;transform:translate(-50%,-50%) scale(1.06)}}
 @keyframes lgs{0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(.96) rotate(-2deg)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.04) rotate(2deg)}}
-#load .bar .bfish{position:absolute;top:50%;left:3%;height:92%;transform:translate(-50%,-50%);pointer-events:none;z-index:3}
+#load .bar .bfish{position:absolute;top:50%;left:3%;height:150%;transform:translate(calc(-50% + 8.75%),calc(-50% + 8.75%));pointer-events:none;z-index:5;filter:drop-shadow(0 2px 3px rgba(0,20,60,.55))}
 </style>
 <style>
 /* Phaser HUD layer: sits on top of the Three.js canvas, never takes pointer events itself */
@@ -321,7 +324,7 @@ body.wetwin #bg3d,body.wetwin #bgpic,body.wetwin #c,body.wetwin>canvas,body.wetw
 /* the HTML UI stays in the layout as a hidden model (the game writes state and reads positions there); Phaser draws it all */
 .topbar,.backup,.targets,.tools,.pan,.overlay,#spotOv,#tut,#toast,#goalMsg,#hint,#camTut,#guideHand{visibility:hidden!important}
 </style>
-  <script type="module" crossorigin src="./assets/index-UnKP8Du2.js"></script>
+  <script type="module" crossorigin src="./assets/index-DzKspKKR.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/phaser-BzvzUBg9.js">
   <link rel="stylesheet" crossorigin href="./assets/index-D2IENCT-.css">
 </head>
@@ -355,7 +358,7 @@ body.wetwin #bg3d,body.wetwin #bgpic,body.wetwin #c,body.wetwin>canvas,body.wetw
     <button class="btn alt" id="bIntro">Got it!</button></div></div>
   <div class="overlay" id="ovLevels"><div class="card"><div class="ribbon">LEVELS</div><div class="lvgrid" id="lvGrid" style="margin-top:6px"></div><button class="btn ghost" id="bLvBack">Back</button></div></div>
   <div class="tut" id="tut"><div class="spot" id="tutSpot"></div><div class="tip" id="tutTip"><div class="pic" id="tutPic"></div><h3 id="tutH"></h3><p id="tutP"></p><div class="row"><button class="skip" id="tutSkip">Skip</button><div class="dots" id="tutDots"></div><button class="btn sm" id="tutNext">Next</button></div></div></div>
-<div id="load"><div class="rays"></div><canvas class="lg" width="760" height="680"></canvas><img id="lgsrc" src="ui/load/logo.png" alt="Spot A Fish" style="display:none"><div class="lgt" style="display:none">SPOT A FISH</div><div class="bar"><div class="fl"></div><img class="bfish" src="ui/load/barfish.png" alt=""></div><div class="tx">Spotting fish<i>...</i></div></div>
+<div id="load"><div class="rays"></div><canvas class="lg" width="760" height="680"></canvas><img id="lgsrc" src="ui/load/logo.png" alt="Fishy Find" style="display:none"><div class="lgt" style="display:none">FISHY FIND</div><div class="bar"><div class="bk"></div><div class="fl"></div><div class="frm"></div><img class="bfish" src="ui/load/bar_icon.svg" alt=""><div class="tx">Finding fish<i>...</i></div></div></div>
 </div>
 <script>(function(){ window.__fr=[]; var l=performance.now(); (function f(){ var n=performance.now(); window.__fr.push(n-l); l=n; if(window.__fr.length<400) requestAnimationFrame(f); })(); })();</script>
 <script>(function(){ var n=0, t=setInterval(function(){ n++; var up=!!(window.__ff&&window.__ff.G); var l=document.getElementById('load'); if(!l||up){ clearInterval(t); if(l&&up) l.remove(); return; } if(n>=120){ l.remove(); clearInterval(t); } },1000); })();</script>
