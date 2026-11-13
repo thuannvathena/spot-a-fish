@@ -3728,7 +3728,7 @@ function celUpdate(dt) {
     const R0 = W.rinse; placeCam(R0.end.az, R0.end.el, R0.end.dist, R0.end.ty);
     if (!R0.closedAt && R0.cu.p() > .96) R0.closedAt = performance.now();
     if (R0.closedAt && performance.now() - R0.closedAt > 220) {   // the curtains are shut and have settled: build the next level behind them, then open them
-      const end = R0.end; winCleanup(W); G.win = null; window.__noIntro = true; nextLevel(c); winOut = { t0: performance.now(), c, end }; Snd.play('curtainopen', { at: .12 }); setTimeout(() => R0.cu.to(0), 120);
+      const end = R0.end; winCleanup(W); G.win = null; nextLevel(c); if (camIntro) { camIntro.az1 = c.az; camIntro.elEnd = c.el; camIntro.distEnd = c.dist; camIntro.tyEnd = c.ty; }   /* the next level gets the same opening swing as a level started from the menu, but it lands on the view the player had, not on the default one */ winOut = { t0: performance.now(), c, end }; Snd.play('curtainopen', { at: .12 }); setTimeout(() => R0.cu.to(0), 120);
     }
     return;
   }
@@ -3823,8 +3823,8 @@ function startRinse(end) {   // the curtains close
 }
 function winOutUpdate() {   // after the swap the camera glides back from the rim to where the player had it, under the frost
   if (!winOut) return; const o = winOut, e = clamp((performance.now() - o.t0) / 1000, 0, 1), k = e * e * (3 - 2 * e);
-  if (G && !G.win) { const az = lerp(o.end.az, o.c.az, k), el = lerp(o.end.el, o.c.el, k), dist = lerp(o.end.dist, o.c.dist, k), ty = lerp(o.end.ty, o.c.ty, k); camTween.on = false; placeCam(az, el, dist, ty); orbit.az = az; orbit.el = el; orbit.dist = dist; orbit.target.y = ty; }
-  if (e >= 1) { winOut = null; orbit.az = o.c.az; orbit.el = o.c.el; orbit.dist = o.c.dist; orbit.target.y = o.c.ty; applyCam(); setTimeout(() => { window.__keepWater = false; if (glassWater.done()) glassWater.clear(); else setTimeout(() => { window.__keepWater = false; glassWater.clear(); }, 2500); }, 1500); }
+  if (G && !G.win && !camIntro) { const az = lerp(o.end.az, o.c.az, k),   /* while the opening shot is running it owns the camera: the glide back to the player's angle would fight it */ el = lerp(o.end.el, o.c.el, k), dist = lerp(o.end.dist, o.c.dist, k), ty = lerp(o.end.ty, o.c.ty, k); camTween.on = false; placeCam(az, el, dist, ty); orbit.az = az; orbit.el = el; orbit.dist = dist; orbit.target.y = ty; }
+  if (e >= 1) { winOut = null; if (!camIntro) { orbit.az = o.c.az; orbit.el = o.c.el; orbit.dist = o.c.dist; orbit.target.y = o.c.ty; applyCam(); } setTimeout(() => { window.__keepWater = false; if (glassWater.done()) glassWater.clear(); else setTimeout(() => { window.__keepWater = false; glassWater.clear(); }, 2500); }, 1500); }
 }
 function nextLevel(c) {   // under the water: the pop-up words go and the next level is built (the first one again after the last, or the same one in the editor's play test)
   const L = G.level; window.__winText = undefined;
@@ -4579,8 +4579,9 @@ function frame(now) {
   { const far = orbit.dist > orbit.fit * 1.12; for (const m of (HBO.cones || [])) { if (m._v0 === undefined) m._v0 = m.visible; m.visible = far ? false : m._v0; } if (glowRing2) glowRing2.visible = !far; }   /* zoomed out beyond what the player can do, the spotlight cones and the floor ring of the hall flare up white: they are left out then */
   if (camIntro) {   // the opening shot: a fast turn round the tank, from far and a little above to the normal framing, easing out so it settles softly
     const u = Math.min(1, (performance.now() - camIntro.t0) / camIntro.dur), e = 1 - Math.pow(1 - u, 3); camTween.on = false; orbit.azV = 0; orbit.elV = 0;
-    orbit.az = camIntro.az1 + (1 - e) * camIntro.turns * Math.PI * 2; orbit.dist = orbit.fit * (1 + (camIntro.far - 1) * (1 - e)); orbit.el = clamp(camIntro.el0 + (.3 - camIntro.el0) * e, EL_MIN, EL_MAX); orbit.target.y += (PAN_Y0 - orbit.target.y) * Math.min(1, dtp * 6);
-    if (u >= 1) { camIntro = null; orbit.az = .65; orbit.dist = orbit.fit; orbit.el = .3; }
+    const eAz = camIntro.az1, eEl = camIntro.elEnd !== undefined ? camIntro.elEnd : .3, eDist = camIntro.distEnd !== undefined ? camIntro.distEnd : orbit.fit, eTy = camIntro.tyEnd !== undefined ? camIntro.tyEnd : PAN_Y0;   /* where the shot lands: the normal framing, or - after a win - exactly the view the player had set */
+    orbit.az = eAz + (1 - e) * camIntro.turns * Math.PI * 2; orbit.dist = eDist + (orbit.fit * camIntro.far - eDist) * (1 - e); orbit.el = clamp(camIntro.el0 + (eEl - camIntro.el0) * e, EL_MIN, EL_MAX); orbit.target.y += (eTy - orbit.target.y) * Math.min(1, dtp * 6);
+    if (u >= 1) { camIntro = null; orbit.az = eAz; orbit.dist = eDist; orbit.el = eEl; orbit.target.y = eTy; }
   }
   { const mv = camDrag || performance.now() - camAct < 110 || !!panHold; window.__toolA = window.__toolA ?? 1; window.__toolA += ((mv ? 0 : 1) - window.__toolA) * (1 - Math.exp(-dtp * (mv ? 14 : 16))); const bkBusy = ov.flights.some(f => f.mode === 'backup'); window.__bkA = window.__bkA ?? 1; window.__bkA += ((bkBusy ? 1 : window.__toolA) - window.__bkA) * (1 - Math.exp(-dtp * 14)); }   // the Backup tank fades with the boosters, but stays while a fish is still flying into it   // fade out quickly while the camera moves, and straight back when the finger lifts
   if (panHold) orbit.target.y -= panHold * 1.7 * dtp; panBtns.classList.toggle('show', orbit.dist < orbit.fit * .96);

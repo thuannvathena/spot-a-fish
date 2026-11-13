@@ -2,7 +2,13 @@
 
 Every published version stays playable at its own URL. The [landing page](https://thuannvathena.github.io/spot-a-fish/) lists them all.
 
-## v0.5.0 <Badge type="tip" text="Live" />
+## v0.5.1 <Badge type="tip" text="Live" />
+
+Changes since v0.5.0.
+
+- **The next level opens with the same camera swing as a level started from the menu** (it was skipped after a win), but it lands on the view the player had set instead of the default one. Measured: 7.49 rad of turn and a pull-back to 22.3, the same shot as a restart, ending exactly on the player's angle, height and distance.
+
+## v0.5.0
 
 Changes since v0.4.0.
 
@@ -155,3 +161,4 @@ Detailed history is in the original project's `CHANGELOG.md`.
 | 2026-11-05 | GDD created from the Find Fish prototype's handover notes and changelog |
 | 2026-11-06 | Released v0.1.0 |
 | 2026-11-13 | Released v0.5.0 |
+| 2026-11-13 | Released v0.5.1 |
