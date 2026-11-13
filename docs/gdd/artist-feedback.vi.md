@@ -77,7 +77,7 @@ Phần này là những việc chủ dự án nhắn thêm trong lúc làm bể 
 - [x] Con mực (sau này là bạch tuộc) chiếm 3 ô: nằm ngang trải qua ba ô, vẽ đè lên song của chính nó để không bị song cắt
 - [x] Thành trên mỏng và dẹt hơn
 - [x] Khung là một vòng liền, các cạnh cắt xéo 45° tại góc; đã bỏ đinh tán
-- [ ] Khung vẫn bị chủ dự án chê thô; đang chuyển sang nhờ ChatGPT vẽ bộ phận khung (góc, thanh ngang, thanh dọc)
+- [x] Khung bị chê thô: đã thay bằng bộ phận khung thép do ChatGPT vẽ (góc, thanh ngang, thanh dọc, song), xoá nền bằng `scripts/key-cage.py`; chủ dự án cần xem lại hình dạng cuối
 - [ ] Cá trong ô bị cắt bởi khung: đã thu nhỏ cá cho vừa chiều cao ô, cần chủ dự án xem lại
 
 ### Âm thanh
