@@ -127,6 +127,8 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
                 const dev = (k: 'devWin' | 'devLose') => () => (window as unknown as { __ff?: Record<string, (() => void) | undefined> }).__ff?.[k]?.();
                 button('sDWn', 'green', D(183, 1380, 340, 110), 'Win', dev('devWin'), 170);
                 button('sDLs', 'orange', D(557, 1380, 340, 110), 'Lose', dev('devLose'), 190);
+                const fx = (window as unknown as { __ff?: { devEvents?: string[]; devEvent?: (n: string) => void } }).__ff;   // the events: one button each, to start it right now
+                (fx?.devEvents ?? []).forEach((n, i) => button('sDE' + i, i % 2 ? 'blue' : 'green', D(40 + (i % 4) * 255, 1520 + Math.floor(i / 4) * 105, 240, 90), n, () => fx?.devEvent?.(n), 150));
             }
         }
         return;
@@ -158,7 +160,9 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         const F = ff(), items = (F.G?.backup ?? []).slice(0, 7), cw = (tw * (cage ? 0.972 : 0.9)) / 7;
         items.forEach((it, i) => {
             const src = it.filler ? '' : ((it.junk ? F.THUMB?.[it.id ?? ''] : F.THUMB?.[F.SPECIES?.[it.type ?? 0]?.id ?? '']) ?? ''), fx = tx + tw * (cage ? 0.014 : 0.05) + cw * i;
-            if (src) P.image('pvf' + i, src, cage ? D(fx + cw * 0.08, ty + th * 0.2 + Math.sin(t * 2 + i) * 3, cw * 0.84, th * 0.56) : D(fx + cw * 0.06, ty + th * 0.36 + Math.sin(t * 2 + i) * 3, cw * 0.88, th * 0.5));
+            const wide = it.id === 'squid' && !it.filler ? (F.THUMB?.['squid_wide'] ?? '') : '';   // the octopus takes three cells: its picture is wide and spread over all three
+            if (wide) P.image('pvf' + i, wide, (() => { const ar = parseFloat(F.THUMB?.['squid_wide_ar'] ?? '1.5') || 1.5, nL = items[i - 1]?.filler ? 1 : 0, nR = items[i + 1]?.filler ? 1 : 0, w = Math.min(cw * (1 + nL + nR) * 0.96, th * 0.8 * ar) * 0.9, h = w / ar; return D(fx + cw / 2 + (nR - nL) * cw / 2 - w / 2 + (nL ? 0 : 0), ty + th * 0.5 - h / 2 + Math.sin(t * 2 + i) * 2, w, h); })());
+            else if (src) P.image('pvf' + i, src, cage ? D(fx + cw * 0.08, ty + th * 0.2 + Math.sin(t * 2 + i) * 3, cw * 0.84, th * 0.56) : D(fx + cw * 0.06, ty + th * 0.36 + Math.sin(t * 2 + i) * 3, cw * 0.88, th * 0.5));
         });
         P.pic('pv3', cage ? 'tk_cage_f' : 'tk_front', D(tx, ty, tw, th));
         const cap = 'Clear the tank to keep playing!', capY = (ty + th + 1025) / 2;
@@ -181,7 +185,7 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         const fv = (window as unknown as { __fv?: { on: boolean; cv: HTMLCanvasElement } }).__fv;
         if (fv && fv.on) {   // a live picture: the obstacle moves like it does in the game (game/src/main.js, FV)
             const tx = c.scene.textures; if (!tx.exists('fvLive')) tx.addCanvas('fvLive', fv.cv); else (tx.get('fvLive') as Phaser.Textures.CanvasTexture).refresh();
-            P.pic('fImg', 'fvLive', sd(540 - 330, 800 - 330, 660, 660, pF.sc), { alpha: pF.a });
+            P.pic('fImg', 'fvLive', sd(540 - 330, 830 - 330, 660, 660, pF.sc), { alpha: pF.a });
         } else if (img) P.image('fImg', cropped(img), sd(540 - 280, 821 - 280 + bob, 560, 560, pF.sc), { alpha: pF.a });
         P.pic('fStars', 'bf_fx_stars', D(243, 610, 592, 554), { alpha: 0.65 + 0.35 * Math.sin(t * 3) });
         boardText(L, s, 'fL', body, title, 1279, fit('Special bubbles are here! Clearing fish', 786 - WHITE.sw), 786, 70, A * pB.a, K, cx0, cy0);   // text only, no frame

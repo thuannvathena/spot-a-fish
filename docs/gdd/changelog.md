@@ -2,7 +2,28 @@
 
 Every published version stays playable at its own URL. The [landing page](https://thuannvathena.github.io/spot-a-fish/) lists them all.
 
-## v0.4.0 <Badge type="tip" text="Live" />
+## v0.5.0 <Badge type="tip" text="Live" />
+
+Changes since v0.4.0.
+
+- **New level ramp for all 60 levels** (`scripts/plan-levels.py`): the number of fish in the tank climbs slowly from 4 (L1) to 40 (L60) instead of jumping to 40 at level 5; the trend is no more than +3 fish between two levels. L1-2 have only target fish, L3 has 3 wrong fish and the Backup, L4 has 5, L5 has 7 (the first level that can be lost). No colour noise in L1-10; colour copies of a target start at L11. Bounty tanks only from L25. New fish are met a few at a time (4 at L1, 24 by L10, all 49 by L45).
+- **Level length:** the Hard and Very Hard levels are the long ones (up to about 195 s by the fish × 5 s estimate), the Easy levels between them are shorter; about 99 minutes in total.
+- **Hard levels have a choke point:** the last pump wave comes when one tank is left and holds back the last two target fish. The bot does not confirm that the losses move to the end of the level.
+- **The pipe tells the player a wave is near:** two tanks before it the mouth glows, one tank before it glows more and bubbles rise and it shivers now and then, then the usual rumble.
+- **Code:** the cap of fish in the tank is 40 (it was 60 in the pump check); colour copies are extra decoy species instead of replacing the first decoy species of the level (the whale, the shark and the sea horse were lost this way); the Backup unlocks at L3.
+- **Level editor:** it opens with the browser storage and every level of the game already loaded (no clicking); a stored level that was never edited is updated when the game's level changes; levels 1-2 no longer get a warning for having no wrong fish.
+- **Artist models for the octopus, the jellyfish and the clam** replace the hand-built ones. The clam's shell is bigger than a fish (so swallowing one is believable), its pearl small; it rocks hard from side to side instead of hopping, and a fish it wants stops to put its nose to the pearl for a moment before the shell snaps shut. The clam is solid: fish swim round it, not through it, and it only hunts once the level is really under way (7-9 s in), like the swarm.
+- **Jumping between the tanks reads as one move:** a released animal starts inside the Backup, behind its glass, and comes in front only once its whole body is above the rim; a caught one arcs over the rim in front of the glass and drops into its cell behind it. The nose follows the path at about 60% (a fish leans, it does not stand on its head) and the 3D fall starts at the speed the flying picture ended with.
+- **Water surface:** a cartoon surface - flat turquoise, a web of white caustic lines, winking sparkles, a drifting band of light and a foam ring at the glass. Ripples, slosh and the whirl still bend it.
+- **Octopus in the Backup:** 5% shorter, and it drifts up and down and sways left and right by exactly the room its three cells leave (measured: 163 px of fish in a 177 px strip).
+- **Every level keeps at least 6 fish over** once every tank is full, so the win animation always has fish to play with (L1 had exactly 4 before). L1-4 still cannot be lost: 6 wrong fish against 7 Backup slots. The bot win rates do not move (2000 runs per level).
+- **No twin wrong fish:** when a wrong species is used more than once its later copies have their colours turned a little, so every fish in the tank reads as its own; the tinted copies still school together.
+- **Swirl event:** the two rings are wider and flatter, so the wheel no longer squashes against the water and the sand, and the fish are shared between the rings by the length of each ring. Measured over 5 s with 22 fish: the closest pair went from 0.42 to 0.55 and the average gap to the nearest fish from 0.65 to 0.74.
+- **LEVEL title on Hard / Super Hard levels** hangs by the middle of the words, not by the middle of the whole picture, so the words sit at the same height as on a normal level (measured: 299.5 px on both) with the fish bones above them.
+- **Boosters light up in their first-time tip:** a greyed-out booster (Clear Backup with an empty Backup) shows at full strength while its tip is open and goes back to grey when it closes.
+- **Tools:** `wr-sim.mjs` reports where in the level a lost run ended; `wr-tune-plan.mjs` tunes colour copies and obstacles on the new `levels.json`; `make-sheet-data.py` and `make-levels-doc.py` build the sheet tab and this GDD table.
+
+## v0.4.0
 
 Changes since v0.3.4. The game is now called **Fishy Find** (the repo, the Pages address and the save key keep their old names).
 
@@ -132,3 +153,4 @@ Detailed history is in the original project's `CHANGELOG.md`.
 |---|---|
 | 2026-11-05 | GDD created from the Find Fish prototype's handover notes and changelog |
 | 2026-11-06 | Released v0.1.0 |
+| 2026-11-13 | Released v0.5.0 |

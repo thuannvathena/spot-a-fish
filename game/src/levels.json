@@ -9,8 +9,82 @@
   "category": "Tutorial",
   "refLevel": 1,
   "goal": 4,
-  "per": 3,
+  "per": 1,
   "tanks": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "bounty": [],
+  "species": 6,
+  "decoyFish": 6,
+  "look": 0,
+  "shift": 130,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": false,
+   "extraFish": 0,
+   "waves": [],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": false,
+  "hint": false,
+  "tank": false,
+  "clear": false,
+  "theme": 0,
+  "events": [
+   "conga"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": false,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": false,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 10,
+  "maxFish": 10,
+  "fishKeys": [
+   "fish_abyss_tetra",
+   "fish_blue_chunker",
+   "fish_green_stripey",
+   "fish_pink_stripe",
+   "fish_silver_line",
+   "fish_rainbow_striper"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L02",
+  "name": "Level 2",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 2,
+  "goal": 5,
+  "per": 1,
+  "tanks": [
+   1,
    1,
    1,
    1,
@@ -61,124 +135,39 @@
    30,
    30
   ],
-  "startFish": 10,
-  "maxFish": 10,
+  "startFish": 11,
+  "maxFish": 11,
   "fishKeys": [
    "fish_blue_chunker",
-   "fish_green_spotty",
-   "fish_deep_lantern_fish",
-   "fish_pinky_puffer",
-   "fish_yellow_stripe",
-   "fish_goldie",
-   "fish_purp_bluefin"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L02",
-  "name": "Backup Slot",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 2,
-  "goal": 7,
-  "per": 3,
-  "tanks": [
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   2
-  ],
-  "bounty": [],
-  "species": 12,
-  "decoyFish": 10,
-  "look": 0,
-  "shift": 130,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": false,
-   "extraFish": 0,
-   "waves": [],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": false,
-  "tank": false,
-  "clear": false,
-  "theme": 0,
-  "events": [
-   "conga"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": false,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": false,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 18,
-  "maxFish": 18,
-  "fishKeys": [
-   "fish_brown_stripe",
-   "fish_red_stripe_wing",
-   "fish_rainbow_bluestripe",
-   "fish_blue_flash",
-   "fish_pink_bubble",
-   "fish_rainbow_wing",
-   "fish_emerald_blue",
-   "fish_sea_horse",
-   "fish_golden_spot",
-   "fish_blue_striper",
-   "fish_blue_chunker",
-   "fish_sunset_puffer"
+   "fish_green_stripey",
+   "fish_pink_stripe",
+   "fish_abyss_tetra",
+   "fish_rainbow_striper",
+   "fish_silver_line",
+   "fish_blue_chuppy"
   ]
  },
  {
   "schema": "spot-a-fish-level",
   "version": 2,
   "id": "L03",
-  "name": "Level 3",
+  "name": "Backup Slot",
   "status": "Ready",
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 3,
-  "goal": 8,
-  "per": 3,
+  "goal": 5,
+  "per": 1,
   "tanks": [
    1,
    1,
    1,
    1,
-   1,
-   1,
-   2,
-   2
+   1
   ],
   "bounty": [],
-  "species": 14,
-  "decoyFish": 12,
+  "species": 7,
+  "decoyFish": 6,
   "look": 0,
   "shift": 130,
   "sizeK": 1.4,
@@ -203,6 +192,493 @@
   "events": [
    "conga",
    "waltz"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": false,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": false,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 11,
+  "maxFish": 11,
+  "fishKeys": [
+   "fish_blue_chuppy",
+   "fish_blue_striper",
+   "fish_abyss_tetra",
+   "fish_blue_chunker",
+   "fish_green_stripey",
+   "fish_silver_line",
+   "fish_green_finny"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L04",
+  "name": "Booster 1: Hint",
+  "status": "Ready",
+  "difficulty": "Medium",
+  "category": "Normal",
+  "refLevel": 4,
+  "goal": 5,
+  "per": 1,
+  "tanks": [
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  "bounty": [],
+  "species": 8,
+  "decoyFish": 6,
+  "look": 0,
+  "shift": 130,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": false,
+   "extraFish": 0,
+   "waves": [],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": false,
+  "clear": false,
+  "theme": 0,
+  "events": [
+   "conga",
+   "waltz"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": false,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": false,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 11,
+  "maxFish": 11,
+  "fishKeys": [
+   "fish_green_spotty",
+   "fish_violet_stripe",
+   "fish_pink_stripe",
+   "fish_blue_striper",
+   "fish_blue_chuppy",
+   "fish_sunset_puffer",
+   "fish_rainbow_striper",
+   "fish_silver_line"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L05",
+  "name": "Level 5",
+  "status": "Ready",
+  "difficulty": "Hard",
+  "category": "Normal",
+  "refLevel": 5,
+  "goal": 6,
+  "per": 1,
+  "tanks": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  "bounty": [],
+  "species": 10,
+  "decoyFish": 7,
+  "look": 0,
+  "shift": 130,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": false,
+   "extraFish": 0,
+   "waves": [],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": false,
+  "clear": false,
+  "theme": 0,
+  "events": [
+   "conga",
+   "waltz"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": false,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": false,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 13,
+  "maxFish": 13,
+  "fishKeys": [
+   "fish_abyss_tetra",
+   "fish_blue_chunker",
+   "fish_green_stripey",
+   "fish_green_spotty",
+   "fish_blue_chuppy",
+   "fish_blue_striper",
+   "fish_green_beast",
+   "fish_golden_scale",
+   "fish_violet_stripe",
+   "fish_green_finny"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L06",
+  "name": "Level 6",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 6,
+  "goal": 7,
+  "per": 1,
+  "tanks": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  "bounty": [],
+  "species": 11,
+  "decoyFish": 7,
+  "look": 0,
+  "shift": 130,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": false,
+   "extraFish": 0,
+   "waves": [],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": false,
+  "clear": false,
+  "theme": 0,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": false,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": false,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 14,
+  "maxFish": 14,
+  "fishKeys": [
+   "fish_rainbow_bluestripe",
+   "fish_pink_stripe",
+   "fish_blue_chuppy",
+   "fish_blue_striper",
+   "fish_violet_stripe",
+   "fish_green_spotty",
+   "fish_abyss_tetra",
+   "fish_sea_horse",
+   "fish_silver_line",
+   "fish_sunset_puffer",
+   "fish_rainbow_striper"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L07",
+  "name": "Booster 2: Tank Clear",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 7,
+  "goal": 7,
+  "per": 1,
+  "tanks": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  "bounty": [],
+  "species": 11,
+  "decoyFish": 7,
+  "look": 0,
+  "shift": 130,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": false,
+   "extraFish": 0,
+   "waves": [],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": false,
+  "theme": 0,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": false,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": false,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 14,
+  "maxFish": 14,
+  "fishKeys": [
+   "fish_emerald_blue",
+   "fish_pinky_puffer",
+   "fish_rainbow_bluestripe",
+   "fish_green_stripey",
+   "fish_violet_stripe",
+   "fish_green_spotty",
+   "fish_blue_chunker",
+   "fish_golden_scale",
+   "fish_green_finny",
+   "fish_green_beast",
+   "fish_rainbow_striper"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L08",
+  "name": "Level 8",
+  "status": "Ready",
+  "difficulty": "Medium",
+  "category": "Normal",
+  "refLevel": 8,
+  "goal": 7,
+  "per": 2,
+  "tanks": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   2
+  ],
+  "bounty": [],
+  "species": 11,
+  "decoyFish": 12,
+  "look": 0,
+  "shift": 130,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 1,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": false,
+   "extraFish": 0,
+   "waves": [],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": false,
+  "theme": 0,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": false,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": false,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 20,
+  "maxFish": 20,
+  "fishKeys": [
+   "fish_peach_anthias",
+   "fish_blue_chuppy",
+   "fish_sunset_puffer",
+   "fish_silver_line",
+   "fish_emerald_blue",
+   "fish_pink_stripe",
+   "fish_pinky_puffer",
+   "fish_sea_horse",
+   "fish_golden_tide",
+   "fish_blue_striper",
+   "fish_golden_scale"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L09",
+  "name": "Booster 3: Backup Clear",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 9,
+  "goal": 8,
+  "per": 2,
+  "tanks": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   2
+  ],
+  "bounty": [],
+  "species": 12,
+  "decoyFish": 13,
+  "look": 0,
+  "shift": 130,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": false,
+   "extraFish": 0,
+   "waves": [],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 0,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop"
   ],
   "eventGap": [
    8,
@@ -225,558 +701,18 @@
   "startFish": 22,
   "maxFish": 22,
   "fishKeys": [
-   "fish_peach_anthias",
-   "fish_golden_flame",
-   "fish_abyss_tetra",
-   "fish_pink_stripe",
-   "fish_green_beast",
-   "fish_purple_sprite",
-   "fish_ice_blue_fish",
-   "fish_green_stripey",
-   "fish_silver_line",
-   "fish_blue_chunker",
-   "fish_blue_striper",
-   "fish_violet_stripe",
-   "fish_blue_chuppy",
-   "fish_orange_stripe"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L04",
-  "name": "Booster 1: Hint",
-  "status": "Ready",
-  "difficulty": "Medium",
-  "category": "Normal",
-  "refLevel": 4,
-  "goal": 8,
-  "per": 3,
-  "tanks": [
-   1,
-   1,
-   1,
-   1,
-   2,
-   2,
-   2,
-   2
-  ],
-  "bounty": [],
-  "species": 16,
-  "decoyFish": 16,
-  "look": 0,
-  "shift": 130,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": false,
-   "extraFish": 0,
-   "waves": [],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": false,
-  "clear": false,
-  "theme": 0,
-  "events": [
-   "conga",
-   "waltz"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": false,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": false,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 28,
-  "maxFish": 28,
-  "fishKeys": [
-   "fish_rainbow_striper",
-   "fish_green_orby",
-   "fish_pale_tide",
-   "fish_ghostly_wave",
-   "fish_orange_sword_fish",
-   "fish_perple_stripe_wing",
-   "fish_panda_puffer",
-   "fish_yellow_shell_kid",
-   "fish_golden_scale",
-   "fish_green_spotty",
-   "fish_emerald_blue",
-   "fish_blue_chunker",
-   "fish_blue_striper",
-   "fish_green_stripey",
-   "fish_green_finny",
-   "fish_violet_ripple"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L05",
-  "name": "Level 5",
-  "status": "Ready",
-  "difficulty": "Hard",
-  "category": "Normal",
-  "refLevel": 5,
-  "goal": 10,
-  "per": 3,
-  "tanks": [
-   1,
-   1,
-   1,
-   1,
-   2,
-   2,
-   2,
-   2,
-   2,
-   2
-  ],
-  "bounty": [],
-  "species": 22,
-  "decoyFish": 24,
-  "look": 4,
-  "shift": 130,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": false,
-   "extraFish": 0,
-   "waves": [],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": false,
-  "clear": false,
-  "theme": 0,
-  "events": [
-   "conga",
-   "waltz"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": false,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": false,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 40,
-  "maxFish": 40,
-  "fishKeys": [
-   "fish_goldie_tot",
-   "fish_purple_wing",
-   "fish_red_fin",
-   "fish_red_wing",
-   "fish_golden_tide",
-   "fish_orange_horn",
-   "fish_yellow_stripe",
    "fish_purp_bluefin",
-   "fish_goldie",
-   "fish_pinky_puffer",
-   "fish_sea_horse",
-   "fish_brown_stripe",
-   "fish_deep_lantern_fish",
-   "fish_green_stripey",
-   "fish_blue_striper",
-   "fish_green_spotty",
-   "fish_emerald_blue",
-   "fish_blue_chunker",
-   "fish_rainbow_wing",
-   "fish_green_beast",
-   "fish_golden_spot",
-   "fish_red_stripe_wing"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L06",
-  "name": "Level 6",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 6,
-  "goal": 8,
-  "per": 3,
-  "tanks": [
-   1,
-   1,
-   2,
-   2,
-   2,
-   2,
-   2,
-   2
-  ],
-  "bounty": [],
-  "species": 14,
-  "decoyFish": 12,
-  "look": 1,
-  "shift": 130,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": false,
-   "extraFish": 0,
-   "waves": [],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": false,
-  "clear": false,
-  "theme": 0,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": false,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": false,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 26,
-  "maxFish": 26,
-  "fishKeys": [
-   "fish_blue_flash",
    "fish_rainbow_bluestripe",
+   "fish_green_spotty",
    "fish_sunset_puffer",
-   "fish_golden_scale",
-   "fish_green_finny",
-   "fish_pink_bubble",
-   "fish_purple_sprite",
-   "fish_violet_stripe",
-   "fish_pink_stripe",
-   "fish_green_stripey",
-   "fish_green_spotty",
-   "fish_emerald_blue",
-   "fish_blue_chunker",
-   "fish_blue_striper"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L07",
-  "name": "Booster 2: Tank Clear",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 7,
-  "goal": 8,
-  "per": 3,
-  "tanks": [
-   1,
-   2,
-   2,
-   2,
-   2,
-   2,
-   2,
-   2
-  ],
-  "bounty": [],
-  "species": 14,
-  "decoyFish": 12,
-  "look": 1,
-  "shift": 130,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": false,
-   "extraFish": 0,
-   "waves": [],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": false,
-  "theme": 0,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": false,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": false,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 27,
-  "maxFish": 27,
-  "fishKeys": [
-   "fish_blue_chuppy",
    "fish_peach_anthias",
-   "fish_green_orby",
-   "fish_perple_stripe_wing",
-   "fish_golden_flame",
-   "fish_silver_line",
-   "fish_violet_ripple",
-   "fish_rainbow_striper",
-   "fish_pale_tide",
-   "fish_blue_striper",
-   "fish_emerald_blue",
-   "fish_green_spotty",
-   "fish_green_stripey",
-   "fish_blue_chunker"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L08",
-  "name": "Level 8",
-  "status": "Ready",
-  "difficulty": "Medium",
-  "category": "Normal",
-  "refLevel": 8,
-  "goal": 9,
-  "per": 3,
-  "tanks": [
-   1,
-   2,
-   2,
-   2,
-   2,
-   2,
-   2,
-   2,
-   2
-  ],
-  "bounty": [],
-  "species": 21,
-  "decoyFish": 23,
-  "look": 4,
-  "shift": 130,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 1,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": false,
-   "extraFish": 0,
-   "waves": [],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": false,
-  "theme": 0,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": false,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": false,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 40,
-  "maxFish": 40,
-  "fishKeys": [
+   "fish_violet_stripe",
    "fish_abyss_tetra",
-   "fish_orange_sword_fish",
-   "fish_yellow_shell_kid",
-   "fish_ghostly_wave",
-   "fish_panda_puffer",
-   "fish_red_wing",
-   "fish_orange_stripe",
-   "fish_ice_blue_fish",
-   "fish_golden_tide",
-   "fish_shark",
-   "fish_sea_horse",
-   "fish_orange_horn",
-   "fish_goldie_tot",
-   "fish_emerald_blue",
-   "fish_blue_chunker",
-   "fish_green_stripey",
-   "fish_blue_striper",
-   "fish_green_spotty",
-   "fish_red_fin",
-   "fish_purple_wing",
-   "fish_goldie"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L09",
-  "name": "Booster 3: Backup Clear",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 9,
-  "goal": 7,
-  "per": 3,
-  "tanks": [
-   2,
-   2,
-   2,
-   2,
-   2,
-   2,
-   3
-  ],
-  "bounty": [],
-  "species": 12,
-  "decoyFish": 10,
-  "look": 1,
-  "shift": 130,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": false,
-   "extraFish": 0,
-   "waves": [],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 0,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": false,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": false,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 25,
-  "maxFish": 25,
-  "fishKeys": [
-   "fish_red_stripe_wing",
-   "fish_rainbow_bluestripe",
-   "fish_golden_spot",
-   "fish_brown_stripe",
    "fish_pinky_puffer",
-   "fish_purp_bluefin",
-   "fish_deep_lantern_fish",
-   "fish_pink_bubble",
-   "fish_emerald_blue",
-   "fish_green_spotty",
-   "fish_blue_striper",
-   "fish_green_stripey"
+   "fish_yellow_shell_kid",
+   "fish_rainbow_striper",
+   "fish_green_finny",
+   "fish_green_beast"
   ]
  },
  {
@@ -789,21 +725,21 @@
   "category": "Normal",
   "refLevel": 10,
   "goal": 8,
-  "per": 3,
+  "per": 2,
   "tanks": [
-   2,
-   2,
-   2,
-   2,
-   2,
-   3,
-   3,
-   3
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   2
   ],
   "bounty": [],
-  "species": 20,
-  "decoyFish": 21,
-  "look": 4,
+  "species": 13,
+  "decoyFish": 13,
+  "look": 0,
   "shift": 130,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -848,29 +784,22 @@
    30,
    30
   ],
-  "startFish": 40,
-  "maxFish": 40,
+  "startFish": 22,
+  "maxFish": 22,
   "fishKeys": [
-   "fish_yellow_stripe",
-   "fish_pink_stripe",
-   "fish_silver_line",
-   "fish_golden_scale",
-   "fish_green_beast",
+   "fish_red_wing",
+   "fish_deep_lantern_fish",
    "fish_blue_chuppy",
-   "fish_rainbow_wing",
-   "fish_blue_flash",
-   "fish_shark",
-   "fish_purple_sprite",
-   "fish_violet_stripe",
-   "fish_blue_chunker",
-   "fish_green_spotty",
-   "fish_blue_striper",
    "fish_green_stripey",
+   "fish_purp_bluefin",
    "fish_emerald_blue",
-   "fish_sunset_puffer",
-   "fish_green_finny",
-   "fish_perple_stripe_wing",
-   "fish_peach_anthias"
+   "fish_silver_line",
+   "fish_pink_stripe",
+   "fish_sea_horse",
+   "fish_golden_tide",
+   "fish_golden_scale",
+   "fish_blue_chunker",
+   "fish_yellow_shell_kid"
   ]
  },
  {
@@ -883,19 +812,19 @@
   "category": "Normal",
   "refLevel": 11,
   "goal": 7,
-  "per": 3,
+  "per": 2,
   "tanks": [
+   1,
+   1,
+   1,
+   1,
+   1,
    2,
-   2,
-   2,
-   2,
-   2,
-   3,
-   3
+   2
   ],
   "bounty": [],
-  "species": 12,
-  "decoyFish": 10,
+  "species": 11,
+  "decoyFish": 11,
   "look": 1,
   "shift": 110,
   "sizeK": 1.4,
@@ -941,21 +870,20 @@
    30,
    30
   ],
-  "startFish": 26,
-  "maxFish": 26,
+  "startFish": 20,
+  "maxFish": 20,
   "fishKeys": [
-   "fish_pale_tide",
-   "fish_rainbow_striper",
-   "fish_orange_stripe",
-   "fish_violet_ripple",
-   "fish_green_orby",
-   "fish_abyss_tetra",
-   "fish_golden_flame",
-   "fish_whale",
+   "fish_goldie_tot",
+   "fish_peach_anthias",
+   "fish_blue_striper",
+   "fish_green_beast",
+   "fish_red_wing",
+   "fish_rainbow_bluestripe",
+   "fish_green_spotty",
    "fish_sea_horse",
-   "fish_yellow_shell_kid",
-   "fish_blue_chunker",
-   "fish_blue_striper"
+   "fish_golden_tide",
+   "fish_pinky_puffer",
+   "fish_sunset_puffer"
   ]
  },
  {
@@ -967,20 +895,22 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 12,
-  "goal": 6,
-  "per": 3,
+  "goal": 8,
+  "per": 2,
   "tanks": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
    2,
-   2,
-   3,
-   3,
-   3,
-   3
+   2
   ],
   "bounty": [],
-  "species": 18,
-  "decoyFish": 24,
-  "look": 4,
+  "species": 12,
+  "decoyFish": 12,
+  "look": 1,
   "shift": 110,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -1026,27 +956,21 @@
    30,
    30
   ],
-  "startFish": 40,
-  "maxFish": 40,
+  "startFish": 22,
+  "maxFish": 22,
   "fishKeys": [
-   "fish_purple_wing",
-   "fish_ice_blue_fish",
-   "fish_orange_horn",
-   "fish_orange_sword_fish",
-   "fish_golden_spot",
-   "fish_golden_tide",
-   "fish_goldie_tot",
-   "fish_goldie",
-   "fish_rainbow_bluestripe",
+   "fish_deep_lantern_fish",
+   "fish_yellow_shell_kid",
+   "fish_abyss_tetra",
+   "fish_rainbow_striper",
+   "fish_violet_stripe",
    "fish_emerald_blue",
-   "fish_green_stripey",
-   "fish_green_spotty",
    "fish_blue_chunker",
-   "fish_blue_striper",
-   "fish_red_wing",
-   "fish_ghostly_wave",
-   "fish_panda_puffer",
-   "fish_purp_bluefin"
+   "fish_purp_bluefin",
+   "fish_sea_horse",
+   "fish_green_finny",
+   "fish_goldie_tot",
+   "fish_golden_tide"
   ]
  },
  {
@@ -1058,20 +982,21 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 13,
-  "goal": 6,
-  "per": 3,
+  "goal": 7,
+  "per": 2,
   "tanks": [
+   1,
+   1,
+   1,
    2,
-   3,
-   3,
-   3,
-   3,
-   3
+   2,
+   2,
+   2
   ],
   "bounty": [],
-  "species": 18,
-  "decoyFish": 23,
-  "look": 4,
+  "species": 11,
+  "decoyFish": 9,
+  "look": 1,
   "shift": 110,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -1117,26 +1042,19 @@
    30,
    30
   ],
-  "startFish": 40,
-  "maxFish": 40,
+  "startFish": 20,
+  "maxFish": 20,
   "fishKeys": [
-   "fish_red_fin",
-   "fish_violet_stripe",
-   "fish_rainbow_wing",
-   "fish_brown_stripe",
+   "fish_golden_spot",
+   "fish_golden_scale",
+   "fish_sunset_puffer",
+   "fish_red_wing",
    "fish_blue_chuppy",
-   "fish_pinky_puffer",
-   "fish_whale",
-   "fish_red_stripe_wing",
-   "fish_deep_lantern_fish",
-   "fish_perple_stripe_wing",
-   "fish_emerald_blue",
    "fish_green_stripey",
    "fish_blue_chunker",
-   "fish_blue_striper",
-   "fish_green_spotty",
-   "fish_pink_bubble",
-   "fish_golden_scale",
+   "fish_pink_stripe",
+   "fish_silver_line",
+   "fish_pinky_puffer",
    "fish_green_beast"
   ]
  },
@@ -1150,20 +1068,20 @@
   "category": "Normal",
   "refLevel": 14,
   "goal": 7,
-  "per": 3,
+  "per": 2,
   "tanks": [
+   1,
+   1,
    2,
    2,
-   3,
-   3,
-   3,
-   3,
-   3
+   2,
+   2,
+   2
   ],
   "bounty": [],
-  "species": 19,
-  "decoyFish": 21,
-  "look": 4,
+  "species": 11,
+  "decoyFish": 8,
+  "look": 1,
   "shift": 110,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -1209,28 +1127,20 @@
    30,
    30
   ],
-  "startFish": 40,
-  "maxFish": 40,
+  "startFish": 20,
+  "maxFish": 20,
   "fishKeys": [
-   "fish_blue_flash",
-   "fish_sunset_puffer",
-   "fish_rainbow_striper",
-   "fish_green_finny",
-   "fish_pale_tide",
-   "fish_peach_anthias",
-   "fish_silver_line",
-   "fish_shark",
-   "fish_sea_horse",
-   "fish_orange_stripe",
-   "fish_pink_stripe",
-   "fish_violet_ripple",
-   "fish_green_spotty",
-   "fish_green_stripey",
-   "fish_blue_chunker",
+   "fish_ice_blue_fish",
+   "fish_deep_lantern_fish",
    "fish_emerald_blue",
+   "fish_yellow_shell_kid",
+   "fish_goldie_tot",
    "fish_blue_striper",
-   "fish_yellow_stripe",
-   "fish_purple_sprite"
+   "fish_violet_stripe",
+   "fish_shark",
+   "fish_peach_anthias",
+   "fish_rainbow_bluestripe",
+   "fish_purp_bluefin"
   ]
  },
  {
@@ -1240,26 +1150,23 @@
   "name": "Level 15",
   "status": "Ready",
   "difficulty": "Hard",
-  "category": "Bounty",
+  "category": "Normal",
   "refLevel": 15,
-  "goal": 8,
-  "per": 3,
+  "goal": 7,
+  "per": 2,
   "tanks": [
    1,
    2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
+   2,
+   2,
+   2,
+   2,
+   2
   ],
-  "bounty": [
-   "tiny"
-  ],
-  "species": 20,
-  "decoyFish": 19,
-  "look": 4,
+  "bounty": [],
+  "species": 11,
+  "decoyFish": 8,
+  "look": 1,
   "shift": 110,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -1305,29 +1212,20 @@
    30,
    30
   ],
-  "startFish": 40,
-  "maxFish": 40,
+  "startFish": 21,
+  "maxFish": 21,
   "fishKeys": [
-   "fish_green_orby",
-   "fish_golden_flame",
-   "fish_red_wing",
-   "fish_abyss_tetra",
-   "fish_orange_sword_fish",
-   "fish_yellow_shell_kid",
-   "fish_golden_spot",
-   "fish_purple_wing",
-   "fish_panda_puffer",
-   "fish_rainbow_bluestripe",
-   "fish_orange_horn",
-   "fish_golden_tide",
+   "fish_violet_ripple",
    "fish_green_spotty",
-   "fish_green_stripey",
-   "fish_emerald_blue",
+   "fish_golden_tide",
+   "fish_golden_spot",
+   "fish_ice_blue_fish",
+   "fish_sunset_puffer",
    "fish_blue_striper",
-   "fish_blue_chunker",
-   "fish_goldie",
-   "fish_goldie_tot",
-   "fish_golden_scale"
+   "fish_red_wing",
+   "fish_green_finny",
+   "fish_rainbow_striper",
+   "fish_abyss_tetra"
   ]
  },
  {
@@ -1339,20 +1237,22 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 16,
-  "goal": 6,
-  "per": 3,
+  "goal": 8,
+  "per": 2,
   "tanks": [
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
+   1,
+   1,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2
   ],
   "bounty": [],
-  "species": 18,
-  "decoyFish": 30,
-  "look": 4,
+  "species": 12,
+  "decoyFish": 8,
+  "look": 1,
   "shift": 110,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -1363,110 +1263,8 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 24,
+   "extraFish": 3,
    "waves": [
-    {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 1,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": false,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 24,
-  "maxFish": 48,
-  "fishKeys": [
-   "fish_ghostly_wave",
-   "fish_red_fin",
-   "fish_purp_bluefin",
-   "fish_yellow_stripe",
-   "fish_brown_stripe",
-   "fish_ice_blue_fish",
-   "fish_shark",
-   "fish_pink_bubble",
-   "fish_rainbow_wing",
-   "fish_deep_lantern_fish",
-   "fish_blue_striper",
-   "fish_green_stripey",
-   "fish_green_spotty",
-   "fish_emerald_blue",
-   "fish_blue_chunker",
-   "fish_green_beast",
-   "fish_pinky_puffer",
-   "fish_pink_stripe"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L17",
-  "name": "Level 17",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 17,
-  "goal": 6,
-  "per": 3,
-  "tanks": [
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 18,
-  "decoyFish": 38,
-  "look": 4,
-  "shift": 110,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 28,
-   "waves": [
-    {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 1
-    },
     {
      "afterTanks": 4,
      "holdLast": true,
@@ -1506,27 +1304,114 @@
    30,
    30
   ],
-  "startFish": 28,
-  "maxFish": 56,
+  "startFish": 19,
+  "maxFish": 22,
   "fishKeys": [
-   "fish_violet_stripe",
-   "fish_sunset_puffer",
-   "fish_blue_chuppy",
-   "fish_green_finny",
-   "fish_goldie",
    "fish_red_stripe_wing",
-   "fish_whale",
-   "fish_sea_horse",
-   "fish_rainbow_striper",
-   "fish_perple_stripe_wing",
-   "fish_pale_tide",
-   "fish_green_spotty",
-   "fish_blue_striper",
    "fish_green_stripey",
-   "fish_emerald_blue",
+   "fish_golden_scale",
+   "fish_green_beast",
+   "fish_pinky_puffer",
    "fish_blue_chunker",
-   "fish_violet_ripple",
-   "fish_blue_flash"
+   "fish_blue_chuppy",
+   "fish_goldie_tot",
+   "fish_sea_horse",
+   "fish_yellow_shell_kid",
+   "fish_purp_bluefin",
+   "fish_peach_anthias"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L17",
+  "name": "Level 17",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 17,
+  "goal": 8,
+  "per": 2,
+  "tanks": [
+   1,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2
+  ],
+  "bounty": [],
+  "species": 12,
+  "decoyFish": 8,
+  "look": 1,
+  "shift": 110,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 3,
+   "waves": [
+    {
+     "afterTanks": 4,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 1,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": false,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 20,
+  "maxFish": 23,
+  "fishKeys": [
+   "fish_orange_horn",
+   "fish_emerald_blue",
+   "fish_deep_lantern_fish",
+   "fish_golden_spot",
+   "fish_pink_stripe",
+   "fish_rainbow_bluestripe",
+   "fish_silver_line",
+   "fish_red_stripe_wing",
+   "fish_sea_horse",
+   "fish_blue_striper",
+   "fish_blue_chunker",
+   "fish_violet_ripple"
   ]
  },
  {
@@ -1542,16 +1427,16 @@
   "per": 3,
   "tanks": [
    2,
-   3,
-   3,
-   3,
-   3,
-   3,
+   2,
+   2,
+   2,
+   2,
+   2,
    3
   ],
   "bounty": [],
-  "species": 14,
-  "decoyFish": 40,
+  "species": 12,
+  "decoyFish": 12,
   "look": 1,
   "shift": 110,
   "sizeK": 1.4,
@@ -1563,20 +1448,10 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 30,
+   "extraFish": 4,
    "waves": [
     {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
      "afterTanks": 4,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
      "holdLast": true,
      "holdFish": 1
     }
@@ -1615,23 +1490,21 @@
    30,
    30
   ],
-  "startFish": 30,
-  "maxFish": 60,
+  "startFish": 23,
+  "maxFish": 27,
   "fishKeys": [
-   "fish_purple_sprite",
-   "fish_orange_stripe",
-   "fish_abyss_tetra",
-   "fish_goldie_tot",
-   "fish_green_orby",
-   "fish_peach_anthias",
-   "fish_orange_sword_fish",
-   "fish_silver_line",
-   "fish_panda_puffer",
-   "fish_green_stripey",
-   "fish_blue_striper",
+   "fish_ice_blue_fish",
+   "fish_red_wing",
+   "fish_red_stripe_wing",
+   "fish_golden_tide",
    "fish_green_spotty",
-   "fish_emerald_blue",
-   "fish_blue_chunker"
+   "fish_green_finny",
+   "fish_violet_stripe",
+   "fish_sea_horse",
+   "fish_goldie_tot",
+   "fish_blue_chunker",
+   "fish_blue_striper",
+   "fish_orange_horn"
   ]
  },
  {
@@ -1643,21 +1516,22 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 19,
-  "goal": 7,
-  "per": 3,
+  "goal": 8,
+  "per": 2,
   "tanks": [
    2,
    2,
-   3,
-   3,
-   3,
-   3,
-   3
+   2,
+   2,
+   2,
+   2,
+   2,
+   2
   ],
   "bounty": [],
-  "species": 19,
-  "decoyFish": 37,
-  "look": 4,
+  "species": 13,
+  "decoyFish": 9,
+  "look": 1,
   "shift": 110,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -1668,15 +1542,10 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 28,
+   "extraFish": 3,
    "waves": [
     {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
     }
@@ -1715,28 +1584,22 @@
    30,
    30
   ],
-  "startFish": 28,
-  "maxFish": 56,
+  "startFish": 22,
+  "maxFish": 25,
   "fishKeys": [
-   "fish_rainbow_bluestripe",
-   "fish_red_wing",
+   "fish_green_orby",
+   "fish_sunset_puffer",
+   "fish_purp_bluefin",
    "fish_orange_horn",
-   "fish_deep_lantern_fish",
-   "fish_yellow_shell_kid",
-   "fish_purple_wing",
-   "fish_golden_flame",
-   "fish_whale",
-   "fish_golden_tide",
-   "fish_golden_scale",
-   "fish_red_fin",
-   "fish_green_spotty",
-   "fish_green_stripey",
-   "fish_blue_chunker",
-   "fish_blue_striper",
+   "fish_violet_ripple",
    "fish_emerald_blue",
-   "fish_ice_blue_fish",
-   "fish_ghostly_wave",
-   "fish_pink_stripe"
+   "fish_abyss_tetra",
+   "fish_yellow_shell_kid",
+   "fish_peach_anthias",
+   "fish_blue_striper",
+   "fish_blue_chunker",
+   "fish_golden_spot",
+   "fish_blue_chuppy"
   ]
  },
  {
@@ -1748,23 +1611,24 @@
   "difficulty": "Very Hard",
   "category": "Normal",
   "refLevel": 20,
-  "goal": 9,
+  "goal": 10,
   "per": 3,
   "tanks": [
    2,
    2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
    3
   ],
   "bounty": [],
-  "species": 21,
-  "decoyFish": 35,
-  "look": 2,
+  "species": 17,
+  "decoyFish": 15,
+  "look": 1,
   "shift": 110,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -1775,25 +1639,10 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 30,
+   "extraFish": 11,
    "waves": [
     {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 4,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 7,
+     "afterTanks": 9,
      "holdLast": true,
      "holdFish": 2
     }
@@ -1832,30 +1681,26 @@
    30,
    30
   ],
-  "startFish": 30,
-  "maxFish": 60,
+  "startFish": 25,
+  "maxFish": 36,
   "fishKeys": [
-   "fish_rainbow_wing",
-   "fish_purp_bluefin",
-   "fish_pink_bubble",
-   "fish_sunset_puffer",
-   "fish_brown_stripe",
-   "fish_golden_spot",
-   "fish_yellow_stripe",
-   "fish_green_beast",
-   "fish_goldie",
-   "fish_shark",
-   "fish_sea_horse",
-   "fish_blue_chuppy",
-   "fish_red_stripe_wing",
+   "fish_pale_tide",
    "fish_pinky_puffer",
-   "fish_blue_chunker",
-   "fish_green_stripey",
-   "fish_emerald_blue",
-   "fish_blue_striper",
-   "fish_green_spotty",
+   "fish_green_beast",
    "fish_rainbow_striper",
-   "fish_green_finny"
+   "fish_red_stripe_wing",
+   "fish_green_stripey",
+   "fish_ice_blue_fish",
+   "fish_deep_lantern_fish",
+   "fish_golden_scale",
+   "fish_rainbow_bluestripe",
+   "fish_shark",
+   "fish_red_wing",
+   "fish_blue_striper",
+   "fish_blue_chunker",
+   "fish_green_orby",
+   "fish_orange_horn",
+   "fish_golden_tide"
   ]
  },
  {
@@ -1871,16 +1716,16 @@
   "per": 3,
   "tanks": [
    2,
-   3,
-   3,
-   3,
-   3,
+   2,
+   2,
+   2,
+   2,
    3,
    3
   ],
   "bounty": [],
   "species": 12,
-  "decoyFish": 24,
+  "decoyFish": 11,
   "look": 2,
   "shift": 90,
   "sizeK": 1.4,
@@ -1892,317 +1737,12 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 22,
+   "extraFish": 3,
    "waves": [
-    {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 2,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 22,
-  "maxFish": 44,
-  "fishKeys": [
-   "fish_violet_stripe",
-   "fish_pale_tide",
-   "fish_orange_stripe",
-   "fish_panda_puffer",
-   "fish_green_orby",
-   "fish_blue_flash",
-   "fish_perple_stripe_wing",
-   "fish_peach_anthias",
-   "fish_green_spotty",
-   "fish_emerald_blue",
-   "fish_green_stripey",
-   "fish_blue_striper"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L22",
-  "name": "Level 22",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 22,
-  "goal": 7,
-  "per": 3,
-  "tanks": [
-   2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 12,
-  "decoyFish": 26,
-  "look": 2,
-  "shift": 90,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 1,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 23,
-   "waves": [
-    {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 2,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 23,
-  "maxFish": 46,
-  "fishKeys": [
-   "fish_violet_ripple",
-   "fish_abyss_tetra",
-   "fish_silver_line",
-   "fish_golden_tide",
-   "fish_yellow_shell_kid",
-   "fish_ice_blue_fish",
-   "fish_orange_sword_fish",
-   "fish_shark",
-   "fish_goldie_tot",
-   "fish_emerald_blue",
-   "fish_blue_chunker",
-   "fish_green_spotty"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L23",
-  "name": "Level 23",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 23,
-  "goal": 7,
-  "per": 3,
-  "tanks": [
-   2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 12,
-  "decoyFish": 32,
-  "look": 2,
-  "shift": 90,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 1,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 26,
-   "waves": [
-    {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 2,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 26,
-  "maxFish": 52,
-  "fishKeys": [
-   "fish_purple_sprite",
-   "fish_golden_flame",
-   "fish_green_beast",
-   "fish_red_fin",
-   "fish_red_wing",
-   "fish_rainbow_bluestripe",
-   "fish_golden_scale",
-   "fish_whale",
-   "fish_sea_horse",
-   "fish_purple_wing",
-   "fish_ghostly_wave",
-   "fish_green_spotty"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L24",
-  "name": "Level 24",
-  "status": "Ready",
-  "difficulty": "Medium",
-  "category": "Normal",
-  "refLevel": 24,
-  "goal": 8,
-  "per": 3,
-  "tanks": [
-   2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 16,
-  "decoyFish": 37,
-  "look": 2,
-  "shift": 90,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 1,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 30,
-   "waves": [
-    {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 1
-    },
     {
      "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
-    },
-    {
-     "afterTanks": 6,
-     "holdLast": true,
-     "holdFish": 1
     }
    ],
    "autoPumpWhenStuck": true,
@@ -2213,757 +1753,6 @@
   "tank": true,
   "clear": true,
   "theme": 2,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 30,
-  "maxFish": 60,
-  "fishKeys": [
-   "fish_orange_horn",
-   "fish_sunset_puffer",
-   "fish_pink_stripe",
-   "fish_rainbow_wing",
-   "fish_purp_bluefin",
-   "fish_deep_lantern_fish",
-   "fish_yellow_stripe",
-   "fish_brown_stripe",
-   "fish_blue_chuppy",
-   "fish_green_finny",
-   "fish_rainbow_striper",
-   "fish_green_stripey",
-   "fish_blue_chunker",
-   "fish_blue_striper",
-   "fish_green_spotty",
-   "fish_emerald_blue"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L25",
-  "name": "Level 25",
-  "status": "Ready",
-  "difficulty": "Hard",
-  "category": "Bounty",
-  "refLevel": 25,
-  "goal": 9,
-  "per": 3,
-  "tanks": [
-   1,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [
-   "camo"
-  ],
-  "species": 21,
-  "decoyFish": 27,
-  "look": 3,
-  "shift": 90,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 2,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 1,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 30,
-   "waves": [
-    {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 4,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 7,
-     "holdLast": true,
-     "holdFish": 2
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 2,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 30,
-  "maxFish": 60,
-  "fishKeys": [
-   "fish_golden_spot",
-   "fish_orange_stripe",
-   "fish_pink_bubble",
-   "fish_pale_tide",
-   "fish_panda_puffer",
-   "fish_red_stripe_wing",
-   "fish_blue_flash",
-   "fish_violet_stripe",
-   "fish_green_orby",
-   "fish_whale",
-   "fish_peach_anthias",
-   "fish_pinky_puffer",
-   "fish_goldie",
-   "fish_perple_stripe_wing",
-   "fish_abyss_tetra",
-   "fish_blue_chunker",
-   "fish_green_stripey",
-   "fish_blue_striper",
-   "fish_green_spotty",
-   "fish_emerald_blue",
-   "fish_orange_sword_fish"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L26",
-  "name": "Level 26",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 26,
-  "goal": 7,
-  "per": 3,
-  "tanks": [
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 12,
-  "decoyFish": 24,
-  "look": 2,
-  "shift": 90,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 23,
-   "waves": [
-    {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 2,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 22,
-  "maxFish": 45,
-  "fishKeys": [
-   "fish_yellow_shell_kid",
-   "fish_golden_tide",
-   "fish_violet_ripple",
-   "fish_silver_line",
-   "fish_ice_blue_fish",
-   "fish_goldie_tot",
-   "fish_red_fin",
-   "fish_shark",
-   "fish_sea_horse",
-   "fish_purple_sprite",
-   "fish_ghostly_wave",
-   "fish_green_stripey"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L27",
-  "name": "Level 27",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 27,
-  "goal": 8,
-  "per": 3,
-  "tanks": [
-   2,
-   2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 14,
-  "decoyFish": 28,
-  "look": 2,
-  "shift": 90,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 1,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 25,
-   "waves": [
-    {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 2,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 25,
-  "maxFish": 50,
-  "fishKeys": [
-   "fish_red_wing",
-   "fish_golden_flame",
-   "fish_rainbow_bluestripe",
-   "fish_green_finny",
-   "fish_deep_lantern_fish",
-   "fish_orange_horn",
-   "fish_purple_wing",
-   "fish_green_beast",
-   "fish_pink_stripe",
-   "fish_yellow_stripe",
-   "fish_blue_striper",
-   "fish_emerald_blue",
-   "fish_green_spotty",
-   "fish_blue_chunker"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L28",
-  "name": "Level 28",
-  "status": "Ready",
-  "difficulty": "Medium",
-  "category": "Normal",
-  "refLevel": 28,
-  "goal": 8,
-  "per": 3,
-  "tanks": [
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 16,
-  "decoyFish": 36,
-  "look": 2,
-  "shift": 90,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 1,
-  "jelly": 1,
-  "squid": 0,
-  "clam": 1,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 30,
-   "waves": [
-    {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 4,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 6,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 2,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 30,
-  "maxFish": 60,
-  "fishKeys": [
-   "fish_blue_chuppy",
-   "fish_rainbow_wing",
-   "fish_golden_scale",
-   "fish_orange_sword_fish",
-   "fish_perple_stripe_wing",
-   "fish_sunset_puffer",
-   "fish_golden_spot",
-   "fish_brown_stripe",
-   "fish_shark",
-   "fish_purp_bluefin",
-   "fish_green_orby",
-   "fish_pale_tide",
-   "fish_green_stripey",
-   "fish_emerald_blue",
-   "fish_blue_chunker",
-   "fish_blue_striper"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L29",
-  "name": "Level 29",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 29,
-  "goal": 8,
-  "per": 3,
-  "tanks": [
-   2,
-   2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 14,
-  "decoyFish": 28,
-  "look": 2,
-  "shift": 90,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 1,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 25,
-   "waves": [
-    {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 2,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 25,
-  "maxFish": 50,
-  "fishKeys": [
-   "fish_peach_anthias",
-   "fish_rainbow_striper",
-   "fish_violet_stripe",
-   "fish_abyss_tetra",
-   "fish_yellow_shell_kid",
-   "fish_orange_stripe",
-   "fish_blue_flash",
-   "fish_pinky_puffer",
-   "fish_whale",
-   "fish_sea_horse",
-   "fish_red_stripe_wing",
-   "fish_goldie",
-   "fish_green_stripey",
-   "fish_green_spotty"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L30",
-  "name": "Level 30",
-  "status": "Ready",
-  "difficulty": "Hard",
-  "category": "Normal",
-  "refLevel": 30,
-  "goal": 9,
-  "per": 3,
-  "tanks": [
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 21,
-  "decoyFish": 33,
-  "look": 3,
-  "shift": 90,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 1,
-  "clam": 1,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 30,
-   "waves": [
-    {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 4,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 7,
-     "holdLast": true,
-     "holdFish": 2
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 2,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 30,
-  "maxFish": 60,
-  "fishKeys": [
-   "fish_pink_bubble",
-   "fish_panda_puffer",
-   "fish_silver_line",
-   "fish_ice_blue_fish",
-   "fish_yellow_stripe",
-   "fish_goldie_tot",
-   "fish_red_fin",
-   "fish_ghostly_wave",
-   "fish_golden_tide",
-   "fish_golden_flame",
-   "fish_purple_sprite",
-   "fish_deep_lantern_fish",
-   "fish_green_beast",
-   "fish_emerald_blue",
-   "fish_blue_striper",
-   "fish_blue_chunker",
-   "fish_green_stripey",
-   "fish_green_spotty",
-   "fish_rainbow_bluestripe",
-   "fish_violet_ripple",
-   "fish_purple_wing"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L31",
-  "name": "Feature 3: Fish Swarm",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 31,
-  "goal": 8,
-  "per": 3,
-  "tanks": [
-   2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 14,
-  "decoyFish": 26,
-  "look": 2,
-  "shift": 75,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 0,
-  "swarm": true,
-  "tube": {
-   "enabled": true,
-   "extraFish": 25,
-   "waves": [
-    {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 3,
   "events": [
    "conga",
    "waltz",
@@ -2991,68 +1780,59 @@
    30
   ],
   "startFish": 24,
-  "maxFish": 49,
+  "maxFish": 27,
   "fishKeys": [
-   "fish_red_wing",
-   "fish_orange_horn",
+   "fish_perple_stripe_wing",
+   "fish_silver_line",
+   "fish_goldie_tot",
    "fish_golden_spot",
-   "fish_blue_chuppy",
-   "fish_sunset_puffer",
-   "fish_green_finny",
-   "fish_pink_stripe",
-   "fish_orange_sword_fish",
-   "fish_whale",
-   "fish_golden_scale",
-   "fish_purp_bluefin",
+   "fish_pale_tide",
    "fish_green_spotty",
-   "fish_green_stripey",
-   "fish_emerald_blue"
+   "fish_pink_stripe",
+   "fish_violet_ripple",
+   "fish_blue_striper",
+   "fish_blue_chunker",
+   "fish_green_finny",
+   "fish_purp_bluefin"
   ]
  },
  {
   "schema": "spot-a-fish-level",
   "version": 2,
-  "id": "L32",
-  "name": "Level 32",
+  "id": "L22",
+  "name": "Level 22",
   "status": "Ready",
   "difficulty": "Easy",
   "category": "Normal",
-  "refLevel": 32,
-  "goal": 8,
+  "refLevel": 22,
+  "goal": 6,
   "per": 3,
   "tanks": [
    2,
-   3,
-   3,
-   3,
-   3,
+   2,
+   2,
    3,
    3,
    3
   ],
   "bounty": [],
-  "species": 14,
-  "decoyFish": 28,
+  "species": 12,
+  "decoyFish": 10,
   "look": 2,
-  "shift": 75,
+  "shift": 90,
   "sizeK": 1.4,
   "speedK": 0.85,
   "urchin": 0,
   "jelly": 0,
   "squid": 0,
-  "clam": 0,
-  "swarm": true,
+  "clam": 1,
+  "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 25,
+   "extraFish": 3,
    "waves": [
     {
      "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
      "holdLast": true,
      "holdFish": 1
     }
@@ -3064,7 +1844,296 @@
   "hint": true,
   "tank": true,
   "clear": true,
-  "theme": 3,
+  "theme": 2,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 22,
+  "maxFish": 25,
+  "fishKeys": [
+   "fish_green_orby",
+   "fish_perple_stripe_wing",
+   "fish_peach_anthias",
+   "fish_orange_horn",
+   "fish_pale_tide",
+   "fish_emerald_blue",
+   "fish_whale",
+   "fish_red_stripe_wing",
+   "fish_blue_striper",
+   "fish_blue_chunker",
+   "fish_violet_stripe",
+   "fish_yellow_shell_kid"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L23",
+  "name": "Level 23",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 23,
+  "goal": 7,
+  "per": 3,
+  "tanks": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 13,
+  "decoyFish": 11,
+  "look": 2,
+  "shift": 90,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 1,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 3,
+   "waves": [
+    {
+     "afterTanks": 4,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 2,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 24,
+  "maxFish": 27,
+  "fishKeys": [
+   "fish_orange_sword_fish",
+   "fish_red_wing",
+   "fish_ice_blue_fish",
+   "fish_golden_scale",
+   "fish_green_orby",
+   "fish_deep_lantern_fish",
+   "fish_green_stripey",
+   "fish_whale",
+   "fish_violet_ripple",
+   "fish_blue_striper",
+   "fish_blue_chunker",
+   "fish_abyss_tetra",
+   "fish_blue_chuppy"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L24",
+  "name": "Level 24",
+  "status": "Ready",
+  "difficulty": "Medium",
+  "category": "Normal",
+  "refLevel": 24,
+  "goal": 8,
+  "per": 3,
+  "tanks": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 15,
+  "decoyFish": 12,
+  "look": 2,
+  "shift": 90,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 1,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 7,
+   "waves": [
+    {
+     "afterTanks": 4,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 2,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 24,
+  "maxFish": 31,
+  "fishKeys": [
+   "fish_goldie",
+   "fish_pinky_puffer",
+   "fish_green_beast",
+   "fish_sunset_puffer",
+   "fish_rainbow_bluestripe",
+   "fish_green_spotty",
+   "fish_rainbow_striper",
+   "fish_golden_tide",
+   "fish_sea_horse",
+   "fish_golden_spot",
+   "fish_blue_chunker",
+   "fish_blue_striper",
+   "fish_perple_stripe_wing",
+   "fish_green_finny",
+   "fish_orange_horn"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L25",
+  "name": "Level 25",
+  "status": "Ready",
+  "difficulty": "Hard",
+  "category": "Bounty",
+  "refLevel": 25,
+  "goal": 10,
+  "per": 3,
+  "tanks": [
+   1,
+   2,
+   2,
+   2,
+   2,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [
+   "tiny"
+  ],
+  "species": 19,
+  "decoyFish": 16,
+  "look": 2,
+  "shift": 90,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 2,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 1,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 14,
+   "waves": [
+    {
+     "afterTanks": 9,
+     "holdLast": true,
+     "holdFish": 2
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 2,
   "events": [
    "conga",
    "waltz",
@@ -3092,36 +2161,419 @@
    30
   ],
   "startFish": 26,
-  "maxFish": 51,
+  "maxFish": 40,
   "fishKeys": [
-   "fish_pinky_puffer",
-   "fish_green_orby",
-   "fish_abyss_tetra",
-   "fish_peach_anthias",
-   "fish_rainbow_striper",
-   "fish_brown_stripe",
-   "fish_perple_stripe_wing",
+   "fish_rainbow_wing",
+   "fish_goldie_tot",
+   "fish_orange_sword_fish",
+   "fish_pink_stripe",
    "fish_pale_tide",
-   "fish_shark",
-   "fish_sea_horse",
-   "fish_orange_stripe",
-   "fish_blue_flash",
+   "fish_red_stripe_wing",
+   "fish_emerald_blue",
+   "fish_purp_bluefin",
+   "fish_yellow_shell_kid",
+   "fish_goldie",
+   "fish_silver_line",
+   "fish_ice_blue_fish",
+   "fish_blue_striper",
    "fish_blue_chunker",
+   "fish_green_orby",
+   "fish_violet_stripe",
+   "fish_violet_ripple",
+   "fish_peach_anthias",
+   "fish_deep_lantern_fish"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L26",
+  "name": "Level 26",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 26,
+  "goal": 6,
+  "per": 3,
+  "tanks": [
+   2,
+   2,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 12,
+  "decoyFish": 11,
+  "look": 2,
+  "shift": 90,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 3,
+   "waves": [
+    {
+     "afterTanks": 3,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 2,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 24,
+  "maxFish": 27,
+  "fishKeys": [
+   "fish_rainbow_wing",
+   "fish_perple_stripe_wing",
+   "fish_goldie",
+   "fish_abyss_tetra",
+   "fish_orange_sword_fish",
+   "fish_red_wing",
+   "fish_shark",
+   "fish_pale_tide",
+   "fish_green_stripey",
+   "fish_green_spotty",
+   "fish_emerald_blue",
+   "fish_blue_chunker"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L27",
+  "name": "Level 27",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 27,
+  "goal": 6,
+  "per": 3,
+  "tanks": [
+   2,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 12,
+  "decoyFish": 11,
+  "look": 2,
+  "shift": 90,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 1,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 3,
+   "waves": [
+    {
+     "afterTanks": 3,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 2,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 25,
+  "maxFish": 28,
+  "fishKeys": [
+   "fish_ghostly_wave",
+   "fish_golden_spot",
+   "fish_blue_chuppy",
+   "fish_orange_horn",
+   "fish_orange_sword_fish",
+   "fish_rainbow_bluestripe",
+   "fish_pinky_puffer",
+   "fish_golden_scale",
+   "fish_green_spotty",
+   "fish_emerald_blue",
+   "fish_green_stripey",
    "fish_blue_striper"
   ]
  },
  {
   "schema": "spot-a-fish-level",
   "version": 2,
-  "id": "L33",
-  "name": "Level 33",
+  "id": "L28",
+  "name": "Level 28",
   "status": "Ready",
-  "difficulty": "Easy",
+  "difficulty": "Medium",
   "category": "Normal",
-  "refLevel": 33,
+  "refLevel": 28,
   "goal": 8,
   "per": 3,
   "tanks": [
+   2,
+   2,
+   2,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 15,
+  "decoyFish": 13,
+  "look": 2,
+  "shift": 90,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 1,
+  "jelly": 1,
+  "squid": 0,
+  "clam": 1,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 9,
+   "waves": [
+    {
+     "afterTanks": 4,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 2,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 25,
+  "maxFish": 34,
+  "fishKeys": [
+   "fish_orange_stripe",
+   "fish_rainbow_wing",
+   "fish_violet_ripple",
+   "fish_goldie",
+   "fish_ice_blue_fish",
+   "fish_green_orby",
+   "fish_rainbow_striper",
+   "fish_golden_tide",
+   "fish_whale",
+   "fish_goldie_tot",
+   "fish_green_beast",
+   "fish_emerald_blue",
+   "fish_green_spotty",
+   "fish_green_stripey",
+   "fish_blue_chunker"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L29",
+  "name": "Level 29",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 29,
+  "goal": 7,
+  "per": 3,
+  "tanks": [
+   2,
+   2,
+   2,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 14,
+  "decoyFish": 12,
+  "look": 2,
+  "shift": 90,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 1,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 3,
+   "waves": [
+    {
+     "afterTanks": 4,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 2,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 27,
+  "maxFish": 30,
+  "fishKeys": [
+   "fish_red_stripe_wing",
+   "fish_purp_bluefin",
+   "fish_ghostly_wave",
+   "fish_green_finny",
+   "fish_orange_horn",
+   "fish_deep_lantern_fish",
+   "fish_sunset_puffer",
+   "fish_whale",
+   "fish_silver_line",
+   "fish_pale_tide",
+   "fish_green_stripey",
+   "fish_green_spotty",
+   "fish_emerald_blue",
+   "fish_blue_striper"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L30",
+  "name": "Level 30",
+  "status": "Ready",
+  "difficulty": "Hard",
+  "category": "Normal",
+  "refLevel": 30,
+  "goal": 10,
+  "per": 3,
+  "tanks": [
+   2,
+   2,
    3,
    3,
    3,
@@ -3132,9 +2584,114 @@
    3
   ],
   "bounty": [],
-  "species": 14,
-  "decoyFish": 30,
+  "species": 20,
+  "decoyFish": 18,
   "look": 2,
+  "shift": 90,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 1,
+  "clam": 1,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 18,
+   "waves": [
+    {
+     "afterTanks": 3,
+     "holdLast": true,
+     "holdFish": 2
+    },
+    {
+     "afterTanks": 9,
+     "holdLast": true,
+     "holdFish": 2
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 2,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 28,
+  "maxFish": 46,
+  "fishKeys": [
+   "fish_panda_puffer",
+   "fish_perple_stripe_wing",
+   "fish_peach_anthias",
+   "fish_yellow_shell_kid",
+   "fish_rainbow_bluestripe",
+   "fish_orange_sword_fish",
+   "fish_ghostly_wave",
+   "fish_red_wing",
+   "fish_golden_spot",
+   "fish_orange_stripe",
+   "fish_sea_horse",
+   "fish_pink_stripe",
+   "fish_violet_stripe",
+   "fish_rainbow_wing",
+   "fish_emerald_blue",
+   "fish_green_stripey",
+   "fish_green_spotty",
+   "fish_blue_chunker",
+   "fish_blue_striper",
+   "fish_ice_blue_fish"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L31",
+  "name": "Feature 3: Fish Swarm",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 31,
+  "goal": 6,
+  "per": 3,
+  "tanks": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 13,
+  "decoyFish": 12,
+  "look": 3,
   "shift": 75,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -3145,15 +2702,10 @@
   "swarm": true,
   "tube": {
    "enabled": true,
-   "extraFish": 27,
+   "extraFish": 3,
    "waves": [
     {
      "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
      "holdLast": true,
      "holdFish": 1
     }
@@ -3193,39 +2745,35 @@
    30
   ],
   "startFish": 27,
-  "maxFish": 54,
+  "maxFish": 30,
   "fishKeys": [
-   "fish_rainbow_wing",
-   "fish_violet_stripe",
-   "fish_red_fin",
-   "fish_ice_blue_fish",
-   "fish_golden_tide",
+   "fish_yellow_stripe",
+   "fish_abyss_tetra",
+   "fish_orange_stripe",
    "fish_goldie",
-   "fish_purple_wing",
-   "fish_yellow_shell_kid",
-   "fish_red_stripe_wing",
-   "fish_panda_puffer",
-   "fish_green_stripey",
+   "fish_violet_ripple",
+   "fish_pinky_puffer",
+   "fish_goldie_tot",
+   "fish_green_orby",
    "fish_emerald_blue",
+   "fish_green_stripey",
    "fish_green_spotty",
-   "fish_blue_chunker"
+   "fish_blue_chunker",
+   "fish_blue_striper"
   ]
  },
  {
   "schema": "spot-a-fish-level",
   "version": 2,
-  "id": "L34",
-  "name": "Level 34",
+  "id": "L32",
+  "name": "Level 32",
   "status": "Ready",
-  "difficulty": "Medium",
+  "difficulty": "Easy",
   "category": "Normal",
-  "refLevel": 34,
-  "goal": 9,
+  "refLevel": 32,
+  "goal": 6,
   "per": 3,
   "tanks": [
-   2,
-   3,
-   3,
    3,
    3,
    3,
@@ -3234,33 +2782,23 @@
    3
   ],
   "bounty": [],
-  "species": 18,
-  "decoyFish": 34,
-  "look": 2,
+  "species": 13,
+  "decoyFish": 13,
+  "look": 3,
   "shift": 75,
   "sizeK": 1.4,
   "speedK": 0.85,
-  "urchin": 1,
+  "urchin": 0,
   "jelly": 0,
   "squid": 0,
-  "clam": 1,
-  "swarm": false,
+  "clam": 0,
+  "swarm": true,
   "tube": {
    "enabled": true,
-   "extraFish": 30,
+   "extraFish": 4,
    "waves": [
     {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 7,
+     "afterTanks": 3,
      "holdLast": true,
      "holdFish": 1
     }
@@ -3299,27 +2837,214 @@
    30,
    30
   ],
-  "startFish": 30,
-  "maxFish": 60,
+  "startFish": 27,
+  "maxFish": 31,
   "fishKeys": [
-   "fish_silver_line",
-   "fish_yellow_stripe",
-   "fish_purple_sprite",
-   "fish_golden_flame",
-   "fish_violet_ripple",
-   "fish_rainbow_bluestripe",
+   "fish_golden_scale",
+   "fish_pale_tide",
    "fish_ghostly_wave",
-   "fish_golden_spot",
-   "fish_goldie_tot",
+   "fish_orange_sword_fish",
+   "fish_rainbow_wing",
+   "fish_panda_puffer",
    "fish_shark",
-   "fish_red_wing",
+   "fish_blue_chuppy",
    "fish_green_beast",
-   "fish_orange_horn",
-   "fish_purp_bluefin",
-   "fish_blue_striper",
-   "fish_blue_chunker",
    "fish_green_stripey",
-   "fish_green_spotty"
+   "fish_emerald_blue",
+   "fish_green_spotty",
+   "fish_blue_striper"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L33",
+  "name": "Level 33",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 33,
+  "goal": 6,
+  "per": 3,
+  "tanks": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 13,
+  "decoyFish": 13,
+  "look": 3,
+  "shift": 75,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 0,
+  "swarm": true,
+  "tube": {
+   "enabled": true,
+   "extraFish": 3,
+   "waves": [
+    {
+     "afterTanks": 3,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 3,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 28,
+  "maxFish": 31,
+  "fishKeys": [
+   "fish_pink_bubble",
+   "fish_yellow_stripe",
+   "fish_golden_tide",
+   "fish_deep_lantern_fish",
+   "fish_purp_bluefin",
+   "fish_perple_stripe_wing",
+   "fish_rainbow_striper",
+   "fish_orange_horn",
+   "fish_green_stripey",
+   "fish_green_spotty",
+   "fish_blue_chunker",
+   "fish_emerald_blue",
+   "fish_blue_striper"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L34",
+  "name": "Level 34",
+  "status": "Ready",
+  "difficulty": "Medium",
+  "category": "Normal",
+  "refLevel": 34,
+  "goal": 8,
+  "per": 3,
+  "tanks": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 17,
+  "decoyFish": 17,
+  "look": 3,
+  "shift": 75,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 1,
+  "jelly": 0,
+  "squid": 0,
+  "clam": 1,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 12,
+   "waves": [
+    {
+     "afterTanks": 4,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 3,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 29,
+  "maxFish": 41,
+  "fishKeys": [
+   "fish_red_stripe_wing",
+   "fish_green_finny",
+   "fish_ice_blue_fish",
+   "fish_panda_puffer",
+   "fish_red_wing",
+   "fish_orange_stripe",
+   "fish_sunset_puffer",
+   "fish_goldie",
+   "fish_whale",
+   "fish_silver_line",
+   "fish_violet_ripple",
+   "fish_yellow_shell_kid",
+   "fish_emerald_blue",
+   "fish_green_stripey",
+   "fish_blue_striper",
+   "fish_green_spotty",
+   "fish_blue_chunker"
   ]
  },
  {
@@ -3336,7 +3061,7 @@
   "tanks": [
    1,
    2,
-   2,
+   3,
    3,
    3,
    3,
@@ -3347,10 +3072,10 @@
    3
   ],
   "bounty": [
-   "fast"
+   "camo"
   ],
-  "species": 22,
-  "decoyFish": 31,
+  "species": 23,
+  "decoyFish": 22,
   "look": 3,
   "shift": 75,
   "sizeK": 1.4,
@@ -3362,25 +3087,15 @@
   "swarm": true,
   "tube": {
    "enabled": true,
-   "extraFish": 30,
+   "extraFish": 21,
    "waves": [
-    {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 2
-    },
     {
      "afterTanks": 4,
      "holdLast": true,
      "holdFish": 2
     },
     {
-     "afterTanks": 7,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 9,
+     "afterTanks": 10,
      "holdLast": true,
      "holdFish": 2
     }
@@ -3419,31 +3134,32 @@
    30,
    30
   ],
-  "startFish": 30,
-  "maxFish": 60,
+  "startFish": 31,
+  "maxFish": 52,
   "fishKeys": [
+   "fish_red_fin",
+   "fish_golden_spot",
+   "fish_ghostly_wave",
+   "fish_rainbow_bluestripe",
+   "fish_goldie_tot",
    "fish_pink_bubble",
-   "fish_deep_lantern_fish",
-   "fish_blue_chuppy",
-   "fish_golden_scale",
-   "fish_green_finny",
-   "fish_pink_stripe",
-   "fish_perple_stripe_wing",
-   "fish_orange_stripe",
-   "fish_blue_flash",
-   "fish_sunset_puffer",
+   "fish_yellow_stripe",
+   "fish_peach_anthias",
+   "fish_rainbow_wing",
+   "fish_orange_sword_fish",
    "fish_green_orby",
    "fish_whale",
-   "fish_sea_horse",
-   "fish_brown_stripe",
-   "fish_orange_sword_fish",
-   "fish_rainbow_striper",
    "fish_pale_tide",
-   "fish_peach_anthias",
+   "fish_violet_stripe",
+   "fish_pink_stripe",
+   "fish_pinky_puffer",
    "fish_emerald_blue",
-   "fish_green_stripey",
    "fish_green_spotty",
-   "fish_blue_striper"
+   "fish_green_stripey",
+   "fish_blue_chunker",
+   "fish_blue_striper",
+   "fish_orange_stripe",
+   "fish_panda_puffer"
   ]
  },
  {
@@ -3455,12 +3171,10 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 36,
-  "goal": 9,
+  "goal": 7,
   "per": 3,
   "tanks": [
    2,
-   2,
-   3,
    3,
    3,
    3,
@@ -3469,9 +3183,9 @@
    3
   ],
   "bounty": [],
-  "species": 16,
-  "decoyFish": 28,
-  "look": 2,
+  "species": 15,
+  "decoyFish": 14,
+  "look": 3,
   "shift": 75,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -3482,15 +3196,10 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 27,
+   "extraFish": 5,
    "waves": [
     {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 6,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
     }
@@ -3529,25 +3238,24 @@
    30,
    30
   ],
-  "startFish": 26,
-  "maxFish": 53,
+  "startFish": 29,
+  "maxFish": 34,
   "fishKeys": [
-   "fish_abyss_tetra",
-   "fish_pinky_puffer",
-   "fish_panda_puffer",
+   "fish_brown_stripe",
+   "fish_pink_bubble",
    "fish_red_fin",
-   "fish_purple_wing",
-   "fish_yellow_shell_kid",
-   "fish_golden_tide",
-   "fish_red_stripe_wing",
+   "fish_abyss_tetra",
+   "fish_yellow_stripe",
+   "fish_golden_scale",
+   "fish_perple_stripe_wing",
+   "fish_sea_horse",
+   "fish_blue_chuppy",
+   "fish_deep_lantern_fish",
    "fish_green_beast",
-   "fish_ice_blue_fish",
-   "fish_goldie",
-   "fish_violet_stripe",
-   "fish_blue_chunker",
    "fish_emerald_blue",
-   "fish_blue_striper",
-   "fish_green_spotty"
+   "fish_green_spotty",
+   "fish_green_stripey",
+   "fish_blue_striper"
   ]
  },
  {
@@ -3559,12 +3267,10 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 37,
-  "goal": 9,
+  "goal": 7,
   "per": 3,
   "tanks": [
    2,
-   2,
-   3,
    3,
    3,
    3,
@@ -3573,9 +3279,9 @@
    3
   ],
   "bounty": [],
-  "species": 16,
-  "decoyFish": 28,
-  "look": 2,
+  "species": 15,
+  "decoyFish": 14,
+  "look": 3,
   "shift": 75,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -3586,125 +3292,10 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 27,
+   "extraFish": 4,
    "waves": [
     {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 6,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 3,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 26,
-  "maxFish": 53,
-  "fishKeys": [
-   "fish_silver_line",
-   "fish_rainbow_wing",
-   "fish_ghostly_wave",
-   "fish_golden_flame",
-   "fish_purp_bluefin",
-   "fish_violet_ripple",
-   "fish_red_wing",
-   "fish_rainbow_bluestripe",
-   "fish_goldie_tot",
-   "fish_whale",
-   "fish_golden_spot",
-   "fish_orange_horn",
-   "fish_purple_sprite",
-   "fish_green_stripey",
-   "fish_emerald_blue",
-   "fish_blue_chunker"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L38",
-  "name": "Level 38",
-  "status": "Ready",
-  "difficulty": "Medium",
-  "category": "Normal",
-  "refLevel": 38,
-  "goal": 10,
-  "per": 3,
-  "tanks": [
-   2,
-   2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 22,
-  "decoyFish": 32,
-  "look": 3,
-  "shift": 75,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 1,
-  "jelly": 0,
-  "squid": 0,
-  "clam": 0,
-  "swarm": true,
-  "tube": {
-   "enabled": true,
-   "extraFish": 30,
-   "waves": [
-    {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 8,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
     }
@@ -3744,41 +3335,34 @@
    30
   ],
   "startFish": 30,
-  "maxFish": 60,
+  "maxFish": 34,
   "fishKeys": [
-   "fish_pink_bubble",
-   "fish_yellow_stripe",
-   "fish_brown_stripe",
-   "fish_peach_anthias",
-   "fish_blue_chuppy",
-   "fish_orange_stripe",
+   "fish_purp_bluefin",
+   "fish_orange_horn",
+   "fish_red_fin",
+   "fish_violet_ripple",
    "fish_green_finny",
-   "fish_perple_stripe_wing",
-   "fish_rainbow_striper",
-   "fish_golden_scale",
-   "fish_shark",
-   "fish_sea_horse",
-   "fish_sunset_puffer",
-   "fish_green_orby",
-   "fish_deep_lantern_fish",
-   "fish_abyss_tetra",
-   "fish_orange_sword_fish",
-   "fish_blue_striper",
-   "fish_green_spotty",
+   "fish_orange_stripe",
+   "fish_panda_puffer",
+   "fish_golden_tide",
+   "fish_goldie",
+   "fish_ghostly_wave",
    "fish_blue_chunker",
    "fish_green_stripey",
-   "fish_emerald_blue"
+   "fish_emerald_blue",
+   "fish_green_spotty",
+   "fish_blue_striper"
   ]
  },
  {
   "schema": "spot-a-fish-level",
   "version": 2,
-  "id": "L39",
-  "name": "Level 39",
+  "id": "L38",
+  "name": "Level 38",
   "status": "Ready",
-  "difficulty": "Easy",
+  "difficulty": "Medium",
   "category": "Normal",
-  "refLevel": 39,
+  "refLevel": 38,
   "goal": 9,
   "per": 3,
   "tanks": [
@@ -3793,28 +3377,23 @@
    3
   ],
   "bounty": [],
-  "species": 16,
-  "decoyFish": 28,
-  "look": 1,
+  "species": 19,
+  "decoyFish": 18,
+  "look": 3,
   "shift": 75,
   "sizeK": 1.4,
   "speedK": 0.85,
-  "urchin": 0,
+  "urchin": 1,
   "jelly": 0,
-  "squid": 1,
-  "clam": 1,
-  "swarm": false,
+  "squid": 0,
+  "clam": 0,
+  "swarm": true,
   "tube": {
    "enabled": true,
-   "extraFish": 27,
+   "extraFish": 14,
    "waves": [
     {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 6,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
     }
@@ -3853,24 +3432,124 @@
    30,
    30
   ],
-  "startFish": 27,
-  "maxFish": 54,
+  "startFish": 30,
+  "maxFish": 44,
   "fishKeys": [
-   "fish_blue_flash",
-   "fish_pale_tide",
-   "fish_yellow_shell_kid",
-   "fish_golden_tide",
+   "fish_purple_sprite",
+   "fish_rainbow_striper",
+   "fish_rainbow_wing",
    "fish_red_stripe_wing",
-   "fish_pink_stripe",
-   "fish_purple_wing",
    "fish_ice_blue_fish",
-   "fish_panda_puffer",
-   "fish_green_beast",
-   "fish_ghostly_wave",
-   "fish_pinky_puffer",
+   "fish_brown_stripe",
+   "fish_pink_bubble",
+   "fish_red_wing",
+   "fish_orange_sword_fish",
+   "fish_shark",
+   "fish_yellow_stripe",
+   "fish_sunset_puffer",
+   "fish_red_fin",
+   "fish_silver_line",
    "fish_green_spotty",
-   "fish_green_stripey",
    "fish_emerald_blue",
+   "fish_green_stripey",
+   "fish_blue_chunker",
+   "fish_blue_striper"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L39",
+  "name": "Level 39",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 39,
+  "goal": 7,
+  "per": 3,
+  "tanks": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 16,
+  "decoyFish": 16,
+  "look": 3,
+  "shift": 75,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 1,
+  "clam": 1,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 5,
+   "waves": [
+    {
+     "afterTanks": 4,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 3,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 32,
+  "maxFish": 37,
+  "fishKeys": [
+   "fish_yellow_shell_kid",
+   "fish_goldie_tot",
+   "fish_pale_tide",
+   "fish_perple_stripe_wing",
+   "fish_red_fin",
+   "fish_golden_spot",
+   "fish_purple_sprite",
+   "fish_peach_anthias",
+   "fish_panda_puffer",
+   "fish_rainbow_bluestripe",
+   "fish_green_orby",
+   "fish_green_spotty",
+   "fish_emerald_blue",
+   "fish_green_stripey",
+   "fish_blue_chunker",
    "fish_blue_striper"
   ]
  },
@@ -3883,11 +3562,12 @@
   "difficulty": "Very Hard",
   "category": "Normal",
   "refLevel": 40,
-  "goal": 11,
+  "goal": 12,
   "per": 3,
   "tanks": [
-   3,
-   3,
+   2,
+   2,
+   2,
    3,
    3,
    3,
@@ -3899,9 +3579,9 @@
    3
   ],
   "bounty": [],
-  "species": 22,
-  "decoyFish": 27,
-  "look": 0,
+  "species": 26,
+  "decoyFish": 25,
+  "look": 3,
   "shift": 75,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -3912,30 +3592,15 @@
   "swarm": true,
   "tube": {
    "enabled": true,
-   "extraFish": 30,
+   "extraFish": 25,
    "waves": [
-    {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 2
-    },
     {
      "afterTanks": 4,
      "holdLast": true,
      "holdFish": 2
     },
     {
-     "afterTanks": 6,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 7,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 9,
+     "afterTanks": 11,
      "holdLast": true,
      "holdFish": 2
     }
@@ -3974,31 +3639,35 @@
    30,
    30
   ],
-  "startFish": 30,
-  "maxFish": 60,
+  "startFish": 33,
+  "maxFish": 58,
   "fishKeys": [
-   "fish_rainbow_wing",
-   "fish_red_fin",
-   "fish_goldie",
-   "fish_violet_stripe",
-   "fish_rainbow_bluestripe",
-   "fish_purple_sprite",
-   "fish_violet_ripple",
    "fish_golden_flame",
-   "fish_purp_bluefin",
-   "fish_goldie_tot",
-   "fish_orange_horn",
-   "fish_shark",
-   "fish_orange_sword_fish",
-   "fish_red_wing",
-   "fish_silver_line",
-   "fish_golden_spot",
+   "fish_pinky_puffer",
+   "fish_orange_stripe",
+   "fish_yellow_stripe",
+   "fish_abyss_tetra",
+   "fish_brown_stripe",
+   "fish_pink_stripe",
+   "fish_green_beast",
+   "fish_ghostly_wave",
+   "fish_goldie",
    "fish_pink_bubble",
+   "fish_golden_scale",
+   "fish_whale",
+   "fish_violet_stripe",
+   "fish_purple_sprite",
+   "fish_blue_chuppy",
+   "fish_deep_lantern_fish",
+   "fish_panda_puffer",
+   "fish_purp_bluefin",
+   "fish_green_stripey",
    "fish_emerald_blue",
+   "fish_green_spotty",
    "fish_blue_chunker",
    "fish_blue_striper",
-   "fish_green_stripey",
-   "fish_green_spotty"
+   "fish_violet_ripple",
+   "fish_red_fin"
   ]
  },
  {
@@ -4010,11 +3679,9 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 41,
-  "goal": 9,
+  "goal": 7,
   "per": 3,
   "tanks": [
-   2,
-   3,
    3,
    3,
    3,
@@ -4025,8 +3692,8 @@
   ],
   "bounty": [],
   "species": 16,
-  "decoyFish": 28,
-  "look": 1,
+  "decoyFish": 16,
+  "look": 3,
   "shift": 62,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -4037,15 +3704,10 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 27,
+   "extraFish": 6,
    "waves": [
     {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 6,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
     }
@@ -4084,25 +3746,25 @@
    30,
    30
   ],
-  "startFish": 27,
-  "maxFish": 54,
+  "startFish": 31,
+  "maxFish": 37,
   "fishKeys": [
-   "fish_brown_stripe",
-   "fish_yellow_stripe",
-   "fish_peach_anthias",
-   "fish_abyss_tetra",
-   "fish_purple_wing",
-   "fish_rainbow_striper",
-   "fish_green_orby",
-   "fish_perple_stripe_wing",
    "fish_green_finny",
+   "fish_golden_flame",
+   "fish_red_stripe_wing",
+   "fish_perple_stripe_wing",
+   "fish_pale_tide",
+   "fish_rainbow_wing",
+   "fish_orange_sword_fish",
    "fish_whale",
-   "fish_sea_horse",
-   "fish_golden_scale",
-   "fish_orange_stripe",
-   "fish_yellow_shell_kid",
+   "fish_golden_tide",
+   "fish_orange_horn",
+   "fish_purple_sprite",
+   "fish_brown_stripe",
    "fish_emerald_blue",
-   "fish_green_stripey"
+   "fish_green_spotty",
+   "fish_green_stripey",
+   "fish_blue_chunker"
   ]
  },
  {
@@ -4114,12 +3776,11 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 42,
-  "goal": 9,
+  "goal": 8,
   "per": 3,
   "tanks": [
-   3,
-   3,
-   3,
+   2,
+   2,
    3,
    3,
    3,
@@ -4128,9 +3789,9 @@
    3
   ],
   "bounty": [],
-  "species": 16,
-  "decoyFish": 28,
-  "look": 1,
+  "species": 17,
+  "decoyFish": 16,
+  "look": 3,
   "shift": 62,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -4141,15 +3802,10 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 27,
+   "extraFish": 6,
    "waves": [
     {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 6,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
     }
@@ -4188,23 +3844,24 @@
    30,
    30
   ],
-  "startFish": 28,
-  "maxFish": 55,
+  "startFish": 32,
+  "maxFish": 38,
   "fishKeys": [
-   "fish_deep_lantern_fish",
-   "fish_blue_chuppy",
-   "fish_pinky_puffer",
-   "fish_golden_tide",
-   "fish_green_beast",
+   "fish_purple_wing",
    "fish_ice_blue_fish",
+   "fish_orange_stripe",
+   "fish_rainbow_striper",
+   "fish_green_orby",
+   "fish_panda_puffer",
+   "fish_golden_flame",
+   "fish_silver_line",
+   "fish_sea_horse",
+   "fish_pink_bubble",
+   "fish_golden_spot",
+   "fish_red_wing",
    "fish_sunset_puffer",
-   "fish_red_stripe_wing",
-   "fish_pale_tide",
-   "fish_pink_stripe",
-   "fish_blue_flash",
-   "fish_ghostly_wave",
    "fish_blue_striper",
-   "fish_blue_chunker",
+   "fish_emerald_blue",
    "fish_green_spotty",
    "fish_green_stripey"
   ]
@@ -4218,12 +3875,11 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 43,
-  "goal": 9,
+  "goal": 8,
   "per": 3,
   "tanks": [
-   3,
-   3,
-   3,
+   2,
+   2,
    3,
    3,
    3,
@@ -4232,8 +3888,8 @@
    3
   ],
   "bounty": [],
-  "species": 16,
-  "decoyFish": 28,
+  "species": 17,
+  "decoyFish": 17,
   "look": 3,
   "shift": 62,
   "sizeK": 1.4,
@@ -4245,15 +3901,10 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 27,
+   "extraFish": 7,
    "waves": [
     {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 6,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
     }
@@ -4292,25 +3943,26 @@
    30,
    30
   ],
-  "startFish": 28,
-  "maxFish": 55,
+  "startFish": 32,
+  "maxFish": 39,
   "fishKeys": [
-   "fish_purple_sprite",
-   "fish_panda_puffer",
-   "fish_silver_line",
-   "fish_rainbow_wing",
-   "fish_purp_bluefin",
-   "fish_golden_spot",
-   "fish_red_wing",
    "fish_golden_flame",
-   "fish_violet_stripe",
-   "fish_whale",
-   "fish_pink_bubble",
-   "fish_orange_sword_fish",
+   "fish_ghostly_wave",
+   "fish_red_fin",
+   "fish_yellow_stripe",
+   "fish_rainbow_bluestripe",
    "fish_goldie_tot",
+   "fish_purple_wing",
+   "fish_yellow_shell_kid",
+   "fish_brown_stripe",
+   "fish_purple_sprite",
+   "fish_goldie",
+   "fish_peach_anthias",
+   "fish_blue_chunker",
    "fish_emerald_blue",
+   "fish_green_spotty",
    "fish_green_stripey",
-   "fish_green_spotty"
+   "fish_blue_striper"
   ]
  },
  {
@@ -4325,7 +3977,7 @@
   "goal": 10,
   "per": 3,
   "tanks": [
-   3,
+   2,
    3,
    3,
    3,
@@ -4337,8 +3989,8 @@
    3
   ],
   "bounty": [],
-  "species": 20,
-  "decoyFish": 30,
+  "species": 22,
+  "decoyFish": 22,
   "look": 3,
   "shift": 62,
   "sizeK": 1.4,
@@ -4350,22 +4002,17 @@
   "swarm": true,
   "tube": {
    "enabled": true,
-   "extraFish": 30,
+   "extraFish": 17,
    "waves": [
     {
      "afterTanks": 3,
      "holdLast": true,
-     "holdFish": 1
+     "holdFish": 2
     },
     {
-     "afterTanks": 5,
+     "afterTanks": 7,
      "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 8,
-     "holdLast": true,
-     "holdFish": 1
+     "holdFish": 2
     }
    ],
    "autoPumpWhenStuck": true,
@@ -4402,28 +4049,30 @@
    30,
    30
   ],
-  "startFish": 30,
-  "maxFish": 60,
+  "startFish": 34,
+  "maxFish": 51,
   "fishKeys": [
-   "fish_violet_ripple",
-   "fish_red_fin",
-   "fish_orange_horn",
-   "fish_yellow_stripe",
-   "fish_rainbow_bluestripe",
-   "fish_goldie",
-   "fish_perple_stripe_wing",
-   "fish_green_finny",
-   "fish_brown_stripe",
-   "fish_yellow_shell_kid",
-   "fish_shark",
-   "fish_sea_horse",
-   "fish_purple_wing",
-   "fish_rainbow_striper",
-   "fish_golden_scale",
-   "fish_golden_tide",
+   "fish_blue_flash",
    "fish_abyss_tetra",
-   "fish_blue_striper",
+   "fish_golden_scale",
+   "fish_orange_sword_fish",
+   "fish_green_beast",
+   "fish_purple_wing",
+   "fish_deep_lantern_fish",
+   "fish_perple_stripe_wing",
+   "fish_rainbow_wing",
+   "fish_pale_tide",
+   "fish_shark",
+   "fish_pink_bubble",
+   "fish_purp_bluefin",
+   "fish_violet_ripple",
+   "fish_purple_sprite",
+   "fish_brown_stripe",
+   "fish_panda_puffer",
+   "fish_green_spotty",
    "fish_emerald_blue",
+   "fish_blue_striper",
+   "fish_green_stripey",
    "fish_blue_chunker"
   ]
  },
@@ -4436,13 +4085,12 @@
   "difficulty": "Hard",
   "category": "Bounty",
   "refLevel": 45,
-  "goal": 13,
+  "goal": 12,
   "per": 3,
   "tanks": [
    1,
-   1,
-   2,
-   2,
+   3,
+   3,
    3,
    3,
    3,
@@ -4454,12 +4102,11 @@
    3
   ],
   "bounty": [
-   "tiny",
-   "camo"
+   "fast"
   ],
-  "species": 22,
-  "decoyFish": 19,
-  "look": 1,
+  "species": 27,
+  "decoyFish": 28,
+  "look": 3,
   "shift": 62,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -4470,7 +4117,7 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 25,
+   "extraFish": 27,
    "waves": [
     {
      "afterTanks": 3,
@@ -4478,17 +4125,12 @@
      "holdFish": 2
     },
     {
-     "afterTanks": 5,
+     "afterTanks": 6,
      "holdLast": true,
      "holdFish": 2
     },
     {
-     "afterTanks": 8,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 10,
+     "afterTanks": 11,
      "holdLast": true,
      "holdFish": 2
     }
@@ -4528,30 +4170,35 @@
    30
   ],
   "startFish": 35,
-  "maxFish": 60,
+  "maxFish": 62,
   "fishKeys": [
-   "fish_orange_stripe",
-   "fish_pink_stripe",
-   "fish_green_orby",
-   "fish_pale_tide",
    "fish_golden_flame",
-   "fish_blue_chuppy",
-   "fish_peach_anthias",
-   "fish_sunset_puffer",
-   "fish_blue_flash",
-   "fish_green_beast",
-   "fish_deep_lantern_fish",
+   "fish_pink_stripe",
    "fish_red_stripe_wing",
-   "fish_ghostly_wave",
+   "fish_green_finny",
+   "fish_blue_chuppy",
+   "fish_blue_flash",
    "fish_pinky_puffer",
-   "fish_red_wing",
-   "fish_pink_bubble",
+   "fish_ghostly_wave",
+   "fish_orange_stripe",
+   "fish_violet_stripe",
+   "fish_orange_horn",
+   "fish_purple_wing",
+   "fish_golden_spot",
+   "fish_golden_tide",
    "fish_ice_blue_fish",
+   "fish_red_fin",
+   "fish_green_orby",
+   "fish_rainbow_striper",
    "fish_purple_sprite",
+   "fish_yellow_stripe",
+   "fish_emerald_blue",
+   "fish_blue_chunker",
+   "fish_green_stripey",
    "fish_green_spotty",
    "fish_blue_striper",
-   "fish_blue_chunker",
-   "fish_green_stripey"
+   "fish_red_wing",
+   "fish_brown_stripe"
   ]
  },
  {
@@ -4563,11 +4210,9 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 46,
-  "goal": 10,
+  "goal": 8,
   "per": 3,
   "tanks": [
-   2,
-   2,
    3,
    3,
    3,
@@ -4579,8 +4224,8 @@
   ],
   "bounty": [],
   "species": 18,
-  "decoyFish": 28,
-  "look": 1,
+  "decoyFish": 18,
+  "look": 4,
   "shift": 62,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -4591,15 +4236,10 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 28,
+   "extraFish": 8,
    "waves": [
     {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 7,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
     }
@@ -4638,26 +4278,26 @@
    30,
    30
   ],
-  "startFish": 28,
-  "maxFish": 56,
+  "startFish": 34,
+  "maxFish": 42,
   "fishKeys": [
-   "fish_goldie_tot",
-   "fish_rainbow_wing",
-   "fish_violet_stripe",
-   "fish_silver_line",
-   "fish_purp_bluefin",
-   "fish_golden_spot",
-   "fish_panda_puffer",
-   "fish_orange_sword_fish",
-   "fish_red_fin",
+   "fish_blue_flash",
+   "fish_goldie",
+   "fish_sunset_puffer",
    "fish_rainbow_bluestripe",
-   "fish_shark",
-   "fish_orange_horn",
-   "fish_golden_tide",
-   "fish_abyss_tetra",
-   "fish_violet_ripple",
-   "fish_blue_striper",
+   "fish_yellow_shell_kid",
+   "fish_pink_bubble",
+   "fish_silver_line",
+   "fish_purple_wing",
+   "fish_whale",
+   "fish_rainbow_wing",
+   "fish_panda_puffer",
+   "fish_golden_flame",
+   "fish_goldie_tot",
+   "fish_orange_sword_fish",
+   "fish_green_stripey",
    "fish_green_spotty",
+   "fish_blue_striper",
    "fish_emerald_blue"
   ]
  },
@@ -4670,11 +4310,9 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 47,
-  "goal": 10,
+  "goal": 8,
   "per": 3,
   "tanks": [
-   2,
-   3,
    3,
    3,
    3,
@@ -4686,8 +4324,8 @@
   ],
   "bounty": [],
   "species": 18,
-  "decoyFish": 27,
-  "look": 3,
+  "decoyFish": 18,
+  "look": 4,
   "shift": 62,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -4698,15 +4336,10 @@
   "swarm": true,
   "tube": {
    "enabled": true,
-   "extraFish": 28,
+   "extraFish": 8,
    "waves": [
     {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 7,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
     }
@@ -4745,27 +4378,27 @@
    30,
    30
   ],
-  "startFish": 28,
-  "maxFish": 56,
+  "startFish": 34,
+  "maxFish": 42,
   "fishKeys": [
-   "fish_blue_flash",
    "fish_brown_stripe",
-   "fish_yellow_stripe",
+   "fish_blue_flash",
    "fish_pale_tide",
-   "fish_red_stripe_wing",
+   "fish_yellow_stripe",
+   "fish_red_fin",
+   "fish_deep_lantern_fish",
+   "fish_peach_anthias",
    "fish_perple_stripe_wing",
-   "fish_goldie",
-   "fish_purple_wing",
-   "fish_yellow_shell_kid",
-   "fish_pinky_puffer",
    "fish_whale",
-   "fish_sea_horse",
-   "fish_blue_chuppy",
+   "fish_ghostly_wave",
+   "fish_purple_wing",
+   "fish_purple_sprite",
+   "fish_purp_bluefin",
    "fish_golden_scale",
-   "fish_red_wing",
-   "fish_green_finny",
+   "fish_violet_ripple",
+   "fish_green_spotty",
    "fish_green_stripey",
-   "fish_blue_striper"
+   "fish_blue_chunker"
   ]
  },
  {
@@ -4777,10 +4410,9 @@
   "difficulty": "Medium",
   "category": "Normal",
   "refLevel": 48,
-  "goal": 11,
+  "goal": 10,
   "per": 3,
   "tanks": [
-   2,
    3,
    3,
    3,
@@ -4793,9 +4425,9 @@
    3
   ],
   "bounty": [],
-  "species": 22,
-  "decoyFish": 28,
-  "look": 3,
+  "species": 23,
+  "decoyFish": 24,
+  "look": 4,
   "shift": 62,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -4806,22 +4438,17 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 30,
+   "extraFish": 19,
    "waves": [
     {
      "afterTanks": 3,
      "holdLast": true,
-     "holdFish": 1
+     "holdFish": 2
     },
     {
-     "afterTanks": 6,
+     "afterTanks": 7,
      "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 8,
-     "holdLast": true,
-     "holdFish": 1
+     "holdFish": 2
     }
    ],
    "autoPumpWhenStuck": true,
@@ -4858,31 +4485,32 @@
    30,
    30
   ],
-  "startFish": 30,
-  "maxFish": 60,
+  "startFish": 35,
+  "maxFish": 54,
   "fishKeys": [
-   "fish_rainbow_striper",
-   "fish_green_orby",
-   "fish_orange_stripe",
-   "fish_pink_stripe",
-   "fish_abyss_tetra",
-   "fish_peach_anthias",
-   "fish_sunset_puffer",
-   "fish_golden_flame",
-   "fish_ice_blue_fish",
-   "fish_ghostly_wave",
-   "fish_purple_sprite",
-   "fish_red_fin",
    "fish_green_beast",
-   "fish_orange_horn",
-   "fish_deep_lantern_fish",
+   "fish_blue_flash",
+   "fish_orange_stripe",
+   "fish_golden_flame",
+   "fish_abyss_tetra",
+   "fish_green_orby",
+   "fish_red_wing",
    "fish_pink_bubble",
-   "fish_violet_ripple",
-   "fish_blue_chunker",
-   "fish_green_spotty",
+   "fish_red_stripe_wing",
+   "fish_purple_wing",
+   "fish_sea_horse",
+   "fish_pink_stripe",
+   "fish_golden_spot",
+   "fish_ice_blue_fish",
+   "fish_orange_horn",
+   "fish_panda_puffer",
+   "fish_goldie",
+   "fish_golden_tide",
    "fish_emerald_blue",
+   "fish_blue_striper",
    "fish_green_stripey",
-   "fish_blue_striper"
+   "fish_green_spotty",
+   "fish_blue_chunker"
   ]
  },
  {
@@ -4894,11 +4522,9 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 49,
-  "goal": 10,
+  "goal": 8,
   "per": 3,
   "tanks": [
-   2,
-   3,
    3,
    3,
    3,
@@ -4909,9 +4535,9 @@
    3
   ],
   "bounty": [],
-  "species": 18,
-  "decoyFish": 27,
-  "look": 2,
+  "species": 19,
+  "decoyFish": 20,
+  "look": 4,
   "shift": 62,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -4922,15 +4548,10 @@
   "swarm": true,
   "tube": {
    "enabled": true,
-   "extraFish": 28,
+   "extraFish": 8,
    "waves": [
     {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 7,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
     }
@@ -4969,26 +4590,27 @@
    30,
    30
   ],
-  "startFish": 28,
-  "maxFish": 56,
+  "startFish": 36,
+  "maxFish": 44,
   "fishKeys": [
-   "fish_violet_stripe",
    "fish_orange_sword_fish",
-   "fish_panda_puffer",
-   "fish_rainbow_wing",
-   "fish_rainbow_bluestripe",
-   "fish_silver_line",
-   "fish_golden_tide",
-   "fish_yellow_stripe",
-   "fish_golden_spot",
-   "fish_purp_bluefin",
-   "fish_whale",
-   "fish_red_wing",
-   "fish_goldie_tot",
    "fish_green_finny",
+   "fish_brown_stripe",
+   "fish_pinky_puffer",
+   "fish_blue_chuppy",
+   "fish_purple_sprite",
+   "fish_purple_wing",
+   "fish_violet_stripe",
+   "fish_rainbow_wing",
+   "fish_blue_flash",
+   "fish_rainbow_striper",
+   "fish_goldie_tot",
+   "fish_ghostly_wave",
    "fish_yellow_shell_kid",
    "fish_emerald_blue",
+   "fish_green_spotty",
    "fish_blue_striper",
+   "fish_green_stripey",
    "fish_blue_chunker"
   ]
  },
@@ -5001,10 +4623,11 @@
   "difficulty": "Hard",
   "category": "Normal",
   "refLevel": 50,
-  "goal": 12,
+  "goal": 13,
   "per": 3,
   "tanks": [
-   2,
+   3,
+   3,
    3,
    3,
    3,
@@ -5018,9 +4641,9 @@
    3
   ],
   "bounty": [],
-  "species": 22,
-  "decoyFish": 25,
-  "look": 3,
+  "species": 26,
+  "decoyFish": 32,
+  "look": 4,
   "shift": 62,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -5031,25 +4654,20 @@
   "swarm": true,
   "tube": {
    "enabled": true,
-   "extraFish": 30,
+   "extraFish": 33,
    "waves": [
     {
-     "afterTanks": 2,
+     "afterTanks": 3,
      "holdLast": true,
      "holdFish": 2
     },
     {
-     "afterTanks": 5,
+     "afterTanks": 6,
      "holdLast": true,
      "holdFish": 2
     },
     {
-     "afterTanks": 7,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 10,
+     "afterTanks": 12,
      "holdLast": true,
      "holdFish": 2
     }
@@ -5088,31 +4706,35 @@
    30,
    30
   ],
-  "startFish": 30,
-  "maxFish": 60,
+  "startFish": 38,
+  "maxFish": 71,
   "fishKeys": [
-   "fish_blue_chuppy",
-   "fish_purple_wing",
-   "fish_orange_horn",
-   "fish_peach_anthias",
+   "fish_yellow_stripe",
+   "fish_red_fin",
    "fish_blue_flash",
-   "fish_green_orby",
-   "fish_goldie",
-   "fish_pinky_puffer",
-   "fish_red_stripe_wing",
-   "fish_pale_tide",
-   "fish_brown_stripe",
+   "fish_rainbow_bluestripe",
+   "fish_golden_flame",
+   "fish_sunset_puffer",
+   "fish_silver_line",
    "fish_perple_stripe_wing",
-   "fish_shark",
-   "fish_sea_horse",
-   "fish_golden_scale",
-   "fish_pink_stripe",
-   "fish_violet_ripple",
    "fish_pink_bubble",
+   "fish_pale_tide",
+   "fish_peach_anthias",
+   "fish_deep_lantern_fish",
    "fish_orange_stripe",
-   "fish_green_stripey",
+   "fish_shark",
+   "fish_brown_stripe",
+   "fish_violet_ripple",
+   "fish_purple_sprite",
+   "fish_green_orby",
+   "fish_purp_bluefin",
+   "fish_golden_scale",
+   "fish_panda_puffer",
+   "fish_goldie",
+   "fish_emerald_blue",
    "fish_green_spotty",
-   "fish_blue_chunker"
+   "fish_blue_chunker",
+   "fish_green_stripey"
   ]
  },
  {
@@ -5124,12 +4746,11 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 51,
-  "goal": 10,
+  "goal": 9,
   "per": 3,
   "tanks": [
-   3,
-   3,
-   3,
+   2,
+   2,
    3,
    3,
    3,
@@ -5139,8 +4760,8 @@
    3
   ],
   "bounty": [],
-  "species": 22,
-  "decoyFish": 26,
+  "species": 20,
+  "decoyFish": 20,
   "look": 4,
   "shift": 55,
   "sizeK": 1.4,
@@ -5152,15 +4773,10 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 28,
+   "extraFish": 9,
    "waves": [
     {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 7,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
     }
@@ -5199,31 +4815,29 @@
    30,
    30
   ],
-  "startFish": 28,
-  "maxFish": 56,
+  "startFish": 36,
+  "maxFish": 45,
   "fishKeys": [
-   "fish_red_fin",
-   "fish_green_beast",
-   "fish_purple_sprite",
-   "fish_golden_flame",
-   "fish_abyss_tetra",
-   "fish_ghostly_wave",
-   "fish_silver_line",
-   "fish_deep_lantern_fish",
-   "fish_sunset_puffer",
-   "fish_ice_blue_fish",
-   "fish_rainbow_striper",
-   "fish_green_finny",
-   "fish_yellow_stripe",
-   "fish_violet_stripe",
-   "fish_orange_sword_fish",
+   "fish_purple_wing",
    "fish_rainbow_wing",
+   "fish_ice_blue_fish",
+   "fish_golden_flame",
+   "fish_red_stripe_wing",
+   "fish_orange_horn",
+   "fish_blue_flash",
    "fish_golden_spot",
-   "fish_green_spotty",
+   "fish_red_wing",
+   "fish_ghostly_wave",
+   "fish_orange_sword_fish",
+   "fish_green_beast",
+   "fish_golden_tide",
+   "fish_red_fin",
+   "fish_brown_stripe",
+   "fish_orange_stripe",
+   "fish_emerald_blue",
    "fish_blue_chunker",
    "fish_blue_striper",
-   "fish_emerald_blue",
-   "fish_green_stripey"
+   "fish_green_spotty"
   ]
  },
  {
@@ -5235,12 +4849,11 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 52,
-  "goal": 10,
+  "goal": 9,
   "per": 3,
   "tanks": [
-   3,
-   3,
-   3,
+   2,
+   2,
    3,
    3,
    3,
@@ -5250,9 +4863,9 @@
    3
   ],
   "bounty": [],
-  "species": 18,
-  "decoyFish": 26,
-  "look": 1,
+  "species": 21,
+  "decoyFish": 21,
+  "look": 4,
   "shift": 55,
   "sizeK": 1.4,
   "speedK": 0.85,
@@ -5263,15 +4876,10 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 28,
+   "extraFish": 10,
    "waves": [
     {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 7,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 1
     }
@@ -5310,27 +4918,30 @@
    30,
    30
   ],
-  "startFish": 28,
-  "maxFish": 56,
+  "startFish": 36,
+  "maxFish": 46,
   "fishKeys": [
-   "fish_purp_bluefin",
-   "fish_panda_puffer",
-   "fish_yellow_shell_kid",
-   "fish_violet_ripple",
-   "fish_orange_stripe",
-   "fish_rainbow_bluestripe",
-   "fish_golden_tide",
+   "fish_purple_sprite",
+   "fish_yellow_stripe",
+   "fish_golden_flame",
+   "fish_abyss_tetra",
+   "fish_silver_line",
    "fish_goldie_tot",
-   "fish_pale_tide",
-   "fish_peach_anthias",
-   "fish_shark",
-   "fish_pinky_puffer",
+   "fish_pink_bubble",
+   "fish_blue_flash",
+   "fish_goldie",
+   "fish_whale",
    "fish_pink_stripe",
-   "fish_green_orby",
-   "fish_perple_stripe_wing",
+   "fish_green_finny",
+   "fish_purple_wing",
+   "fish_pinky_puffer",
+   "fish_panda_puffer",
+   "fish_pale_tide",
+   "fish_brown_stripe",
+   "fish_green_stripey",
+   "fish_emerald_blue",
    "fish_blue_striper",
-   "fish_green_spotty",
-   "fish_blue_chunker"
+   "fish_green_spotty"
   ]
  },
  {
@@ -5342,12 +4953,10 @@
   "difficulty": "Easy",
   "category": "Normal",
   "refLevel": 53,
-  "goal": 11,
+  "goal": 9,
   "per": 3,
   "tanks": [
    2,
-   2,
-   3,
    3,
    3,
    3,
@@ -5358,8 +4967,8 @@
    3
   ],
   "bounty": [],
-  "species": 22,
-  "decoyFish": 25,
+  "species": 21,
+  "decoyFish": 21,
   "look": 4,
   "shift": 55,
   "sizeK": 1.4,
@@ -5371,15 +4980,10 @@
   "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 28,
+   "extraFish": 10,
    "waves": [
     {
      "afterTanks": 4,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 7,
      "holdLast": true,
      "holdFish": 1
     }
@@ -5418,31 +5022,30 @@
    30,
    30
   ],
-  "startFish": 28,
-  "maxFish": 56,
+  "startFish": 37,
+  "maxFish": 47,
   "fishKeys": [
+   "fish_rainbow_striper",
+   "fish_yellow_shell_kid",
+   "fish_violet_ripple",
    "fish_blue_chuppy",
-   "fish_red_wing",
-   "fish_red_stripe_wing",
-   "fish_golden_scale",
-   "fish_yellow_stripe",
-   "fish_purple_wing",
-   "fish_blue_flash",
-   "fish_ice_blue_fish",
-   "fish_goldie",
-   "fish_pink_bubble",
-   "fish_brown_stripe",
-   "fish_whale",
-   "fish_sea_horse",
-   "fish_violet_stripe",
-   "fish_orange_horn",
-   "fish_abyss_tetra",
-   "fish_golden_flame",
-   "fish_purple_sprite",
+   "fish_deep_lantern_fish",
    "fish_sunset_puffer",
+   "fish_perple_stripe_wing",
+   "fish_golden_scale",
+   "fish_orange_sword_fish",
+   "fish_whale",
+   "fish_green_orby",
+   "fish_violet_stripe",
+   "fish_peach_anthias",
+   "fish_rainbow_bluestripe",
+   "fish_orange_stripe",
+   "fish_golden_flame",
+   "fish_ghostly_wave",
    "fish_emerald_blue",
-   "fish_blue_striper",
-   "fish_blue_chunker"
+   "fish_blue_chunker",
+   "fish_green_spotty",
+   "fish_blue_striper"
   ]
  },
  {
@@ -5454,11 +5057,10 @@
   "difficulty": "Medium",
   "category": "Normal",
   "refLevel": 54,
-  "goal": 12,
+  "goal": 11,
   "per": 3,
   "tanks": [
-   2,
-   2,
+   3,
    3,
    3,
    3,
@@ -5471,8 +5073,8 @@
    3
   ],
   "bounty": [],
-  "species": 22,
-  "decoyFish": 26,
+  "species": 26,
+  "decoyFish": 28,
   "look": 4,
   "shift": 55,
   "sizeK": 1.4,
@@ -5484,22 +5086,17 @@
   "swarm": true,
   "tube": {
    "enabled": true,
-   "extraFish": 30,
+   "extraFish": 23,
    "waves": [
     {
-     "afterTanks": 3,
+     "afterTanks": 4,
      "holdLast": true,
-     "holdFish": 1
+     "holdFish": 2
     },
     {
-     "afterTanks": 6,
+     "afterTanks": 7,
      "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 9,
-     "holdLast": true,
-     "holdFish": 1
+     "holdFish": 2
     }
    ],
    "autoPumpWhenStuck": true,
@@ -5536,31 +5133,35 @@
    30,
    30
   ],
-  "startFish": 30,
-  "maxFish": 60,
+  "startFish": 38,
+  "maxFish": 61,
   "fishKeys": [
-   "fish_green_beast",
-   "fish_rainbow_striper",
-   "fish_silver_line",
-   "fish_pinky_puffer",
-   "fish_purp_bluefin",
    "fish_red_fin",
-   "fish_panda_puffer",
    "fish_rainbow_wing",
-   "fish_deep_lantern_fish",
-   "fish_ghostly_wave",
-   "fish_green_finny",
+   "fish_blue_flash",
+   "fish_ice_blue_fish",
+   "fish_orange_horn",
    "fish_golden_spot",
-   "fish_orange_sword_fish",
-   "fish_goldie_tot",
-   "fish_yellow_shell_kid",
-   "fish_perple_stripe_wing",
-   "fish_violet_ripple",
-   "fish_green_orby",
+   "fish_purple_wing",
+   "fish_purple_sprite",
+   "fish_red_stripe_wing",
+   "fish_yellow_stripe",
+   "fish_purp_bluefin",
+   "fish_sea_horse",
+   "fish_pink_bubble",
+   "fish_red_wing",
+   "fish_green_beast",
+   "fish_golden_tide",
+   "fish_brown_stripe",
+   "fish_goldie",
+   "fish_pale_tide",
+   "fish_panda_puffer",
+   "fish_pinky_puffer",
    "fish_green_stripey",
-   "fish_blue_chunker",
+   "fish_green_spotty",
    "fish_emerald_blue",
-   "fish_green_spotty"
+   "fish_blue_chunker",
+   "fish_blue_striper"
   ]
  },
  {
@@ -5570,586 +5171,8 @@
   "name": "Level 55",
   "status": "Ready",
   "difficulty": "Hard",
-  "category": "Normal",
-  "refLevel": 55,
-  "goal": 13,
-  "per": 3,
-  "tanks": [
-   2,
-   2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 22,
-  "decoyFish": 23,
-  "look": 2,
-  "shift": 55,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 0,
-  "jelly": 0,
-  "squid": 1,
-  "clam": 2,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 29,
-   "waves": [
-    {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 5,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 8,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 10,
-     "holdLast": true,
-     "holdFish": 2
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 5,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 31,
-  "maxFish": 60,
-  "fishKeys": [
-   "fish_pale_tide",
-   "fish_pink_stripe",
-   "fish_sunset_puffer",
-   "fish_golden_tide",
-   "fish_orange_stripe",
-   "fish_yellow_stripe",
-   "fish_peach_anthias",
-   "fish_rainbow_bluestripe",
-   "fish_purple_sprite",
-   "fish_pink_bubble",
-   "fish_orange_horn",
-   "fish_blue_flash",
-   "fish_golden_scale",
-   "fish_whale",
-   "fish_red_wing",
-   "fish_brown_stripe",
-   "fish_red_stripe_wing",
-   "fish_golden_flame",
-   "fish_purple_wing",
-   "fish_emerald_blue",
-   "fish_green_stripey",
-   "fish_blue_striper"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L56",
-  "name": "Level 56",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 56,
-  "goal": 11,
-  "per": 3,
-  "tanks": [
-   2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 22,
-  "decoyFish": 24,
-  "look": 4,
-  "shift": 55,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 2,
-  "jelly": 1,
-  "squid": 0,
-  "clam": 0,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 28,
-   "waves": [
-    {
-     "afterTanks": 4,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 7,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 5,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 28,
-  "maxFish": 56,
-  "fishKeys": [
-   "fish_blue_chuppy",
-   "fish_violet_stripe",
-   "fish_goldie",
-   "fish_orange_sword_fish",
-   "fish_yellow_shell_kid",
-   "fish_ice_blue_fish",
-   "fish_violet_ripple",
-   "fish_goldie_tot",
-   "fish_abyss_tetra",
-   "fish_panda_puffer",
-   "fish_pinky_puffer",
-   "fish_shark",
-   "fish_sea_horse",
-   "fish_deep_lantern_fish",
-   "fish_ghostly_wave",
-   "fish_green_finny",
-   "fish_silver_line",
-   "fish_rainbow_striper",
-   "fish_red_fin",
-   "fish_green_beast",
-   "fish_green_spotty",
-   "fish_blue_chunker"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L57",
-  "name": "Level 57",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 57,
-  "goal": 11,
-  "per": 3,
-  "tanks": [
-   2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 22,
-  "decoyFish": 24,
-  "look": 4,
-  "shift": 55,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 2,
-  "jelly": 2,
-  "squid": 0,
-  "clam": 0,
-  "swarm": true,
-  "tube": {
-   "enabled": true,
-   "extraFish": 28,
-   "waves": [
-    {
-     "afterTanks": 4,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 7,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 5,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 28,
-  "maxFish": 56,
-  "fishKeys": [
-   "fish_perple_stripe_wing",
-   "fish_rainbow_wing",
-   "fish_purp_bluefin",
-   "fish_golden_scale",
-   "fish_sunset_puffer",
-   "fish_green_orby",
-   "fish_golden_tide",
-   "fish_golden_spot",
-   "fish_pink_bubble",
-   "fish_pale_tide",
-   "fish_red_stripe_wing",
-   "fish_brown_stripe",
-   "fish_orange_stripe",
-   "fish_orange_horn",
-   "fish_peach_anthias",
-   "fish_yellow_stripe",
-   "fish_pink_stripe",
-   "fish_purple_wing",
-   "fish_blue_striper",
-   "fish_green_stripey",
-   "fish_blue_chunker",
-   "fish_emerald_blue"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L58",
-  "name": "Level 58",
-  "status": "Ready",
-  "difficulty": "Medium",
-  "category": "Normal",
-  "refLevel": 58,
-  "goal": 12,
-  "per": 3,
-  "tanks": [
-   2,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 22,
-  "decoyFish": 25,
-  "look": 3,
-  "shift": 55,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 1,
-  "jelly": 0,
-  "squid": 2,
-  "clam": 1,
-  "swarm": false,
-  "tube": {
-   "enabled": true,
-   "extraFish": 30,
-   "waves": [
-    {
-     "afterTanks": 3,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 6,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 9,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 5,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 30,
-  "maxFish": 60,
-  "fishKeys": [
-   "fish_red_wing",
-   "fish_red_fin",
-   "fish_rainbow_bluestripe",
-   "fish_yellow_shell_kid",
-   "fish_golden_flame",
-   "fish_blue_chuppy",
-   "fish_purple_sprite",
-   "fish_blue_flash",
-   "fish_deep_lantern_fish",
-   "fish_pinky_puffer",
-   "fish_goldie",
-   "fish_green_finny",
-   "fish_shark",
-   "fish_green_beast",
-   "fish_ice_blue_fish",
-   "fish_ghostly_wave",
-   "fish_panda_puffer",
-   "fish_abyss_tetra",
-   "fish_rainbow_striper",
-   "fish_green_spotty",
-   "fish_emerald_blue",
-   "fish_green_stripey"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L59",
-  "name": "Level 59",
-  "status": "Ready",
-  "difficulty": "Easy",
-  "category": "Normal",
-  "refLevel": 59,
-  "goal": 11,
-  "per": 3,
-  "tanks": [
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
-  ],
-  "bounty": [],
-  "species": 22,
-  "decoyFish": 23,
-  "look": 4,
-  "shift": 55,
-  "sizeK": 1.4,
-  "speedK": 0.85,
-  "urchin": 2,
-  "jelly": 1,
-  "squid": 0,
-  "clam": 2,
-  "swarm": true,
-  "tube": {
-   "enabled": true,
-   "extraFish": 28,
-   "waves": [
-    {
-     "afterTanks": 4,
-     "holdLast": true,
-     "holdFish": 1
-    },
-    {
-     "afterTanks": 7,
-     "holdLast": true,
-     "holdFish": 1
-    }
-   ],
-   "autoPumpWhenStuck": true,
-   "stuckDelaySec": 2.5
-  },
-  "backup": true,
-  "hint": true,
-  "tank": true,
-  "clear": true,
-  "theme": 5,
-  "events": [
-   "conga",
-   "waltz",
-   "swirl",
-   "drop",
-   "squabble",
-   "hide"
-  ],
-  "eventGap": [
-   8,
-   10
-  ],
-  "feed": true,
-  "feedGap": [
-   24,
-   34
-  ],
-  "startle": true,
-  "startleGap": [
-   26,
-   38
-  ],
-  "swarmGap": [
-   30,
-   30
-  ],
-  "startFish": 28,
-  "maxFish": 56,
-  "fishKeys": [
-   "fish_violet_stripe",
-   "fish_goldie_tot",
-   "fish_silver_line",
-   "fish_pale_tide",
-   "fish_golden_spot",
-   "fish_rainbow_wing",
-   "fish_orange_horn",
-   "fish_violet_ripple",
-   "fish_orange_sword_fish",
-   "fish_purp_bluefin",
-   "fish_pink_bubble",
-   "fish_whale",
-   "fish_sea_horse",
-   "fish_golden_tide",
-   "fish_peach_anthias",
-   "fish_brown_stripe",
-   "fish_purple_wing",
-   "fish_green_orby",
-   "fish_golden_scale",
-   "fish_perple_stripe_wing",
-   "fish_blue_chunker",
-   "fish_green_spotty"
-  ]
- },
- {
-  "schema": "spot-a-fish-level",
-  "version": 2,
-  "id": "L60",
-  "name": "Level 60",
-  "status": "Ready",
-  "difficulty": "Very Hard",
   "category": "Bounty",
-  "refLevel": 60,
+  "refLevel": 55,
   "goal": 14,
   "per": 3,
   "tanks": [
@@ -6169,31 +5192,26 @@
    3
   ],
   "bounty": [
-   "fast",
+   "tiny",
    "camo"
   ],
-  "species": 22,
-  "decoyFish": 14,
+  "species": 26,
+  "decoyFish": 35,
   "look": 4,
   "shift": 55,
   "sizeK": 1.4,
   "speedK": 0.85,
   "urchin": 0,
   "jelly": 0,
-  "squid": 2,
-  "clam": 0,
-  "swarm": true,
+  "squid": 1,
+  "clam": 2,
+  "swarm": false,
   "tube": {
    "enabled": true,
-   "extraFish": 20,
+   "extraFish": 33,
    "waves": [
     {
-     "afterTanks": 2,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 5,
+     "afterTanks": 4,
      "holdLast": true,
      "holdFish": 2
     },
@@ -6203,12 +5221,7 @@
      "holdFish": 2
     },
     {
-     "afterTanks": 9,
-     "holdLast": true,
-     "holdFish": 2
-    },
-    {
-     "afterTanks": 12,
+     "afterTanks": 13,
      "holdLast": true,
      "holdFish": 2
     }
@@ -6248,30 +5261,598 @@
    30
   ],
   "startFish": 40,
-  "maxFish": 60,
+  "maxFish": 73,
   "fishKeys": [
+   "fish_golden_flame",
+   "fish_green_finny",
+   "fish_blue_flash",
+   "fish_silver_line",
+   "fish_abyss_tetra",
+   "fish_goldie_tot",
    "fish_pink_stripe",
+   "fish_perple_stripe_wing",
+   "fish_purple_wing",
+   "fish_ghostly_wave",
+   "fish_violet_ripple",
+   "fish_deep_lantern_fish",
+   "fish_green_orby",
+   "fish_pink_bubble",
+   "fish_purple_sprite",
    "fish_orange_stripe",
+   "fish_orange_sword_fish",
+   "fish_yellow_stripe",
+   "fish_red_fin",
+   "fish_peach_anthias",
+   "fish_golden_scale",
+   "fish_emerald_blue",
+   "fish_blue_chunker",
+   "fish_blue_striper",
+   "fish_green_stripey",
+   "fish_green_spotty"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L56",
+  "name": "Level 56",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 56,
+  "goal": 9,
+  "per": 3,
+  "tanks": [
+   2,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 22,
+  "decoyFish": 23,
+  "look": 4,
+  "shift": 55,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 2,
+  "jelly": 1,
+  "squid": 0,
+  "clam": 0,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 11,
+   "waves": [
+    {
+     "afterTanks": 4,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 5,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 38,
+  "maxFish": 49,
+  "fishKeys": [
+   "fish_yellow_shell_kid",
+   "fish_brown_stripe",
+   "fish_red_stripe_wing",
+   "fish_rainbow_bluestripe",
+   "fish_violet_stripe",
+   "fish_sunset_puffer",
+   "fish_rainbow_striper",
    "fish_blue_chuppy",
    "fish_goldie",
-   "fish_green_beast",
-   "fish_rainbow_striper",
-   "fish_sunset_puffer",
-   "fish_red_stripe_wing",
-   "fish_blue_flash",
-   "fish_abyss_tetra",
-   "fish_golden_flame",
+   "fish_shark",
    "fish_panda_puffer",
-   "fish_deep_lantern_fish",
-   "fish_purple_sprite",
-   "fish_ice_blue_fish",
-   "fish_yellow_stripe",
-   "fish_ghostly_wave",
-   "fish_pinky_puffer",
-   "fish_peach_anthias",
-   "fish_rainbow_bluestripe",
+   "fish_red_fin",
+   "fish_rainbow_wing",
+   "fish_orange_horn",
+   "fish_green_beast",
+   "fish_purple_wing",
+   "fish_blue_flash",
+   "fish_golden_spot",
+   "fish_emerald_blue",
    "fish_green_stripey",
+   "fish_green_spotty",
+   "fish_blue_chunker"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L57",
+  "name": "Level 57",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 57,
+  "goal": 9,
+  "per": 3,
+  "tanks": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 22,
+  "decoyFish": 23,
+  "look": 4,
+  "shift": 55,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 2,
+  "jelly": 2,
+  "squid": 0,
+  "clam": 0,
+  "swarm": true,
+  "tube": {
+   "enabled": true,
+   "extraFish": 11,
+   "waves": [
+    {
+     "afterTanks": 4,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 5,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 39,
+  "maxFish": 50,
+  "fishKeys": [
+   "fish_golden_tide",
+   "fish_pale_tide",
+   "fish_red_wing",
+   "fish_deep_lantern_fish",
+   "fish_rainbow_wing",
+   "fish_purple_sprite",
+   "fish_golden_flame",
+   "fish_pink_bubble",
+   "fish_purp_bluefin",
+   "fish_yellow_stripe",
+   "fish_ice_blue_fish",
+   "fish_green_orby",
+   "fish_orange_sword_fish",
+   "fish_perple_stripe_wing",
+   "fish_ghostly_wave",
+   "fish_blue_flash",
+   "fish_orange_stripe",
+   "fish_emerald_blue",
+   "fish_green_stripey",
+   "fish_blue_chunker",
+   "fish_blue_striper",
+   "fish_green_spotty"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L58",
+  "name": "Level 58",
+  "status": "Ready",
+  "difficulty": "Medium",
+  "category": "Normal",
+  "refLevel": 58,
+  "goal": 12,
+  "per": 3,
+  "tanks": [
+   2,
+   2,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 26,
+  "decoyFish": 30,
+  "look": 4,
+  "shift": 55,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 1,
+  "jelly": 0,
+  "squid": 2,
+  "clam": 1,
+  "swarm": false,
+  "tube": {
+   "enabled": true,
+   "extraFish": 25,
+   "waves": [
+    {
+     "afterTanks": 4,
+     "holdLast": true,
+     "holdFish": 2
+    },
+    {
+     "afterTanks": 8,
+     "holdLast": true,
+     "holdFish": 2
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 5,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 39,
+  "maxFish": 64,
+  "fishKeys": [
+   "fish_silver_line",
+   "fish_pinky_puffer",
+   "fish_brown_stripe",
+   "fish_golden_spot",
+   "fish_abyss_tetra",
+   "fish_peach_anthias",
+   "fish_purple_wing",
+   "fish_red_fin",
+   "fish_panda_puffer",
+   "fish_golden_scale",
+   "fish_violet_ripple",
+   "fish_goldie_tot",
+   "fish_whale",
+   "fish_sunset_puffer",
+   "fish_green_finny",
+   "fish_red_stripe_wing",
+   "fish_pink_stripe",
+   "fish_violet_stripe",
+   "fish_golden_flame",
+   "fish_goldie",
+   "fish_pink_bubble",
+   "fish_emerald_blue",
+   "fish_green_stripey",
+   "fish_green_spotty",
+   "fish_blue_chunker",
    "fish_blue_striper"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L59",
+  "name": "Level 59",
+  "status": "Ready",
+  "difficulty": "Easy",
+  "category": "Normal",
+  "refLevel": 59,
+  "goal": 9,
+  "per": 3,
+  "tanks": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [],
+  "species": 22,
+  "decoyFish": 24,
+  "look": 4,
+  "shift": 55,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 2,
+  "jelly": 1,
+  "squid": 0,
+  "clam": 2,
+  "swarm": true,
+  "tube": {
+   "enabled": true,
+   "extraFish": 11,
+   "waves": [
+    {
+     "afterTanks": 4,
+     "holdLast": true,
+     "holdFish": 1
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 5,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 40,
+  "maxFish": 51,
+  "fishKeys": [
+   "fish_yellow_shell_kid",
+   "fish_blue_flash",
+   "fish_orange_horn",
+   "fish_rainbow_bluestripe",
+   "fish_orange_stripe",
+   "fish_purple_sprite",
+   "fish_green_beast",
+   "fish_rainbow_wing",
+   "fish_blue_chuppy",
+   "fish_whale",
+   "fish_rainbow_striper",
+   "fish_ghostly_wave",
+   "fish_yellow_stripe",
+   "fish_perple_stripe_wing",
+   "fish_green_orby",
+   "fish_golden_flame",
+   "fish_orange_sword_fish",
+   "fish_deep_lantern_fish",
+   "fish_emerald_blue",
+   "fish_blue_chunker",
+   "fish_green_stripey",
+   "fish_green_spotty"
+  ]
+ },
+ {
+  "schema": "spot-a-fish-level",
+  "version": 2,
+  "id": "L60",
+  "name": "Level 60",
+  "status": "Ready",
+  "difficulty": "Very Hard",
+  "category": "Bounty",
+  "refLevel": 60,
+  "goal": 14,
+  "per": 3,
+  "tanks": [
+   1,
+   1,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "bounty": [
+   "fast",
+   "camo"
+  ],
+  "species": 26,
+  "decoyFish": 38,
+  "look": 4,
+  "shift": 55,
+  "sizeK": 1.4,
+  "speedK": 0.85,
+  "urchin": 0,
+  "jelly": 0,
+  "squid": 2,
+  "clam": 0,
+  "swarm": true,
+  "tube": {
+   "enabled": true,
+   "extraFish": 36,
+   "waves": [
+    {
+     "afterTanks": 3,
+     "holdLast": true,
+     "holdFish": 2
+    },
+    {
+     "afterTanks": 6,
+     "holdLast": true,
+     "holdFish": 2
+    },
+    {
+     "afterTanks": 8,
+     "holdLast": true,
+     "holdFish": 2
+    },
+    {
+     "afterTanks": 13,
+     "holdLast": true,
+     "holdFish": 2
+    }
+   ],
+   "autoPumpWhenStuck": true,
+   "stuckDelaySec": 2.5
+  },
+  "backup": true,
+  "hint": true,
+  "tank": true,
+  "clear": true,
+  "theme": 5,
+  "events": [
+   "conga",
+   "waltz",
+   "swirl",
+   "drop",
+   "squabble",
+   "hide"
+  ],
+  "eventGap": [
+   8,
+   10
+  ],
+  "feed": true,
+  "feedGap": [
+   24,
+   34
+  ],
+  "startle": true,
+  "startleGap": [
+   26,
+   38
+  ],
+  "swarmGap": [
+   30,
+   30
+  ],
+  "startFish": 40,
+  "maxFish": 76,
+  "fishKeys": [
+   "fish_pale_tide",
+   "fish_purple_wing",
+   "fish_golden_tide",
+   "fish_red_fin",
+   "fish_golden_spot",
+   "fish_purp_bluefin",
+   "fish_red_wing",
+   "fish_brown_stripe",
+   "fish_red_stripe_wing",
+   "fish_panda_puffer",
+   "fish_ice_blue_fish",
+   "fish_pink_bubble",
+   "fish_golden_flame",
+   "fish_purple_sprite",
+   "fish_sea_horse",
+   "fish_goldie",
+   "fish_goldie_tot",
+   "fish_perple_stripe_wing",
+   "fish_peach_anthias",
+   "fish_pinky_puffer",
+   "fish_pink_stripe",
+   "fish_violet_stripe",
+   "fish_green_stripey",
+   "fish_emerald_blue",
+   "fish_blue_striper",
+   "fish_blue_chunker"
   ]
  }
 ]

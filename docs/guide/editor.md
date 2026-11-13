@@ -8,7 +8,7 @@ Source: `game/editor/` (`main.js`, `template.html`, `build.mjs`). `npm run build
 
 ## 0. How it works in practice
 
-- First launch: choose a folder (Chrome/Edge) or Browser storage, then press **Add the 15 built-in levels**.
+- First launch: the editor opens in the Browser storage with all 60 levels of the game already loaded. To keep the levels as files, choose a folder (Chrome/Edge) and press **Add or update built-in levels**. In the Browser storage, a level you did not edit is updated automatically when the game's level changes; an edited one is kept.
 - Edit a level, press **Save** (Ctrl/Cmd+S). Each save keeps the last 10 versions.
 - **Play** opens the game over the editor with the open level. Back and Restart are in the top bar. **Seed**: the same seed gives the same fish layout at the start; after that fish move with real time, so a run is not frame-for-frame identical.
 - **Collections** (Organiser tab) order levels. **Export levels.json** downloads the collection as one file; put it at `game/src/levels.json` and rebuild to ship those levels in the game. The published game does not read the editor's folder by itself.

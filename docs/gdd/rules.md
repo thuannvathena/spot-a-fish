@@ -25,7 +25,7 @@
 |---|---|---|
 | Sea urchin | L1 | Wanders. Tapping sends it to Backup like junk |
 | Jellyfish | L4 | Same as urchin |
-| Squid | L3 (alone, as intro) | Sprays ink that hides the view. If tapped, takes up to 3 Backup slots |
+| Octopus (was Squid) | L11 (alone, as intro) | Sprays ink that hides the view. If tapped, takes 3 Backup slots |
 | Clam | L6 (alone, as intro) | Opens and closes, hides a fish inside; the player must open it |
 | Fish swarm | L9 | 400–560 grey-silver fish come out of a cave and cover the tank for 18–26 s, then go back. **Only hides the view**: a tap through the swarm still hits the real fish |
 

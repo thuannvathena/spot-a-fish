@@ -91,15 +91,15 @@ export function playOnce(lv, r, errScale) {
       else { let c = pick - dsum; for (const [s, n] of pool) { if (c < n) { inTank[s]--; backup.push({ t: s, n: 1 }); break; } c -= n; } } }
     // tanks that need a species that was just tapped wrongly get it back at once
     for (const a of active) if (a) { pull(a); if (a.got >= need[a.s]) finish(active.indexOf(a)); }
-    if (slots() >= BACKUP_MAX) return { win: false, time };
+    if (slots() >= BACKUP_MAX) return { win: false, time, at: done / k };   // at: how far through the level (finished tanks / tanks) the run was lost
   }
   if (done < k && globalThis.__SIMDBG) console.log('STALL', JSON.stringify({ L: lv.refLevel, done, k, active, inTank, need, backup, decoy, la, order, qi, time, waves: waves.length, wi }));
   return { win: done >= k, time, stall: done < k };   // stall = the run ran out of steps without winning or losing (a model gap, counted as a loss)
 }
 
 export function simulate(lv, runs = RUNS, errScale = 1, seed = SEED) {
-  const r = rng(seed * 7919 + lv.refLevel); let w = 0, tm = 0, st = 0; for (let i = 0; i < runs; i++) { const o = playOnce(lv, r, errScale); if (o.win) w++; if (o.stall) st++; tm += o.time; }
-  const p = w / runs; return { wr: p, ci: 1.96 * Math.sqrt(Math.max(p * (1 - p), 1e-4) / runs), time: tm / runs, stall: st / runs };
+  const r = rng(seed * 7919 + lv.refLevel); let w = 0, tm = 0, st = 0, lost = 0, atSum = 0, late = 0; for (let i = 0; i < runs; i++) { const o = playOnce(lv, r, errScale); if (o.win) w++; if (o.stall) st++; if (o.at != null) { lost++; atSum += o.at; if (o.at >= .6) late++; } tm += o.time; }
+  const p = w / runs; return { wr: p, ci: 1.96 * Math.sqrt(Math.max(p * (1 - p), 1e-4) / runs), time: tm / runs, stall: st / runs, lossAt: lost ? atSum / lost : null, lateShare: lost ? late / lost : null, lost: lost / runs };   // lossAt: average share of the level done when a run is lost; lateShare: share of the losses after 60% of the tanks
 }
 
 if (import.meta.url === 'file://' + process.argv[1] || process.argv[1]?.endsWith('wr-sim.mjs')) {
@@ -107,7 +107,7 @@ if (import.meta.url === 'file://' + process.argv[1] || process.argv[1]?.endsWith
   const out = []; let sumAbs = 0, n = 0;
   console.log('L   diff       sim WR   ±CI   sheet   diff   avg time(s)');
   for (const lv of LEVELS) { const L = lv.refLevel; if (L < FROM || L > TO) continue; const s = simulate(lv), t = sheet[L]; const d = t != null ? s.wr * 100 - t : null; if (d != null) { sumAbs += Math.abs(d); n++; }
-    out.push({ L, difficulty: lv.difficulty, sim: +(s.wr * 100).toFixed(1), ci: +(s.ci * 100).toFixed(1), sheet: t, diff: d == null ? null : +d.toFixed(1), time: Math.round(s.time) });
+    out.push({ L, difficulty: lv.difficulty, lossAt: s.lossAt == null ? null : +s.lossAt.toFixed(2), lateShare: s.lateShare == null ? null : +s.lateShare.toFixed(2), sim: +(s.wr * 100).toFixed(1), ci: +(s.ci * 100).toFixed(1), sheet: t, diff: d == null ? null : +d.toFixed(1), time: Math.round(s.time) });
     console.log(String(L).padEnd(3), lv.difficulty.padEnd(10), (s.wr * 100).toFixed(1).padStart(6) + '%', ('±' + (s.ci * 100).toFixed(1)).padStart(5), t != null ? (t + '%').padStart(7) : '', d != null ? (d >= 0 ? '+' : '') + d.toFixed(1) : '', String(Math.round(s.time)).padStart(8)); }
   if (n) console.log(`mean |sim - sheet| = ${(sumAbs / n).toFixed(1)} points over ${n} levels (${RUNS} runs each)`);
   if (arg('json', null)) fs.writeFileSync(arg('json'), JSON.stringify(out, null, 1));

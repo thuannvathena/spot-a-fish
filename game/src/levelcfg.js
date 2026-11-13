@@ -9,10 +9,10 @@ export const LEVELS = [
   [8, 14, 6, 58], [9, 15, 6, 62], [9, 16, 7, 66], [10, 18, 7, 70], [10, 20, 8, 74]];
 
 // level at which each random event becomes available (and stays available afterwards); drop = the pearl, feed = the food bucket, startle = the falling rock
-export const EVENT_UNLOCK = { conga: 1, waltz: 3, swirl: 6, drop: 9, squabble: 12, feed: 15, hide: 18, startle: 21 };
+export const EVENT_UNLOCK = { conga: 1, waltz: 3, swirl: 6, drop: 9, squabble: 12, feed: 15, startle: 21 };   // (the 'hide' event, fish swimming into the houses, was taken out)
 export const evKindsFor = L => Object.entries(EVENT_UNLOCK).filter(([k, from]) => from <= L && k !== 'feed' && k !== 'startle').map(([k]) => k);
-// the sheet's unlock levels: Backup 2, Hint 4, Clear Tank 7, Clear Backup 9, pipe 16, swarm 31
-export const UNLOCK = { backup: 2, hint: 4, tank: 7, clear: 9, swarm: 31, tube: 16 };
+// the sheet's unlock levels: Backup 3, Hint 4, Clear Tank 7, Clear Backup 9, pipe 16, swarm 31
+export const UNLOCK = { backup: 3, hint: 4, tank: 7, clear: 9, swarm: 31, tube: 16 };
 
 export function defaultsFor(L) {
   let [goal, , obs, decoy] = LEVELS[Math.min(Math.max(L, 1), LEVELS.length) - 1];

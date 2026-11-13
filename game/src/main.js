@@ -143,6 +143,21 @@ try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); }
 if (PLAYTEST) Object.assign(save, { tut: true, unlocked: 99, g1: 1, gRot: 1, gZoom: 1, gTilt: 1, iBackup: 1, iHint: 1, iTank: 1, iClear: 1, iSquid: 1, iClam: 1, iSwarm: 1, iPump: 1 });
 const persist = () => { if (resetting || PLAYTEST) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { } };
 const MAX_LV = LV.length;
+/* ---- level loop: after the last level the game plays sets of levels 11..X (X = the highest level when the set was made), the 3 obstacle tutorials left out, shuffled. A set is fixed once made, so new levels only appear in the next set ---- */
+const LOOP_SKIP = [11, 21, 31];
+function srcLvl(L) {
+  if (L <= MAX_LV || PLAYTEST || PLAY_OVERRIDE) return Math.min(L, MAX_LV);
+  const sets = save.loop = Array.isArray(save.loop) ? save.loop : []; let end = MAX_LV;
+  for (const q of sets) end = q.from + q.ord.length - 1;
+  while (end < L) {
+    const from = end + 1, ord = []; for (let n = 11; n <= MAX_LV; n++) if (!LOOP_SKIP.includes(n)) ord.push(n);
+    let sd = (from * 2654435761) >>> 0; const rnd = () => { sd = (sd + 0x6D2B79F5) >>> 0; let t = sd; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    for (let i = ord.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [ord[i], ord[j]] = [ord[j], ord[i]]; }
+    const prev = sets.length ? sets[sets.length - 1].ord[sets[sets.length - 1].ord.length - 1] : MAX_LV; if (ord[0] === prev && ord.length > 1) [ord[0], ord[1]] = [ord[1], ord[0]];
+    sets.push({ from, max: MAX_LV, ord }); end = from + ord.length - 1; persist();
+  }
+  const q = sets.find(z => L >= z.from && L < z.from + z.ord.length); return q ? q.ord[L - q.from] : MAX_LV;
+}
 
 /* ============================== sound (WebAudio synth) ============================== */
 const Snd = (() => {
@@ -237,10 +252,15 @@ function hueRGB(c, deg) {   // the same colour turn as hueRotate, for one colour
   const rad = deg * Math.PI / 180, k = Math.cos(rad), n = Math.sin(rad), [r, g, b] = c, m = [.213 + k * .787 - n * .213, .715 - k * .715 - n * .715, .072 - k * .072 + n * .928, .213 - k * .213 + n * .143, .715 + k * .285 + n * .140, .072 - k * .072 - n * .283, .213 - k * .213 - n * .787, .715 - k * .715 + n * .715, .072 + k * .928 + n * .072];
   return [0, 1, 2].map(o => Math.max(0, Math.min(1, m[o * 3] * r + m[o * 3 + 1] * g + m[o * 3 + 2] * b)));
 }
-function hueRotate(cnv, deg) {   // recolour a canvas (keeps white eyes / neutral tones, shifts every hue)
+function hueRotate(cnv, deg) {   /* recolour a canvas: every hue is turned, AND the parts with almost no colour (a white or silver fish, grey stripes) are washed with a little of the new hue - turning the hue alone leaves a grey fish exactly as it was, so two copies of a white species stayed identical */
   const g = cnv.getContext('2d', { willReadFrequently: true }), d = g.getImageData(0, 0, cnv.width, cnv.height), p = d.data, rad = deg * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad);
   const a0 = .213 + c * .787 - s * .213, a1 = .715 - c * .715 - s * .715, a2 = .072 - c * .072 + s * .928, b0 = .213 - c * .213 + s * .143, b1 = .715 + c * .285 + s * .140, b2 = .072 - c * .072 - s * .283, c0 = .213 - c * .213 - s * .787, c1 = .715 - c * .715 + s * .715, c2 = .072 + c * .928 + s * .072;
-  for (let i = 0; i < p.length; i += 4) { const r = p[i], g2 = p[i + 1], b = p[i + 2]; p[i] = Math.max(0, Math.min(255, a0 * r + a1 * g2 + a2 * b)); p[i + 1] = Math.max(0, Math.min(255, b0 * r + b1 * g2 + b2 * b)); p[i + 2] = Math.max(0, Math.min(255, c0 * r + c1 * g2 + c2 * b)); }
+  const T = hueRGB([1, 0, 0], deg), Tl = Math.max(.05, .213 * T[0] + .715 * T[1] + .072 * T[2]), Tn = T.map(v => v / Tl), W = Math.min(.62, Math.abs(((deg % 360) + 360) % 360 - 180) / 180 * 0 + .62);   // the wash colour of this hue, at the brightness of the pixel it tints
+  for (let i = 0; i < p.length; i += 4) { const r = p[i], g2 = p[i + 1], b = p[i + 2];
+    let R = Math.max(0, Math.min(255, a0 * r + a1 * g2 + a2 * b)), G = Math.max(0, Math.min(255, b0 * r + b1 * g2 + b2 * b)), B = Math.max(0, Math.min(255, c0 * r + c1 * g2 + c2 * b));
+    if (p[i + 3] > 8) { const mx = Math.max(R, G, B), mn = Math.min(R, G, B), sat = mx ? (mx - mn) / mx : 0, w = W * Math.max(0, 1 - sat / .3);   // only what has little colour of its own is washed; a bright red fin keeps its own turned hue
+      if (w > .002) { const L = .213 * R + .715 * G + .072 * B; R += (Math.min(255, L * Tn[0]) - R) * w; G += (Math.min(255, L * Tn[1]) - G) * w; B += (Math.min(255, L * Tn[2]) - B) * w; } }
+    p[i] = R; p[i + 1] = G; p[i + 2] = B; }
   g.putImageData(d, 0, 0);
 }
 function findEye(px, W, H, bw, bh) {   // the big white, round blob with a dark pupil
@@ -733,38 +753,205 @@ function buildUrchin() {
   return { group: g, kind: 'urchin' };
 }
 
-function buildJelly() {
-  const g = new THREE.Group();
-  const bellMat = new THREE.MeshPhongMaterial({ color: 0xff7ad9, emissive: 0x8a1f78, transparent: true, opacity: .72, side: THREE.DoubleSide, shininess: 100, specular: 0xffffff });
-  const bell = new THREE.Mesh(new THREE.SphereGeometry(.34, 28, 14, 0, Math.PI * 2, 0, Math.PI * .55), bellMat); bell.position.y = .1; g.add(bell);
-  const core = new THREE.Mesh(new THREE.SphereGeometry(.14, 12, 10), new THREE.MeshBasicMaterial({ color: 0xffd0f4, transparent: true, opacity: .8 })); core.position.y = .12; g.add(core);
-  const tents = [];
-  const tm = new THREE.MeshPhongMaterial({ color: 0xff9ae6, emissive: 0x9a2a80, transparent: true, opacity: .85 });
-  for (let i = 0; i < 8; i++) {
-    const a = i / 8 * Math.PI * 2, geo = new THREE.CylinderGeometry(.012, .005, .6, 5); geo.translate(0, -.3, 0);
-    const t = new THREE.Mesh(geo, tm); t.position.set(Math.cos(a) * .22, .08, Math.sin(a) * .22); g.add(t); tents.push(t);
-  }
-  return { group: g, kind: 'jelly', bell, tents };
+/* ============================== the jellyfish: one static FBX (bell, skirt, tentacles), moved by a vertex shader: the bell squeezes with each pulse, the tentacles trail and sway ============================== */
+const JEL = { p: null, tpl: null, tex: null, ready: false, failed: false }, JEL_S = .0031;
+function loadJelly() {
+  if (JEL.p) return JEL.p;
+  JEL.p = (async () => {
+    const base = document.baseURI, [obj, tex] = await Promise.all([new FBXLoader().loadAsync(new URL('models/jelly/model.fbx', base).href), new THREE.TextureLoader().loadAsync(new URL('models/jelly/tex.png', base).href)]);
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4; JEL.tpl = obj; JEL.tex = tex; JEL.ready = true; if (THUMBS_MADE) makeThumbs();
+  })().catch(e => { console.warn('jellyfish not loaded', e); JEL.p = null; JEL.failed = true; });
+  return JEL.p;
+}
+let _jelId = 0;
+const JEL_HUES = [0, 0, 0, 1.9, 1.05, -1.4, -2.9, -.5];   /* most jellyfish are blue; now and then one is pink, purple, green, orange or cyan (the hue turn applied to the blue picture) */
+function buildJelly(hue) {
+  if (hue === undefined) hue = JEL_HUES[(Math.random() * JEL_HUES.length) | 0];
+  const g = new THREE.Group(), id = ++_jelId, ph = Math.random() * 6.28, bell = new THREE.Object3D(), uPulse = { value: 0 }, uPh = { value: ph }, uHue = { value: hue };   /* bell.scale is what the game sets for each pulse (as it did for the old jellyfish); the shader turns it into the squeeze */
+  const mat = new THREE.MeshPhongMaterial({ map: JEL.tex, emissiveMap: JEL.tex, emissive: 0xffffff, emissiveIntensity: .55, transparent: true, opacity: .92, side: THREE.DoubleSide, shininess: 80, specular: 0x88aaff, depthWrite: false });
+  const HUE = 'uniform float uHue; vec3 hueRot(vec3 c, float a) { vec3 k = vec3(.57735); return clamp(c * cos(a) + cross(k, c) * sin(a) + k * dot(k, c) * (1. - cos(a)), 0., 1.); }\n';
+  const mkMat = kind => {   /* one material per part: 0 = the bell, 1 = the tentacles, 2 = the skirt. The geometry is in the file's own small units (a bell ~3.7 wide, the tentacles ~0.5 long) */
+    const m2 = mat.clone(); m2.map = JEL.tex; m2.emissiveMap = JEL.tex;
+    m2.onBeforeCompile = sh => { sh.uniforms.uPulse = uPulse; sh.uniforms.uPh = uPh; sh.uniforms.uHue = uHue; sh.uniforms.uTime = U.uTime;
+      sh.fragmentShader = HUE + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb = hueRot(diffuseColor.rgb, uHue);').replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance = hueRot(totalEmissiveRadiance, uHue);');
+      const body = kind === 0 ? 'transformed.xz *= 1. - .16 * uPulse; transformed.y *= 1. + .07 * uPulse;'
+        : kind === 1 ? `float ty = clamp(-position.y / .75, 0., 1.), ty15 = pow(ty, 1.6), tp = atan(position.z, position.x) * 2.3 + uPh;
+           float w = sin(uTime * 3. - position.y * 7. + tp) * ty15 * .22 + sin(uTime * 1.9 - position.y * 3.5 + uPh * 2.) * ty * .12 + sin(uTime * 5.5 - position.y * 14. + tp) * ty15 * .05;
+           float w2 = cos(uTime * 2.6 - position.y * 6.5 + tp * 1.3) * ty15 * .2 + sin(uTime * 1.5 - position.y * 3. + uPh) * ty * .1;
+           transformed.x += w; transformed.z += w2; transformed.xz *= 1. - .22 * uPulse * ty; transformed.y += ty * uPulse * .12;`
+        : `/* the six thin tentacles: the mesh is turned on its side in the file, so they hang along its z axis (from .41 at the rim down to -1.83) and sway across x and y */
+           float ty = clamp((.35 - position.z) / 1.5, 0., 1.), ty15 = pow(ty, 1.6), tp = uPh + sign(position.x) * 1.3 + floor(position.x * .9) * .8;   /* one phase per tentacle (not per vertex), so a tentacle bends as a whole and does not tear into slats */
+           float w = sin(uTime * 3. - position.z * 4. + tp) * ty15 * .17 + sin(uTime * 1.9 - position.z * 2. + uPh * 2.) * ty * .1 + sin(uTime * 5.5 - position.z * 8. + tp) * ty15 * .02;
+           float w2 = cos(uTime * 2.6 - position.z * 3.5 + tp * 1.3) * ty15 * .15 + sin(uTime * 1.5 - position.z * 1.8 + uPh) * ty * .08;
+           transformed.x += w; transformed.y += w2; transformed.xy *= 1. - .18 * uPulse * ty;`;
+      sh.vertexShader = 'uniform float uPulse; uniform float uPh; uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', 'vec3 transformed = vec3(position);\n' + body); };
+    m2.customProgramCacheKey = () => 'jelly' + id + 'k' + kind; return m2; };
+  const mats = [mkMat(0), mkMat(1), mkMat(2)];
+  const body = new THREE.Group(); body.scale.set(JEL_S * .9, JEL_S, JEL_S * .9); g.add(body);   /* 10% narrower */ body.position.y = .08;
+  JEL.tpl.traverse(m => { if (!m.isMesh) return; const c = new THREE.Mesh(m.geometry, mats[m.name === 'Cube_Remeshed' ? 0 : m.name === 'Cube001' ? 2 : 1]); c.position.copy(m.position); c.rotation.copy(m.rotation); c.scale.copy(m.scale); c.frustumCulled = false; c.onBeforeRender = () => { uPulse.value = clamp((1 - bell.scale.y) / .22, 0, 1.2); }; body.add(c); });
+  const proxy = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); proxy.scale.set(.4, .5, .4); proxy.userData.pickOnly = true; g.add(proxy);   /* what a tap hits */
+  return { group: g, kind: 'jelly', bell, tents: [], model: true, hue };
 }
 
-function buildSquid() {
-  const g = new THREE.Group();
-  const skin = new THREE.MeshPhongMaterial({ color: 0xff6f9a, emissive: 0x7a1838, shininess: 90, specular: 0xffffff });
-  const light = new THREE.MeshPhongMaterial({ color: 0xffb3cb, emissive: 0x8a2a50, shininess: 70 });
-  const mantle = new THREE.Mesh(new THREE.SphereGeometry(.2, 22, 16), skin); mantle.scale.set(1, 1.9, 1); mantle.position.y = .36; g.add(mantle);
-  for (const sx of [-1, 1]) { const fin = new THREE.Mesh(new THREE.SphereGeometry(.16, 12, 8), light); fin.scale.set(1.3, .9, .14); fin.position.set(sx * .17, .66, 0); fin.rotation.z = sx * -.6; g.add(fin); mantle.userData.fins = (mantle.userData.fins || []).concat(fin); }
-  const head = new THREE.Mesh(new THREE.SphereGeometry(.17, 18, 12), skin); head.position.y = .02; g.add(head);
-  for (const sx of [-1, 1]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(.075, 14, 10), new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 120, emissive: 0x666666 })); eye.position.set(sx * .13, .04, .09); g.add(eye);
-    const pu = new THREE.Mesh(new THREE.SphereGeometry(.042, 10, 8), new THREE.MeshBasicMaterial({ color: 0x1a0a2a })); pu.position.set(sx * .14, .04, .15); g.add(pu);
-    const sh = new THREE.Mesh(new THREE.SphereGeometry(.014, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffffff })); sh.position.set(sx * .14 + .012, .055, .185); g.add(sh);
+/* ============================== the octopus (it took the squid's place): one skinned FBX, its eight arms posed by code ============================== */
+const OCT_TANK_K = 1.25;   /* the octopus in the tank is this much bigger than a fish of the level: with the Backup size it looked tiny in the water */
+const OCT_REL = 2.43, OCT_LEN = 4 / 2.43 * .95;   /* OCT_REL: how thick it is (x a fish). OCT_LEN: it is made longer along its body, not fatter, while it lies in the Backup and flies to and from it: 3 cells long, as slim as the 2-cell one */   /* THE octopus size: its length is OCT_REL x a fish's length, everywhere (in the tank it is the fish scale of the level, in the flight and the Backup the fish's size) */
+const OCT = { p: null, tpl: null, ready: false }, OCT_S = .0016, OCT_CY = .45;   /* OCT_S: the model is ~640 units tall; OCT_CY: where the middle of its body is above the tips of its arms */
+const OCT_ARMS = [9, 24, 29, 34, 39, 44, 49, 54].map(n => [0, 1, 2, 3, 4].map(k => 'Bone' + String(n + k).padStart(3, '0')));
+function loadOctopus() {
+  if (OCT.p) return OCT.p;
+  OCT.p = (async () => {
+    const base = document.baseURI, [obj, tex] = await Promise.all([new FBXLoader().loadAsync(new URL('models/octopus/model.fbx', base).href), new THREE.TextureLoader().loadAsync(new URL('models/octopus/tex.jpg', base).href)]);
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    const mat = new THREE.MeshPhongMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: .4, shininess: 50, specular: 0x555555, side: THREE.DoubleSide });
+    obj.traverse(m => { if (m.isMesh) { m.material = mat; m.frustumCulled = false; } });
+    { const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d'); g.drawImage(tex.image, 0, 0, 96, 96); const d = g.getImageData(0, 0, 96, 96).data; let r = 0, gg = 0, bb = 0, n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 150 && d[i + 1] < 110 && d[i + 2] < 100) { r += d[i]; gg += d[i + 1]; bb += d[i + 2]; n++; } OCT.skin = n ? new THREE.Color(r / n / 255, gg / n / 255, bb / n / 255).convertSRGBToLinear() : new THREE.Color(0xd04030); }   /* the colour of its skin, for the eyelids */
+    OCT.tpl = obj; OCT.ready = true; if (THUMBS_MADE) makeThumbs();   /* (the picture of it for the pop-ups and the Backup list) */
+  })().catch(e => { console.warn('octopus not loaded', e); OCT.p = null; OCT.failed = true; });
+  return OCT.p;
+}
+function buildSquid() {   /* (the name stays: the obstacle id is still 'squid') */
+  const root = SkeletonUtils.clone(OCT.tpl), g = new THREE.Group(), body = new THREE.Group(), inner = new THREE.Group();
+  { let mt = null; root.traverse(m => { if (m.isMesh) { mt = mt || m.material.clone(); m.material = mt; } }); }   /* every octopus has its OWN material: they used to share one, so fading the one in the Backup (while the camera moves) made the one in the tank invisible */
+  root.scale.setScalar(OCT_S); root.position.y = -OCT_CY; inner.add(root); body.add(inner); g.add(body); g.updateMatrixWorld(true);
+  let skel = null; root.traverse(m => { if (m.isSkinnedMesh && !skel) skel = m.skeleton; });
+  const by = {}; for (const bn of skel.bones) by[bn.name] = bn;
+  const up = new THREE.Vector3(0, 1, 0), spin = new THREE.Vector3(); by.Spin.getWorldPosition(spin);
+  const arms = OCT_ARMS.map((names, i) => { const bs = names.map(n => by[n]), p = new THREE.Vector3(); bs[0].getWorldPosition(p); bs[4].scale.setScalar(.01); bs[3].scale.setScalar(.7);   /* the last bone of every arm is shrunk to nothing: the very thin tip of the mesh (which stretched into spikes) folds into the arm, which ends a little shorter and blunt */
+    const rad = new THREE.Vector3(p.x - spin.x, 0, p.z - spin.z).normalize(), a1 = new THREE.Vector3().crossVectors(up, rad).normalize();
+    return { rad, ang: Math.atan2(rad.x, rad.z), ph: i * 1.7, bones: bs.map(bn => { const wq = new THREE.Quaternion(); bn.getWorldQuaternion(wq); const inv = wq.clone().invert(); return { bn, rq: bn.quaternion.clone(), l1: a1.clone().applyQuaternion(inv), l2: up.clone().applyQuaternion(inv), b: 0, s: 0 }; }) }; });
+  const ax = new THREE.Vector3(1, 0, 0), az = new THREE.Vector3(0, 0, 1), head = ['Spin', 'Spin1', 'Spin2'].map(n => { const bn = by[n], wq = new THREE.Quaternion(); bn.getWorldQuaternion(wq); const inv = wq.clone().invert(); return { bn, rq: bn.quaternion.clone(), lx: ax.clone().applyQuaternion(inv), lz: az.clone().applyQuaternion(inv), ly: new THREE.Vector3(0, 1, 0).applyQuaternion(inv), p: 0, r: 0, y: 0 }; });
+  const proxy = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); proxy.scale.set(.4, .5, .4); proxy.position.y = .05; proxy.userData.pickOnly = true; body.add(proxy);   /* what a tap hits (skinned meshes are not in the pick buffer) */
+  const lids = [], lidMat = new THREE.MeshPhongMaterial({ color: OCT.skin || 0xd04030, emissive: OCT.skin || 0xd04030, emissiveIntensity: .35, shininess: 40, side: THREE.DoubleSide }), box = new THREE.Box3(), cc = new THREE.Vector3(), sz = new THREE.Vector3();
+  g.updateMatrixWorld(true); const hb = by.Spin, hws = new THREE.Vector3(), hwq = new THREE.Quaternion(); hb.getWorldScale(hws); hb.getWorldQuaternion(hwq); const hinv = hwq.clone().invert();
+  root.traverse(m => {   /* an eyelid per eye, fixed to the head bone (so it follows the head): a skin-coloured cap that comes down over the eye from above */
+    if (!(m.isSkinnedMesh && /^Sphere/.test(m.name))) return; box.setFromObject(m); box.getCenter(cc); box.getSize(sz);
+    const rr = (sz.x + sz.y + sz.z) / 6 * 1.15 / hws.x, fw = new THREE.Vector3(Math.sign(cc.x) * .2, .05, 1).normalize(), zl = fw.clone().applyQuaternion(hinv).normalize(), ul = new THREE.Vector3(0, 1, 0).applyQuaternion(hinv), xl = new THREE.Vector3().crossVectors(ul, zl).normalize(), yl = new THREE.Vector3().crossVectors(zl, xl).normalize();
+    const pv = new THREE.Group(), lid = new THREE.Mesh(new THREE.SphereGeometry(rr, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2).rotateX(Math.PI / 2).translate(0, -rr, 0), lidMat);
+    pv.position.copy(hb.worldToLocal(cc.clone())).addScaledVector(yl, rr); pv.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(xl, yl, zl)); pv.add(lid); pv.scale.y = .001; pv.visible = false; hb.add(pv); lids.push(pv);
+  });
+  const mantle = new THREE.Object3D();
+  return { group: g, kind: 'squid', body, inner, root, arms, head, lids, mantle, fins: [], tents: [], oct: true };
+}
+const _oq1 = new THREE.Quaternion(), _oq2 = new THREE.Quaternion();
+const OCT_CR = [-.5, -.1, .06, .1, .12], OCT_WOFF = .4, OCT_FLY = .12;   /* OCT_CR: how the five bones of an arm bend when it lies flat on the sand or the glass; OCT_WOFF: how far its middle is from the glass; OCT_FLY: its middle above the sand */
+function octoCycle(ph) {   /* one swim stroke, ph in 0..1: the arms FLARE open and curl (wind-up, the body hangs back), then SNAP: they whip together behind it and the body is thrown forward, then it glides while the arms slowly spread again */
+  const bump = (x, a0, a1, k = 2) => { const u = (x - a0) / (a1 - a0); return u <= 0 || u >= 1 ? 0 : Math.sin(Math.PI * u) ** k; };
+  const flare = bump(ph, -.02, .4, 2), thrust = bump(ph, .36, .62, 1.4), glide = bump(ph, .5, 1.05) + bump(ph + 1, .5, 1.05);
+  return { contract: flare * .35, flare, thrust, glide };
+}
+/* every bone follows its target through a low-pass filter, slower towards the tips: that is what makes the arms and the head trail behind the body and swing past (follow-through) instead of moving in lock-step */
+function octoAnim(b, dt, P) {
+  const fl = P.flare || 0, wt = P.wt, v = P.v, ink = P.ink || 0, ct = P.contract || 0, th = P.thrust || 0, gl = P.glide || 0, pk = P.pk || 0, walk = P.walk || 0, land = P.land || 0, gt = P.gait || 0, wind = P.wind || 0;
+  b.arms.forEach((arm, i) => {
+    const rx = arm.rad.x, rz = arm.rad.z;
+    arm.bones.forEach((q, j) => {
+      const k = j / 4, w = [.55, .4, .3, .2, .1][j];
+      let fb = .1 + .045 * j + (ct * (.3 + .45 * k) + th * (.6 + 1.05 * k)) - gl * (.05 + .3 * k) - fl * (.55 + .95 * k) + (.4 + .3 * gl) * Math.sin(wt * 1.5 - j * .95 + arm.ph) * (.4 + .3 * j) - ink * (.55 + .12 * j) - wind * (.25 + .4 * k) - land * (.25 + .1 * j) + (P.kick || 0) * (.35 + .75 * k);   /* in the recoil the arms are pulled tight together and stream out behind it */
+      let fs = (.5 * Math.sin(wt * 1.1 - j * .7 + arm.ph * 1.7) * (.3 + .3 * j)) * (1 + gl * .6 + fl * 1.2) + ink * .35 * Math.sin(wt * 8 + arm.ph + j) * (.3 + .2 * j);
+      if (P.vyaw) fs += P.vyaw * (.12 + .06 * j) * (rz >= 0 ? 1 : -.6);   /* in a turn the arms swing out behind the body */
+      if (v) { fb += (v.z * rz + v.x * rx) * w * .9 + v.y * (.18 + .1 * j) * .6; fs += (v.z * rx * -1 + v.x * rz) * w * .9; }   /* trailing: the arms are dragged back, to the side and down by the way it moves */
+      /* crawling: the arms ripple like waves from the root to the tip (big sideways S-curves, the tips curl), and pull in turn: reaching ahead, then drawing back and carrying the body with them; nothing steps or lifts like a spider's leg */
+      const pull = Math.sin(gt * 6.283 - j * .7 + arm.ph), rip = Math.sin(wt * 1.3 - j * .95 + arm.ph * 1.3);
+      const cb = OCT_CR[j] + (.2 + .03 * j) * pull * walk * (.4 + .6 * Math.abs(rz)) + .1 * rip * (.4 + .08 * j) + land * .1, cs = (.5 * rip + .22 * pull * rx * -1) * (.3 + .12 * j) * (.5 + .5 * walk) + .06 * Math.sin(wt * .5 + arm.ph + j);
+      const tipK = [1, 1, .9, .4, 0][j], cm = [1.8, 1.8, 1.6, 1.2, 1][j], fb2 = fb * cm, fs2 = fs * (1 + (cm - 1) * .6), lim = [.9, .9, .75, .3, 0][j], tb = clamp((fb2 + (cb - fb2) * pk) * tipK, -lim, lim), ts = clamp((fs2 + (cs - fs2) * pk) * tipK, -lim, lim), tau   /* no bone is ever bent past a limit (the thin tips stretch into spikes when they are) */   /* the last bone is never bent (it just follows the bone before it) and the one before only a little: bending the thin tip made the hooks and spikes */ = .06 + .07 * j, f = dt >= 5 ? 1 : 1 - Math.exp(-dt / tau);
+      q.b += (tb - q.b) * f; q.s += (ts - q.s) * f;
+      q.bn.quaternion.copy(q.rq).multiply(_oq1.setFromAxisAngle(q.l1, q.b)).multiply(_oq2.setFromAxisAngle(q.l2, q.s));
+    });
+  });
+  b.head.forEach((h, k) => {   /* the head: three bones (the mantle) that nod and roll a little behind the body */
+    const tp = (P.hp || 0) * [.3, .45, .6][k] + (pk ? Math.sin(wt * 1.5) * .05 * walk : 0), tr = (P.hr || 0) * [.3, .45, .6][k] + (pk ? Math.sin(wt * 1.5 + 1.4) * .07 * walk : 0) + Math.sin(wt * .7 + k) * .03, tau = .07 + .09 * k, f = dt >= 5 ? 1 : 1 - Math.exp(-dt / tau);
+    const ty = (P.hy || 0) * [.3, .5, .7][k]; h.p += (tp - h.p) * f; h.r += (tr - h.r) * f; h.y += (ty - h.y) * f;
+    h.bn.quaternion.copy(h.rq).multiply(_oq1.setFromAxisAngle(h.lx, h.p)).multiply(_oq2.setFromAxisAngle(h.lz, h.r)).multiply(_oq2.setFromAxisAngle(h.ly, h.y));
+  });
+}
+function octoPose(b, wt, jet, pk, walk, ink = 0) { octoAnim(b, 10, { wt, contract: jet, pk, walk, ink }); }   /* a still pose (the picture of it) */
+function octoBlink(b, dt) {
+  const k = b.blk || (b.blk = { t: rand(1, 3), p: -1 }); k.t -= dt; if (k.p < 0 && k.t <= 0) k.p = 0;
+  let v = 0; if (k.p >= 0) { k.p += dt / .24; v = k.p < .32 ? k.p / .32 : k.p < .5 ? 1 : Math.max(0, 1 - (k.p - .5) / .5); if (k.p >= 1) { k.p = -1; k.t = Math.random() < .25 ? .18 : rand(2, 5); v = 0; } }
+  for (const pv of b.lids) { pv.scale.y = Math.max(.001, v); pv.visible = v > .03; }
+}
+function wallNormal(x, z, y, out) {   /* which way the glass faces at (x, z): out of the tank */
+  const e = .05, f = (px, pz, py) => Math.hypot(px, pz) - wallAt(px, pz, py);   /* (the glass of a bowl leans in above and below the middle, so the normal has a vertical part) */
+  out.set(f(x + e, z, y) - f(x - e, z, y), f(x, z, y + e) - f(x, z, y - e), f(x, z + e, y) - f(x, z - e, y)); if (out.lengthSq() < 1e-8) out.set(x, 0, z); return out.normalize();
+}
+function octoWallPos(S, out, k = 1) { const c = Math.cos(S.a), sn = Math.sin(S.a), wl = wallAt(c, sn, S.wy), off = S.woff === undefined ? OCT_WOFF * k + .3 : S.woff; return out.set(c * (wl - off), S.wy, sn * (wl - off)); }   /* S.woff: how far its middle is from the glass: found by measuring, so the tips of its arms really lie ON the glass */   /* (a little extra: its arms lie on a curved glass and would stick out through it) */
+const _ow = new THREE.Vector3(), _on = new THREE.Vector3(), _ox = new THREE.Vector3(), _oy = new THREE.Vector3(), _om = new THREE.Matrix4(), _oQ = new THREE.Quaternion(), _oE = new THREE.Euler(), _ov = new THREE.Vector3(), _oiq = new THREE.Quaternion(), _opv = new THREE.Vector3(), _oz2 = new THREE.Vector3();
+function squidUpdate(o, dt, t, age) {   /* the octopus: it swims in pushes (squeeze, thrust, glide), sprays ink (wind-up, burst), crawls on the sand and climbs the glass */
+  const b = o.parts, S = o.oc || (o.oc = { mode: 'swim', t: 0, next: rand(6, 10), wt: rand(0, 6), ph: rand(0, 1), fk: 0, wk: 0, a: 0, wy: 2, wa: 0, wyT: 2, pk: 0, walk: 0, gait: 0, land: 0, wind: 0, ink: 0, lean: 0, fwp: new THREE.Vector3(), mv: new THREE.Vector3(0, 1, 0), v: new THREE.Vector3(), pp: o.pos.clone(), vyaw: 0, yawP: 0 });
+  S.t += dt; o.dash = Math.max(0, (o.dash || 0) - dt);
+  const fy = FLOOR_Y + (OCT_FLY + .3) * o.sz, wasFk = S.fk, wasWk = S.wk;
+  if (S.mode !== 'swim' && S.t > S.next && S.wind <= 0) {   /* it has had enough of the sand / the glass: it pushes off and swims on */
+    const was = S.mode; S.mode = 'swim'; S.t = 0; S.next = 0; S.cool = rand(14, 26); S.ph = 0; o.wp = new THREE.Vector3(o.pos.x * (was === 'wall' ? .45 : 1), clamp(o.pos.y + 1.6, FLOOR_Y + 1.6, WATER_Y - 1), o.pos.z * (was === 'wall' ? .45 : 1)); o.wpT = 8; o.dir.set(-o.pos.x * (was === 'wall' ? .5 : 0), .5, -o.pos.z * (was === 'wall' ? .5 : 0)).normalize();
+  } else if (S.mode === 'swim') {   /* only when it happens to swim close to the sand or the glass, and only now and then, it settles there; otherwise it just swims */
+    S.cool = Math.max(0, (S.cool === undefined ? rand(5, 10) : S.cool) - dt);
+    if (S.cool <= 0 && S.wind <= 0 && age > 3) {
+      const nearFloor = o.pos.y - FLOOR_Y < (OCT_FLY + .3) * o.sz + .7, nearWall = wallAt(o.pos.x, o.pos.z, o.pos.y) - Math.hypot(o.pos.x, o.pos.z) < OCT_WOFF * o.sz + .7;
+      if (nearFloor && Math.random() < dt * .3) {   /* (climbing the glass was taken out: it only settles on the sand) */
+        if (false) { S.mode = 'wall'; S.t = 0; S.next = rand(16, 24); S.a = Math.atan2(o.pos.z, o.pos.x); S.wy = clamp(o.pos.y, FLOOR_Y + 1, WATER_Y - 1.3); S.wa = S.a; S.wyT = S.wy; }
+        else { S.mode = 'floor'; S.t = 0; S.next = rand(14, 22); S.fwp.copy(randomPoint(o)); S.fwp.y = fy; }
+      }
+    }
   }
-  const tents = [], tm = new THREE.MeshPhongMaterial({ color: 0xff8fb0, emissive: 0x802a50, shininess: 60 });
-  for (let i = 0; i < 8; i++) {
-    const a = i / 8 * Math.PI * 2, len = i % 4 === 0 ? .62 : .42, geo = new THREE.CylinderGeometry(.026, .01, len, 6); geo.translate(0, -len / 2, 0);
-    const t = new THREE.Mesh(geo, tm); t.position.set(Math.cos(a) * .1, -.1, Math.sin(a) * .1); g.add(t); tents.push(t);
+  let cyc = { contract: 0, thrust: 0, glide: 0 };   /* the swim: one push every ~1.5 s */
+  if (S.mode === 'swim') { S.ph = (S.ph + dt / (2.1 - Math.min(.7, o.dash * .8))) % 1; cyc = octoCycle(S.ph); }
+  if (S.wind > 0) { S.wind -= dt; cyc.contract = Math.max(cyc.contract, smooth01(1 - S.wind / .4)); cyc.thrust = 0; if (S.wind <= 0) { S.ink = 1; { o.group.updateMatrixWorld(true); const mouth = o.group.localToWorld(new THREE.Vector3(0, -.28, 0)); if (S.wk > .5) mouth.lerp(new THREE.Vector3(0, mouth.y, 0), .18);
+          const jd = o.group.localToWorld(new THREE.Vector3(0, -1, 0)).sub(o.group.position).normalize().multiplyScalar(.6).addScaledVector(o.dir, -.8); if (S.wk > .5) { wallNormal(o.pos.x, o.pos.z, o.pos.y, _on); jd.copy(_on).multiplyScalar(.9).add(new THREE.Vector3(0, -.4, 0)); } else if (S.fk > .85) jd.set(-o.dir.x * .5, -.9, -o.dir.z * .5); jd.normalize();
+          S.kick = (S.kick || new THREE.Vector3()).copy(jd).multiplyScalar(-(S.mode === 'swim' ? 4.2 : 2.6)); S.kickT = 0; sprayInk({ pos: mouth }, jd); if (S.mode === 'wall') { S.mode = 'swim'; S.cool = rand(14, 26); S.ph = .2; o.dir.copy(S.kick).normalize(); } }   /* it jets the ink out of its funnel one way and is thrown the other: a hard kick that fades away (recoil) */   /* the ink leaves from underneath it, where the arms start (its funnel), not from the middle of the body */ o.inkT = rand(13, 19); if (S.mode === 'swim') { o.dash = .9; S.ph = .2; o.wp = randomPoint(o); o.wp.y = clamp(o.wp.y, FLOOR_Y + 1.2, WATER_Y - .8); o.wpT = rand(6, 10); o.dir.lerp(dTmp.subVectors(o.wp, o.pos).normalize(), .8).normalize(); } } }
+  let moving = 0;
+  if (S.mode === 'swim') {
+    if (o.pos.distanceTo(o.wp) < .4 || o.wpT <= 0) { o.wp = randomPoint(o); o.wp.y = clamp(o.wp.y, FLOOR_Y + 1.2, WATER_Y - .8); o.wpT = rand(6, 12); } o.wpT -= dt;
+    dTmp.subVectors(o.wp, o.pos).normalize(); o.dir.lerp(dTmp, 1 - Math.exp(-dt * (.5 + .9 * cyc.thrust))).normalize(); separate(o, dt);
+    S.sp = (S.sp || 0) + (o.speed * 1.9 * (.08 + 3.4 * cyc.thrust + .5 * cyc.glide + o.dash * 2) - (S.sp || 0)) * (1 - Math.exp(-dt * (cyc.thrust > .05 ? 9 : 2.2))); o.pos.addScaledVector(o.dir, S.sp * dt); moving = 1;   /* it speeds up and slows down smoothly with each push */
+    { const rr = Math.hypot(o.pos.x, o.pos.z), lim = (RF - .1) * shK(o.pos.x, o.pos.z, o.pos.y); if (rr > lim) { o.pos.x *= lim / rr; o.pos.z *= lim / rr; o.dir.x -= o.pos.x / lim * .5; o.dir.z -= o.pos.z / lim * .5; o.dir.normalize(); } o.pos.y = clamp(o.pos.y, FLOOR_Y + .6, WATER_Y - .7); }
+    S.fk = Math.max(0, S.fk - dt * 1.5); S.wk = Math.max(0, S.wk - dt * 1.5);
+  } else if (S.mode === 'floor') {
+    if (Math.hypot(S.fwp.x - o.pos.x, S.fwp.z - o.pos.z) < .35) { S.fwp.copy(randomPoint(o)); S.fwp.y = fy; }
+    dTmp.set(S.fwp.x - o.pos.x, 0, S.fwp.z - o.pos.z).normalize(); S.fk = 1 - clamp((o.pos.y - fy) / 1.4, 0, 1);
+    if (S.fk > .85) { o.dir.lerp(dTmp, 1 - Math.exp(-dt * 2.2)); o.dir.y = 0; } else { dTmp.y = -.55; o.dir.lerp(dTmp, 1 - Math.exp(-dt * 2)); S.ph = (S.ph + dt / 1.5) % 1; cyc = octoCycle(S.ph); }
+    o.dir.normalize(); const sp = S.fk > .85 ? .42 * (.55 + .45 * Math.sin(S.gait * 6.283 * 2 + 1)) : .32 * (.2 + 3 * cyc.thrust); o.pos.x += o.dir.x * sp * dt; o.pos.z += o.dir.z * sp * dt; o.pos.y += (fy - o.pos.y) * (1 - Math.exp(-dt * 1.4)); moving = S.fk > .85 ? 1 : .3;   /* on the sand it advances with each step */
+    { const rr = Math.hypot(o.pos.x, o.pos.z), lim = (RF - .1) * shK(o.pos.x, o.pos.z, o.pos.y); if (rr > lim) { o.pos.x *= lim / rr; o.pos.z *= lim / rr; } }
+    S.wk = Math.max(0, S.wk - dt * 1.5);
+  } else {   /* the glass */
+    octoWallPos(S, _ow, o.sz); const dist = o.pos.distanceTo(_ow);
+    if (S.wk < .98) { S.ph = (S.ph + dt / 1.7) % 1; cyc = octoCycle(S.ph); dTmp.subVectors(_ow, o.pos).normalize(); o.dir.lerp(dTmp, 1 - Math.exp(-dt * 2)).normalize(); S.sp = (S.sp || 0) + (Math.min(dist * 1.4, .28 + 1.4 * cyc.thrust) - (S.sp || 0)) * (1 - Math.exp(-dt * 3)); o.pos.addScaledVector(o.dir, Math.min(S.sp * dt, dist)); S.wk = Math.max(S.wk, 1 - clamp((dist - .12) / 1.0, 0, 1)); if (dist < .1) S.wk = 1; moving = .4; }   /* it swims over to the glass with its own pushes, then settles on it */
+    else {
+      S.wk = 1; const rr = Math.hypot(o.pos.x, o.pos.z) || 1, da = Math.atan2(Math.sin(S.wa - S.a), Math.cos(S.wa - S.a)), dy = S.wyT - S.wy;
+      if (Math.abs(da) * rr < .35 && Math.abs(dy) < .3) { S.wa = S.a + rand(-1.8, 1.8); S.wyT = rand(FLOOR_Y + 1, WATER_Y - 1.3); }   /* it keeps going: a new place is chosen before it gets to the last one */
+      const v = .34 * (.55 + .45 * Math.sin(S.gait * 6.283 * 2 + 1)), sa = clamp(da * rr, -1, 1), sy = clamp(dy, -1, 1); S.a += sa * v * dt / rr; S.wy += sy * v * dt; octoWallPos(S, _ow, o.sz); _ov.subVectors(_ow, o.pos); o.pos.copy(_ow);
+      if (_ov.lengthSq() > 1e-8) S.mv.lerp(_ov.normalize(), 1 - Math.exp(-dt * 3)).normalize(); moving = 1;
+    }
+    S.fk = Math.max(0, S.fk - dt * 1.5);
   }
-  return { group: g, kind: 'squid', mantle, fins: mantle.userData.fins, tents };
+  if ((wasFk <= .85 && S.fk > .85) || (wasWk < .98 && S.wk >= .98)) S.land = 1;   /* touch down: a little squash and the arms splay */
+  if (S.kick && S.kick.lengthSq() > .01) {   /* the recoil: thrown away from the jet, then it drifts to a stop; it also swings the body round (the funnel end goes the other way) */
+    S.kickT += dt; o.pos.addScaledVector(S.kick, dt); S.kick.multiplyScalar(Math.exp(-dt * 2.4));
+    if (S.mode === 'swim') { o.dir.lerp(_ov.copy(S.kick).normalize(), 1 - Math.exp(-dt * 6)).normalize(); o.pos.y = clamp(o.pos.y, FLOOR_Y + .6, WATER_Y - .7); { const rr = Math.hypot(o.pos.x, o.pos.z), lim = (RF - .1) * shK(o.pos.x, o.pos.z, o.pos.y); if (rr > lim) { o.pos.x *= lim / rr; o.pos.z *= lim / rr; } } }
+    else if (S.mode === 'floor') o.pos.y = Math.max(o.pos.y, fy - .05);
+    cyc.thrust = Math.max(cyc.thrust, Math.min(1, S.kick.length() / 3.2));
+  }
+  S.land = Math.max(0, S.land - dt / .6);
+  S.walk += ((moving > .5 && (S.fk > .85 || S.wk > .95) ? 1 : 0) - S.walk) * (1 - Math.exp(-dt * 3)); S.pk += (Math.max(S.fk > .6 ? 1 : 0, S.wk > .5 ? 1 : 0) - S.pk) * (1 - Math.exp(-dt * 2.5));
+  S.wt += dt * 2.2; S.gait = (S.gait + dt * .6 * S.walk) % 1; S.ink = Math.max(0, S.ink - dt / 1.3); const inkK = S.ink * S.ink * (3 - 2 * S.ink);
+  _ov.subVectors(o.pos, S.pp).divideScalar(Math.max(dt, 1e-3)); S.pp.copy(o.pos); S.v.lerp(_ov, 1 - Math.exp(-dt * 8)); _oiq.copy(o.group.quaternion).invert(); _opv.copy(S.v).applyQuaternion(_oiq).multiplyScalar(.9);   /* how fast it really moves, seen from its own side: the arms are dragged by it and the head swings behind it */
+  const want = Math.atan2(o.dir.x, o.dir.z), turn = Math.atan2(Math.sin(want - S.yawP), Math.cos(want - S.yawP)), step = turn * (1 - Math.exp(-dt * (1.6 + 1.6 * cyc.thrust + .8 * S.walk))); S.yawP += step; const yawNow = S.yawP; S.vyaw += (clamp(step / Math.max(dt, 1e-3), -3, 3) - S.vyaw) * (1 - Math.exp(-dt * 6));   /* the body turns more slowly than the direction it wants: the head looks ahead, the arms swing out, it banks into the turn */
+  const km = S.kick ? Math.min(1, S.kick.length() / 3.6) : 0;   /* how hard it is still being thrown by the last jet */
+  octoAnim(b, dt, { wt: S.wt, flare: cyc.flare, contract: cyc.contract, thrust: cyc.thrust, glide: cyc.glide, pk: S.pk, walk: S.walk, gait: S.gait, ink: inkK * (km > .05 ? smooth01((S.kickT - .3) / .35) : 1), kick: km, wind: S.wind > 0 ? smooth01(1 - S.wind / .4) : 0, land: S.land, v: _opv, vyaw: S.vyaw, hy: clamp(turn * .9, -.9, .9), hp: -.25 * cyc.flare + .3 * cyc.thrust - _opv.z * .4 + .55 * km - (S.wind > 0 ? .35 : 0), hr: -S.vyaw * .12 + Math.sin(S.wt * .8 + o.phase) * .04 });
+  octoBlink(b, dt);
+  S.lean += ((S.mode === 'swim' ? .12 + .3 * cyc.thrust - .08 * cyc.contract + .75 * km : 0) - S.lean) * (1 - Math.exp(-dt * (3.5 + 4 * km)));   /* it points its head along the way it is thrown, arms trailing */   /* its attitude: floating = facing where it goes, leaning into each push; on the sand = low, facing where it walks; on the glass = flat on it, face out, head up */
+  let tq = _oQ.setFromEuler(_oE.set(S.lean - o.dir.y * .5, yawNow, -S.vyaw * .1, 'YXZ')).clone();
+  if (S.wk > .5) { wallNormal(o.pos.x, o.pos.z, o.pos.y, _on); _oy.copy(_on).negate(); _ox.copy(S.mv).addScaledVector(_on, -S.mv.dot(_on)); if (_ox.lengthSq() < 1e-4) _ox.set(0, 1, 0); _ox.normalize(); _oz2.crossVectors(_oy, _ox).normalize(); _om.makeBasis(_oz2, _oy, _ox); tq = new THREE.Quaternion().setFromRotationMatrix(_om); }   /* on the glass: the arms are the part that touches it, spread flat, and the head sticks out into the tank; it goes the way its front points */
+  o.group.quaternion.slerp(tq, 1 - Math.exp(-dt * 4));
+  if (S.wk > .9 && S.mode === 'wall') {   /* touch the glass: measure how far the nearest arm tip is from it and move the body until that is just a skin's thickness */
+    let gap = 9; for (const arm of b.arms) { arm.bones[4].bn.getWorldPosition(_ow); gap = Math.min(gap, wallAt(_ow.x, _ow.z, _ow.y) - Math.hypot(_ow.x, _ow.z)); }
+    S.woff = clamp((S.woff === undefined ? OCT_WOFF * o.sz + .3 : S.woff) - (gap - .02) * Math.min(1, dt * 3), .05, 1.6);
+  } else if (S.mode !== 'wall') S.woff = undefined;
+  b.body.position.y += (-.08 * S.fk - b.body.position.y) * (1 - Math.exp(-dt * 4));
+  const sqz = cyc.thrust * .1 + cyc.contract * .04 + inkK * .05 + S.land * .1 + (S.wind > 0 ? .05 : 0);   /* the body squeezes on each push and bounces back */
+  b.inner.scale.set(1 - sqz * .8, 1 + cyc.thrust * .14 + cyc.contract * .05 + inkK * .07 - S.land * .12, 1 - sqz * .8);
+  b.inner.rotation.z = Math.sin(t * 1.1 + o.phase) * .06 * (1 - S.pk); b.inner.rotation.x = Math.sin(t * .8 + o.phase * 2) * .05 * (1 - S.pk);
+  if (o.inkT === undefined) o.inkT = rand(5, 9); o.inkT -= dt;
+  if (o.inkT <= 0 && age > 1 && S.wind <= 0) S.wind = .4;   /* wind up first: it draws in, then it bursts */
 }
 let _lock = null; function lockTex() {
   if (_lock) return _lock; const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d');
@@ -776,7 +963,7 @@ let _lock = null; function lockTex() {
   _lock = new THREE.CanvasTexture(c); _lock.colorSpace = THREE.SRGBColorSpace; return _lock;
 }
 const heldTex = {};
-function buildClam() {
+function buildClamOld() {   /* the first, hand-made clam (kept as the fallback if the model does not load) */
   const g = new THREE.Group();
   const sc = document.createElement('canvas'); sc.width = 256; sc.height = 64; { const x = sc.getContext('2d'); const N = 10; for (let i = 0; i < N; i++) { const g = x.createLinearGradient(i * 256 / N, 0, (i + 1) * 256 / N, 0); g.addColorStop(0, '#ff7fbd'); g.addColorStop(.45, '#ffc3de'); g.addColorStop(.62, '#ffd9ea'); g.addColorStop(1, '#ff6aae'); x.fillStyle = g; x.fillRect(i * 256 / N, 0, 256 / N + 1, 64); } }
   const shellTex = new THREE.CanvasTexture(sc); shellTex.colorSpace = THREE.SRGBColorSpace; shellTex.wrapS = THREE.RepeatWrapping;
@@ -796,6 +983,37 @@ function buildClam() {
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffe27a, transparent: true, depthWrite: false, fog: false, ...ADD, opacity: .4 })); glow.scale.set(1.3, 1.3, 1); glow.position.y = .15; g.add(glow);
   return { group: g, kind: 'clam', lid: pivot, pearl, lock, held, pips, pipsCanvas: pc, pipsTex, glow, open: .5 };
 }
+/* ============================== the clam: the artist's model (two shell halves and a pearl, no bones). The top half hangs on a pivot at the hinge and the game turns it; the old code only needed .lid, .pearl and the little sprites, so those are kept ============================== */
+const CLAM = { p: null, tpl: null, tex: null, ready: false, failed: false }, CLAM_S = .0058;   /* bigger than a fish: it has to be able to swallow one */
+function smoothNormals(geo, cos = .55) {   /* the model's faces were each lit flat (that is the rough, faceted look): the normal of every corner becomes the average of the normals of the corners that share its place and lean about the same way (creases that are really sharp stay) */
+  if (geo._smooth) return; geo._smooth = true; if (!geo.attributes.normal) geo.computeVertexNormals(); const P = geo.attributes.position, N = geo.attributes.normal, n = P.count, key = new Map(), q = 1e3;
+  for (let i = 0; i < n; i++) { const k = Math.round(P.getX(i) * q) + ',' + Math.round(P.getY(i) * q) + ',' + Math.round(P.getZ(i) * q); let a = key.get(k); if (!a) key.set(k, a = []); a.push(i); }
+  const out = new Float32Array(n * 3);
+  for (const a of key.values()) for (const i of a) { let x = 0, y = 0, z = 0; const nx = N.getX(i), ny = N.getY(i), nz = N.getZ(i); for (const j of a) { const jx = N.getX(j), jy = N.getY(j), jz = N.getZ(j); if (jx * nx + jy * ny + jz * nz > cos) { x += jx; y += jy; z += jz; } } const l = Math.hypot(x, y, z) || 1; out[i * 3] = x / l; out[i * 3 + 1] = y / l; out[i * 3 + 2] = z / l; }
+  geo.setAttribute('normal', new THREE.BufferAttribute(out, 3));
+}
+function loadClam() {
+  if (CLAM.p) return CLAM.p;
+  CLAM.p = (async () => {
+    const base = document.baseURI, [obj, tex] = await Promise.all([new FBXLoader().loadAsync(new URL('models/clam/model.fbx', base).href), new THREE.TextureLoader().loadAsync(new URL('models/clam/tex.png', base).href)]);
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4; obj.traverse(m => { if (m.isMesh) smoothNormals(m.geometry); }); CLAM.tpl = obj; CLAM.tex = tex; CLAM.ready = true; if (THUMBS_MADE) makeThumbs();
+  })().catch(e => { console.warn('clam not loaded', e); CLAM.p = null; CLAM.failed = true; });
+  return CLAM.p;
+}
+function buildClam() {
+  const b = buildClamOld(); if (!CLAM.ready) return b;
+  for (const ch of b.group.children.slice()) if (!ch.isSprite) b.group.remove(ch);   /* out with the hand-made shell: only the sprites (lock, held fish, pips, glow) stay */
+  const mat = new THREE.MeshPhongMaterial({ map: CLAM.tex, emissiveMap: CLAM.tex, emissive: 0xffffff, emissiveIntensity: .32, shininess: 70, specular: 0x886688, side: THREE.DoubleSide });   /* its own material: they are faded one by one */
+  const M = new THREE.Group(), root = CLAM.tpl.clone(true); root.updateMatrixWorld(true); M.add(root);
+  M.scale.setScalar(CLAM_S); M.position.set(0, 35 * CLAM_S, 252.5 * CLAM_S);   /* the seam of the shell is at the origin */
+  let top = null, bottom = null, pearl = null; root.traverse(m => { if (!m.isMesh) return; m.material = mat; m.frustumCulled = false; if (m.name === 'Cube_Remeshed') top = m; else if (m.name === 'Cube_Remeshed001') bottom = m; else pearl = m; });
+  const pivot = new THREE.Group(); pivot.position.set(0, -35, -347); root.add(pivot); root.updateMatrixWorld(true); if (top) pivot.attach(top);   /* the hinge: the back edge on the seam */
+  if (pearl) {   /* the pearl is small compared with the shell: shrunk about ITS OWN centre (the mesh's vertices sit in shell space, so scaling the mesh itself pulled the pearl into the shell and it vanished) */
+    pearl.geometry = pearl.geometry.clone(); pearl.geometry.computeBoundingBox(); const pc = pearl.geometry.boundingBox.getCenter(new THREE.Vector3()); pearl.geometry.translate(-pc.x, -pc.y, -pc.z);
+    pearl.position.add(pc.clone().multiply(pearl.scale).applyQuaternion(pearl.quaternion)); pearl.scale.multiplyScalar(.5); }
+  b.group.add(M); b.lid = pivot; b.pearl = pearl || new THREE.Object3D(); b.open = .5; b.model = true;
+  return b;
+}
 function drawPips(p, n, total) {
   const c = p.pipsCanvas, g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height);
   for (let i = 0; i < total; i++) { const x = c.width / 2 + (i - (total - 1) / 2) * 34; g.beginPath(); g.arc(x, 20, 12, 0, 6.283); g.fillStyle = i < n ? '#ffd23a' : 'rgba(255,255,255,.25)'; g.fill(); g.lineWidth = 4; g.strokeStyle = '#7a3a00'; g.stroke(); }
@@ -814,7 +1032,7 @@ function makeThumbs() {
   const hand = buildHand(); hand.rotation.set(0, 0, 0); hand.userData.body.rotation.z = .75;
   { const pm = new THREE.MeshPhongMaterial({ color: 0xffb347, emissive: 0x803000 }); for (let i = 0; i < 9; i++) { const p = new THREE.Mesh(new THREE.SphereGeometry(.05, 10, 8), pm); p.position.set(-.55 - (i % 3) * .1, -.1 - (i % 4) * .12, rand(-.08, .08)); hand.add(p); } }
   const clam = buildClam().group; clam.children.filter(c => c.isSprite).forEach(c => clam.remove(c)); clam.children.find(c => c.isGroup).rotation.x = -.65;
-  const items = [{ id: 'urchin', obj: buildUrchin().group, rot: [.3, .5] }, { id: 'jelly', obj: buildJelly().group, rot: [.1, .4] }, { id: 'squid', obj: buildSquid().group, rot: [.1, .3] }, { id: 'clam', obj: clam, rot: [.9, .5] }, { id: 'hand', obj: hand, rot: [0, .35] }];
+  const items = [{ id: 'urchin', obj: buildUrchin().group, rot: [.3, .5] }, ...(JEL.ready ? [{ id: 'jelly', obj: buildJelly().group, rot: [.1, .4] }] : []), ...(OCT.ready ? [(() => { const sq = buildSquid(); octoPose(sq, 1, 0, 0, 0); return { id: 'squid', obj: sq.group, rot: [.1, .3] }; })()] : []), { id: 'clam', obj: clam, rot: [.9, .5] }, { id: 'hand', obj: hand, rot: [0, .35] }];
   for (const it of items) {
     it.obj.rotation.set(it.rot[0] * .5, it.rot[1], it.rot[0] * .3, 'YXZ');  // fish: flat side view
     sc.add(it.obj);
@@ -822,12 +1040,22 @@ function makeThumbs() {
     it.obj.position.sub(ctr);
     const need = Math.max(size.x / (200 / 160), size.y) * 1.25;
     cam.position.set(0, 0, need / (2 * Math.tan(THREE.MathUtils.degToRad(14))) + size.z * .5); cam.lookAt(0, 0, 0);
-    r.render(sc, cam); THUMB[it.id] = r.domElement.toDataURL('image/png');
-    r.setSize(640, 512, false); r.render(sc, cam); THUMB[it.id + '_big'] = r.domElement.toDataURL('image/png'); r.setSize(200, 160, false);   // a large copy for the first-time pop-ups
+    const fitCrop = (W, H) => { const src = document.createElement('canvas'); src.width = W; src.height = H; const q = src.getContext('2d'); q.drawImage(r.domElement, 0, 0, W, H); const d = q.getImageData(0, 0, W, H).data; let x0 = W, x1 = -1, y0 = H, y1 = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } if (x1 <= x0) return r.domElement.toDataURL('image/png'); const w = x1 - x0 + 1, h = y1 - y0 + 1, k = Math.min(W * .94 / w, H * .94 / h), out = document.createElement('canvas'); out.width = W; out.height = H; out.getContext('2d').drawImage(src, x0, y0, w, h, (W - w * k) / 2, (H - h * k) / 2, w * k, h * k); return out.toDataURL('image/png'); };   /* the jellyfish picture is cropped to the jellyfish: it sat small in a big empty frame */
+    r.render(sc, cam); THUMB[it.id] = it.id === 'jelly' ? fitCrop(200, 160) : r.domElement.toDataURL('image/png');
+    r.setSize(640, 512, false); r.render(sc, cam); THUMB[it.id + '_big'] = it.id === 'jelly' ? fitCrop(640, 512) : r.domElement.toDataURL('image/png'); r.setSize(200, 160, false);   // a large copy for the first-time pop-ups
     sc.remove(it.obj);
   }
-  r.dispose(); r.forceContextLoss();
+  if (OCT.ready) {   /* a wide picture of the octopus spread out, for the three Backup cells it takes (the Out of space pop-up) */
+    const sq = buildSquid(); octoAnim(sq, 10, { wt: 1, contract: .2, glide: .3 }); sq.group.scale.set(1, OCT_LEN, 1); sq.group.rotation.set(0, 0, Math.PI / 2); sc.add(sq.group); sq.group.updateMatrixWorld(true); r.setSize(600, 360, false);
+    const bb = new THREE.Box3().setFromObject(sq.group), sz2 = bb.getSize(new THREE.Vector3()), ct = bb.getCenter(new THREE.Vector3()), asp = 600 / 360; cam.aspect = asp; cam.updateProjectionMatrix();
+    const fv = THREE.MathUtils.degToRad(cam.fov), dist = Math.max(sz2.x / (2 * Math.tan(fv / 2) * asp), sz2.y / (2 * Math.tan(fv / 2))) * 1.04 + sz2.z / 2;   /* it fills the picture: the popup draws it at the width of its two cells */
+    sq.group.position.sub(ct); cam.position.set(0, 0, dist); cam.lookAt(0, 0, 0); r.render(sc, cam); { const src = document.createElement('canvas'); src.width = 600; src.height = 360; const g2 = src.getContext('2d'); g2.drawImage(r.domElement, 0, 0, 600, 360); const d = g2.getImageData(0, 0, 600, 360).data; let x0 = 600, x1 = -1, y0 = 360, y1 = -1; for (let y = 0; y < 360; y++) for (let x = 0; x < 600; x++) if (d[(y * 600 + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 > x0 && y1 > y0) { const w = x1 - x0 + 1, h = y1 - y0 + 1, out = document.createElement('canvas'); out.width = w; out.height = h; out.getContext('2d').drawImage(src, x0, y0, w, h, 0, 0, w, h); THUMB.squid_wide = out.toDataURL('image/png'); THUMB.squid_wide_ar = String(w / h); } else THUMB.squid_wide = r.domElement.toDataURL('image/png'); }   /* cropped to the octopus itself, so it can be drawn as wide as its two cells */
+    sc.remove(sq.group);
+  }
+  r.dispose(); r.forceContextLoss(); THUMBS_MADE = true;
 }
+let THUMBS_MADE = false;
 
 /* ============================== three scene ============================== */
 const canvas = $('c');
@@ -1028,20 +1256,28 @@ const surfU = { uTime: U.uTime, uWater: U.uWater, uRip: { value: ripples }, uSlo
       void main(){
         float wr = uMode>1.5 ? wallRad(vL) : (uMode>.5 ? uSurfR : ${R.toFixed(3)});
         if(length(vL)>wr-.02) discard;
-        vec2 w=vL; float t=uTime; vec2 g=vec2(0.);
-        g+=vec2(.8,.6)*.30*cos(7.*dot(vec2(.8,.6),w)+t*1.5);
-        g+=vec2(-.5,.87)*.26*cos(9.*dot(vec2(-.5,.87),w)-t*1.9);
-        g+=vec2(.95,-.3)*.22*cos(13.*dot(vec2(.95,-.3),w)+t*2.3);
-        g+=vec2(-.2,-.98)*.18*cos(17.*dot(vec2(-.2,-.98),w)-t*2.9);
-        vec3 N=normalize(vNm+vec3(g.x,0.,g.y)); vec3 V=normalize(cameraPosition-vW); if(dot(N,V)<0.) N=-N;
-        float nv=max(dot(N,V),0.); float f=pow(1.-nv,2.2);
-        vec3 L=normalize(vec3(.4,.8,.5)); vec3 Rf=reflect(-V,N);
-        float sp=min(pow(max(dot(reflect(-L,N),V),0.),26.)*1.4+.7*pow(max(dot(reflect(-normalize(vec3(-.6,.7,-.3)),N),V),0.),60.),.8);   // (capped: seen from high up, as the camera swings round at the start of a level, the glint must not blow out to white)
-        vec3 sky=mix(vec3(.55,.8,1.),vec3(1.,1.,1.),smoothstep(.2,1.,Rf.y))*(.55+.45*smoothstep(-.1,.7,Rf.y));
-        float tw=pow(max(0.,sin(vL.x*14.+uTime*3.)*sin(vL.y*13.-uTime*2.4)),10.);
-        vec3 col=mix(uWater+vec3(.02,.05,.02),sky,clamp(f*1.4+.18+sp*.6,0.,.92))+sp*1.1+tw*.35;
-        float edge=smoothstep(wr-.02,wr-.25,length(vL));
-        gl_FragColor=vec4(col,clamp(.28+f*.6+sp*1.2+tw*.2,0.,.95)*(.5+.5*edge)); }`
+        /* CARTOON WATER: a flat turquoise with a web of white caustic lines, a toon glint and a foam ring at the glass. The ripples, slosh and whirl still show: they bend the web and the light. */
+        float t=uTime*.32; vec2 uv=vL*1.25+vNm.xz*1.6;
+        float d1=9., d2=9.; vec2 rn=vec2(0.); float hn=0.;
+        vec2 ip=floor(uv), fp=fract(uv);
+        for(int j=-1;j<=1;j++) for(int i=-1;i<=1;i++){ vec2 g=vec2(float(i),float(j)); vec2 id=ip+g;
+          vec2 o=fract(sin(vec2(dot(id,vec2(127.1,311.7)),dot(id,vec2(269.5,183.3))))*43758.5453); o=.5+.42*sin(t*2.+6.2831*o);
+          vec2 r=g+o-fp; float d=dot(r,r); if(d<d1){ d2=d1; d1=d; rn=r; hn=fract(sin(dot(id,vec2(41.3,289.1)))*917.7); } else if(d<d2) d2=d; }
+        float web=1.-smoothstep(.02,.2,sqrt(d2)-sqrt(d1)); float web2=1.-smoothstep(.0,.07,sqrt(d2)-sqrt(d1));   /* (a soft wide line and a crisp thin one on top of it) */
+        vec3 V=normalize(cameraPosition-vW); vec3 N=normalize(vNm); if(dot(N,V)<0.) N=-N;
+        float nv=max(dot(N,V),0.); float fr=smoothstep(.46,.56,pow(1.-nv,1.6));
+        vec3 L=normalize(vec3(.4,.8,.5)); float lit=dot(N,L);
+        float glint=smoothstep(.93,.95,pow(max(dot(reflect(-L,N),V),0.),12.));
+        vec3 deep=uWater*1.15+vec3(.04,.14,.16), shallow=vec3(.5,.93,1.);
+        vec3 col=mix(deep,shallow,.6+.2*step(.8,lit)+.15*fr); col=mix(col,vec3(.62,.98,1.),.35*smoothstep(.2,.9,.5+.5*sin(vL.x*2.2+vL.y*1.6+uTime*.6)));   /* a bright turquoise with a flat lighter band moving through it */
+        col=mix(col,vec3(1.),web*.4+web2*.4);
+        col+=glint*.55;
+        float bl=smoothstep(.9,1.,sin(uTime*1.5+hn*6.2831)); float star=exp(-abs(rn.x)*38.)*exp(-abs(rn.y)*7.)+exp(-abs(rn.y)*38.)*exp(-abs(rn.x)*7.); col+=vec3(1.)*star*bl*.95;   /* little four-point sparkles that wink on and off */
+        col+=vec3(.12,.2,.16)*smoothstep(.0,1.,.5+.5*sin(vL.x*1.7-vL.y*1.1+uTime*.5));   /* a slow wide band of light drifting over the surface */
+        float rr=length(vL); float foam=smoothstep(wr-.2,wr-.07,rr)*(.65+.35*sin(atan(vL.y,vL.x)*9.+uTime*1.4));
+        col=mix(col,vec3(1.),foam*.85);
+        float edge=smoothstep(wr-.02,wr-.25,rr);
+        gl_FragColor=vec4(col,clamp(.68+web*.12+fr*.1+glint*.3+foam*.2,0.,.95)*(.6+.4*edge)); }`
   });
   const surf = new THREE.Mesh(new THREE.PlaneGeometry(R * 2, R * 2, 60, 60).rotateX(-Math.PI / 2), surfMat);
   surf.position.y = WATER_Y; surf.renderOrder = 11; tank.add(surf);
@@ -1380,8 +1616,8 @@ function pickAtId(cx, cy) {
   const r = canvas.getBoundingClientRect(), sx = PICK.w / r.width, sy = PICK.h / r.height, px = Math.round((cx - r.left) * sx), py = PICK.h - 1 - Math.round((cy - r.top) * sy);
   const idAt = (x, y) => { if (x < 0 || y < 0 || x >= PICK.w || y >= PICK.h) return 0; const i = (y * PICK.w + x) * 4; return PICK.buf[i] + PICK.buf[i + 1] * 256; };
   const direct = PICK.map.get(idAt(px, py)); if (pickValid(direct)) return direct;
-  const rad = Math.ceil(16 * sx), sc = new Map();   // tolerance: nothing under the finger -> the closest / biggest silhouette within ~16px
-  for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { const d2 = dx * dx + dy * dy; if (d2 > rad * rad) continue; const t = PICK.map.get(idAt(px + dx, py + dy)); if (!pickValid(t)) continue; sc.set(t, (sc.get(t) || 0) + 1 / (1 + d2)); }
+  const rad = Math.ceil(24 * sx), sc = new Map();   // tolerance: nothing under the finger -> the closest / biggest silhouette within ~16px
+  for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { const d2 = dx * dx + dy * dy; const t = PICK.map.get(idAt(px + dx, py + dy)); if (!pickValid(t)) continue; const lim = (t.fastB ? 24 : t.sz === .5 ? 20 : 16) * sx; if (d2 > lim * lim) continue; sc.set(t, (sc.get(t) || 0) + 1 / (1 + d2)); }
   let best = null, bs = 0; for (const [t, v] of sc) if (v > bs) { bs = v; best = t; } return best;
 }
 function pickAtRay(cx, cy) {
@@ -1446,16 +1682,16 @@ function clamSpotFree(q) {   // keep clams clear of the theme decor so they are 
   if (!g.userData.boxes) { g.userData.boxes = []; g.updateMatrixWorld(true); for (const c of g.children) { const b = new THREE.Box3().setFromObject(c); if (!b.isEmpty() && b.min.y < 1.4 && (b.max.x - b.min.x) < 6) g.userData.boxes.push(b); } }
   return g.userData.boxes.every(b => !(q.x > b.min.x - .45 && q.x < b.max.x + .45 && q.z > b.min.z - .45 && q.z < b.max.z + .45));
 }
-const FISH_CAP = 60, TUBE_INIT = 40;   // max fish in the tank at once (target + decoy), also enforced for pump waves; tube levels start at the cap
+const FISH_CAP = 40, TUBE_INIT = 40;   // max fish in the tank at once (target + decoy), also enforced for pump waves; tube levels start at the cap
 // Level data comes from levels.json (built-in 15 levels); the editor's Play button posts its own level, which overrides it for that session.
 let PLAY_OVERRIDE = null;
 function levelConfig(L) {
-  const C = cfgFromLevel(PLAY_OVERRIDE || LV[Math.min(L, LV.length) - 1], L);
+  const C = cfgFromLevel(PLAY_OVERRIDE || LV[srcLvl(L) - 1], L);
   if (!(Array.isArray(C.fishKeys) && C.fishKeys.length)) C.typesTotal = Math.min(BASE.length, C.typesTotal); return C;
 }
 
 function clearWorld() {
-  PICK.map.clear(); PICK.pid = 0; PICK.t = -1e9;
+  PICK.map.clear(); PICK.pid = 0; PICK.t = -1e9; swarmHouseRemove();
   if (!G) return; for (const f of G.things) { fishRoot.remove(f.group); if (f.mark) fishRoot.remove(f.mark); } resetEvents();
 }
 
@@ -1611,7 +1847,14 @@ function tubeUpdate(dt) {
   tube.lidV += ((tgt - tube.lidA) * 260 - tube.lidV * 13) * dt; tube.lidA += tube.lidV * dt; if (tube.lidA > 0) { tube.lidA = 0; tube.lidV *= -.35; } tube.hinge.rotation.z = tube.lidA; tube.glow.visible = tube.lidA < -.4;
   tube.lidM.emissiveIntensity = tube.state === 'idle' && G.waves.length ? .45 + .3 * Math.sin(now * 2.4) : .5;   // while fish wait inside the lid pulses softly
   if (tube.state === 'idle') {
-    tubePose(0, 0); tube.glow.material.opacity = (G.waves.length ? .3 : .1) + (G.waves.length ? .12 : .04) * Math.sin(now * 2.2);   // always there: the mouth glows softly while fish are waiting inside
+    /* the pipe tells the player that a wave is near: two tanks before it the mouth starts to glow, one tank before it glows more, bubbles rise and the pipe shivers now and then, and when the wave is due it is at its brightest */
+    const remain = G.waves.length ? G.waves[0].t - G.completed : 99, want = !G.waves.length ? 0 : remain <= 0 ? 1 : remain === 1 ? .7 : remain === 2 ? .35 : 0;
+    tube.prog = (tube.prog || 0) + (want - (tube.prog || 0)) * Math.min(1, dt * 1.8); const pr = tube.prog;
+    tube.shv = Math.max(0, (tube.shv || 0) - dt); tube.shT = (tube.shT || 0) - dt;
+    if (remain <= 1 && G.waves.length && G.status === 'play' && !paused && tube.shT <= 0) { tube.shv = .45; tube.shT = 2.4 + Math.random() * .8; }
+    const sk = tube.shv / .45; tubePose(Math.sin(now * 61) * .013 * sk, Math.cos(now * 53) * .013 * sk);
+    tube.glow.material.opacity = (G.waves.length ? .3 : .1) + (G.waves.length ? .12 : .04) * Math.sin(now * 2.2) + .4 * pr; tube.glow.visible = tube.glow.visible || pr > .06;
+    tube.lidM.emissiveIntensity += 1.2 * pr; if (pr > .06 && Math.random() < dt * 7 * pr) burstFx.emit(tube.mouth, 0xbdf0ff, 1, .35);
     if (!G.waves.length || G.status !== 'play' || paused || introOn || guide.on || camTutBusy()) return;   // a wave starts right away: no waiting for events, feeding or the swarm
     const nIn = G.things.reduce((n, o) => n + (o.kind === 'fish' && o.alive && !o.gone && !o.tubeP ? 1 : 0), 0), sparse = nIn <= Math.round(FISH_CAP * .58) && now - (tube.lastT || -99) > 5;   // a wave is pumped in only once the tank has thinned out: crowded water gets no new fish
     const due = G.completed >= G.waves[0].t; if (due && tube.due == null) tube.due = now; if (!due) tube.due = null; const overdue = due && (G.completed > G.waves[0].t || now - tube.due > 8);   // a wave that is due but the tank never thins out (boosters, many decoys) must still come: after 8 s, or one more finished tank, it is pumped whatever the crowd (the FISH_CAP hold still keeps it from overfilling)
@@ -1648,7 +1891,7 @@ function themeUpdate(dt, t) {
 }
 let lvPending = 0;   // a level whose "LEVEL N" animation waits for the first-time pop-up to close
 const TIERFX = [0, 0xd8c0ff, 0xffc0cc], TIERBALL = [0, 0xc8a8ff, 0xffa0b4];   // Hard (purple) and Super Hard (red-pink): the colour of the bubble that carries the level number
-const levelTier = L => { const r = LV[Math.min(L, LV.length) - 1]; return !r || L < 10 ? 0 : r.difficulty === 'Very Hard' ? 2 : r.difficulty === 'Hard' ? 1 : 0; };   // the sheet's Difficulty column: Hard -> 1, Very Hard -> 2 (from level 10 on)
+const levelTier = L => { const r = LV[srcLvl(L) - 1]; return !r || L < 10 ? 0 : r.difficulty === 'Very Hard' ? 2 : r.difficulty === 'Hard' ? 1 : 0; };   // the sheet's Difficulty column: Hard -> 1, Very Hard -> 2 (from level 10 on)
 const fxc = c => (window.__lvTier ? TIERFX[window.__lvTier] : c);
 function startLvIntro() { if (!lvPending || !G || G.level !== lvPending) { lvPending = 0; window.__lvShown = true; return; } window.__lvIntro = { t0: performance.now(), n: lvPending }; lvPending = 0; }
 const HUD_DELAY_MS = 2000;   // the UI slides in first (the last piece, the Backup tank, lands at about 1 s); only then the LEVEL words, or the first-time pop-up of a booster, may appear
@@ -1658,12 +1901,15 @@ function hudIntroAnim() {   // the UI comes in at the start of a level: the top 
   ['bHint', 'bTank', 'bClear'].forEach((id) => run($(id), 'inRight', .3));
 }
 function newLevel(L) {
-  setShape(shapeForLevel(L));
+  setShape(shapeForLevel(srcLvl(L)));
   window.__hudFadeT0 = undefined; const hd = L >= 2 ? HUD_DELAY_MS : 0; window.__hudInT0 = performance.now() + hd; { const gi0 = gid + 1; if (hd) setTimeout(() => { if (gid === gi0) hudIntroAnim(); }, hd); else hudIntroAnim(); } window.__lvTier = levelTier(L);   // level 2+: the LEVEL words come first, the UI slides in while the bubble flies and has landed when the bubble reaches the badge
   
   clearWorld(); ovClear(); gid++;
-  const cfg = levelConfig(L); if (Array.isArray(cfg.fishKeys) && cfg.fishKeys.length && cfg.fishKeys.some(kk => MODEL_IDX[kk] === undefined)) { loadFish(cfg.fishKeys.map(kk => kk.replace(/^fish_/, ''))).then(() => newLevel(L)); return; }
-  { const nx = levelConfig(Math.min(L + 1, MAX_LV)); if (nx && Array.isArray(nx.fishKeys)) setTimeout(() => loadFish(nx.fishKeys.map(kk => kk.replace(/^fish_/, ''))), 4000); }   // the next level's fish arrive in the background
+  const cfg = levelConfig(L); if (cfg.clams && !CLAM.ready && !CLAM.failed) { loadClam().then(() => newLevel(L)); return; }
+  if (cfg.jelly && !JEL.ready && !JEL.failed) { loadJelly().then(() => newLevel(L)); return; } if (JEL.failed) cfg.jelly = 0;
+  if (cfg.squid && !OCT.ready && !OCT.failed) { loadOctopus().then(() => newLevel(L)); return; } if (OCT.failed) cfg.squid = 0;   /* the octopus model comes in before a level that has it */
+  if (Array.isArray(cfg.fishKeys) && cfg.fishKeys.length && cfg.fishKeys.some(kk => MODEL_IDX[kk] === undefined)) { loadFish(cfg.fishKeys.map(kk => kk.replace(/^fish_/, ''))).then(() => newLevel(L)); return; }
+  { const nx = levelConfig(L + 1); if (nx && Array.isArray(nx.fishKeys)) setTimeout(() => loadFish(nx.fishKeys.map(kk => kk.replace(/^fish_/, ''))), 4000); }   // the next level's fish arrive in the background
   setTheme(L, cfg.theme);
   const k = cfg.goal;   // one target species per set, exactly 3 fish each - no spare target fish are ever added
   // big species (whale, shark) never become targets - they only swim around as scenery among the decoys
@@ -1677,7 +1923,7 @@ function newLevel(L) {
   const baseDecoys = fk ? fk.slice(k) : only !== undefined ? Array.from({ length: nd3 }, (_, i) => modelVariant(only, Math.round((i + .5) * step))) : smallAll.slice(k, k + (cfg.typesTotal - k - nb)).concat(bigAll.slice(0, nb));
   // 1~2 of the decoy species are colour variants of a target species (same body, different colours)
   const looks = shuffle(targetTypes.slice()).slice(0, Math.min(cfg.look, baseDecoys.length)).map(tt => variantOf(tt, (Math.random() < .5 ? 1 : -1) * cfg.shift));
-  const decoyTypes = looks.concat(baseDecoys.slice(looks.length));
+  const decoyTypes = looks.concat(baseDecoys);   // the colour copies are extra decoy species: they no longer take the place of the first species named in the level
   const multi = targetTypes.slice(); const counts = {}; multi.forEach(t => counts[t] = (counts[t] || 0) + 1);
   const spawn = [];
   // bounty tanks (up to 2 kinds in a level, each a different target species that needs just 1 fish, made hard to spot / catch): the last target species
@@ -1687,7 +1933,7 @@ function newLevel(L) {
   bTypes.forEach(() => { const j = sizes.indexOf(1); if (j >= 0) sizes.splice(j, 1); else sizes.pop(); });
   const sizeQ = shuffle(sizes), perMap = {}; let sqi = 0; targetTypes.forEach(t => { perMap[t] = bTypes.includes(t) ? 1 : (sizeQ[sqi++] ?? cfg.per); });
   for (const t in counts) { const bi = bTypes.indexOf(+t); for (let i = 0; i < counts[t] * perMap[+t]; i++) spawn.push({ kind: 'fish', type: +t, bounty: bi < 0 ? null : bKinds[bi] }); }
-  bTypes.forEach((bt2, bi) => { if (bKinds[bi] === 'camo') { const cv = variantOf(bt2, Math.random() < .5 ? 20 : -20); for (let i = 0; i < 8; i++) spawn.push({ kind: 'fish', type: cv }); } });   // look-alikes: same body and texture, colours only a little off
+  bTypes.forEach((bt2, bi) => { if (bKinds[bi] === 'camo') { const cv = variantOf(bt2, Math.random() < .5 ? 20 : -20); for (let i = 0; i < 5; i++) spawn.push({ kind: 'fish', type: cv }); } });   // look-alikes: same body and texture, colours only a little off
   // decoys: only the non-target species, spread evenly
   const remArr = shuffle(multi); bTypes.forEach(bt2 => remArr.splice(remArr.indexOf(bt2), 1)); bTypes.forEach((bt2, bi) => remArr.splice(bi === 0 ? Math.min(2, remArr.length) : Math.min(remArr.length, Math.max(5, remArr.length - 2)), 0, bt2));   // the bounty tanks come after the first two; a second one comes near the end
   // fish tube (L7+): part of the fish (targets AND decoys) wait in the tube and are pumped in as waves - every 2~3 finished sets. Some waves carry the LAST fish of a target set, so the player must wait for / hunt the new wave.
@@ -1701,7 +1947,9 @@ function newLevel(L) {
     const used = new Set();
     for (const w of waves) for (let h = 0; h < (w.holdN || 1); h++) { let j = w.t; while (j < remArr.length && (bTypes.includes(remArr[j]) || used.has(remArr[j]))) j++; if (j >= remArr.length) break; const ty = remArr[j], at = spawn.findIndex(x => x.type === ty && !x.bounty); used.add(ty); if (at < 0 || perMap[ty] < 2 || w.hold === false) continue; spawn.splice(at, 1); w.specs.push({ kind: 'fish', type: ty, tgt: true }); }   // each wave holds back the last fish of holdN target species (1 unless the level file says more)
   }
-  const bigN = {}, nextDecoy = () => { for (;;) { const ty = decoyTypes[di++ % decoyTypes.length]; if (isBig(ty)) { bigN[ty] = (bigN[ty] || 0) + 1; if (bigN[ty] > 1) continue; } return { kind: 'fish', type: ty }; } };
+  const bigN = {}, decN = {}, DEC_TINT = [52, -52, 104, -104, 150, -150];   /* two wrong fish of the same species must not look like twins: every copy after the first has its colours turned a little (not enough to make it a look-alike of a target), so each one reads as a fish of its own */
+  const bk = ty => { const q = SPECIES[ty]; return q.model3d || q.base || q.id; };   // the body a species is built from (hue variants of one fish share it)
+  const nextDecoy = () => { for (;;) { const ty = decoyTypes[di++ % decoyTypes.length]; if (isBig(ty)) { bigN[ty] = (bigN[ty] || 0) + 1; if (bigN[ty] > 1) continue; } const n = decN[ty] = (decN[ty] || 0) + 1; return { kind: 'fish', type: n > 1 && !isBig(ty) ? variantOf(ty, DEC_TINT[(n - 2) % DEC_TINT.length]) : ty }; } };
   if (cfg.maxFish != null && cfg.startFish != null) { cfg.decoys = Math.max(0, cfg.maxFish - spawn.length); cfg.tubeExtra = cfg.tube ? clamp(cfg.maxFish - cfg.startFish, 0, cfg.decoys) : 0; }   /* the level says how many fish are there at the start and how many in all: the rest is pumped, no more */
   let di = 0, extra = cfg.tube ? (cfg.tubeExtra != null ? Math.max(0, cfg.decoys - cfg.tubeExtra) : Math.max(0, Math.min(cfg.decoys, TUBE_INIT - spawn.length))) : (cfg.maxFish != null ? cfg.decoys : Math.max(0, Math.min(cfg.decoys, FISH_CAP - spawn.length)));   // the tank starts with at most TUBE_INIT (tube levels) / FISH_CAP fish
   if (cfg.tube) for (let k = 0, n = cfg.decoys - extra; k < n; k++) waves[k % waves.length].specs.push(nextDecoy());
@@ -1727,8 +1975,10 @@ function newLevel(L) {
     placed.push(pos); spawnThing(s, pos, G.things.length);
   }
   // schools: most decoy species travel in small groups of 3-5 (target fish always swim alone, so they stay distinguishable)
+  const schooled = new Set();
   for (const dty of decoyTypes) {
-    const fs = shuffle(G.things.filter(o => o.kind === 'fish' && o.type === dty)), n = Math.floor(fs.length * .6); let i = 0;
+    const body = bk(dty); if (schooled.has(body)) continue; schooled.add(body);   /* the tinted copies of a species still swim together: they are grouped by body, not by exact colour */
+    const fs = shuffle(G.things.filter(o => o.kind === 'fish' && bk(o.type) === body)), n = Math.floor(fs.length * .6); let i = 0;
     while (n - i >= 3) {
       const sz = Math.min(n - i, 3 + Math.floor(Math.random() * 3)), m = fs.slice(i, i + sz), S = { wp: new THREE.Vector3(), wpT: 0, upd: -1, lead: m[0], m, sp: rand(.55, .85) }, base = m[0].pos;
       m.forEach((f, k) => { f.school = S; f.off = new THREE.Vector3(rand(-.9, .9), rand(-.35, .35), rand(-.9, .9)); f.speed = S.sp * cfg.speedK * rand(.95, 1.05);
@@ -1736,7 +1986,7 @@ function newLevel(L) {
       i += sz;
     }
   }
-  resetEvents(); tubeSetup(); G.nextFeed = rand(12, 18); G.nextStartle = rand(14, 22); G.nextEv = rand(3, 5); G.nextSwarm = rand(7, 10); G.combo = 0; G.comboUntil = 0; camTut.step = null; guide.on = L === 1 && !save.g1; guide.left = 2; guide.tgt = null; orbit.dist = orbit.fit * (L <= 3 ? .8 : L <= 6 ? .85 : .92); applyCam();
+  resetEvents(); tubeSetup(); swarmHouseSetup(); G.nextFeed = rand(12, 18); G.nextStartle = rand(14, 22); G.nextEv = rand(3, 5); G.nextSwarm = rand(7, 10); G.clamFrom = rand(7, 9); G.combo = 0; G.comboUntil = 0; camTut.step = null; guide.on = L === 1 && !save.g1; guide.left = 2; guide.tgt = null; orbit.dist = orbit.fit * (L <= 3 ? .8 : L <= 6 ? .85 : .92); applyCam();
   // clams sit on the floor and snap up needed fish that swim close; the player frees them with a few taps
   { const taken = [];
     for (let n = 0; n < cfg.clams; n++) {
@@ -1762,17 +2012,17 @@ function spawnThing(s, pos, idx) {
   else if (s.kind === 'urchin') { built = buildUrchin(); o = { kind: 'obstacle', id: 'urchin' }; }
   else if (s.kind === 'squid') { built = buildSquid(); o = { kind: 'obstacle', id: 'squid' }; }
   else if (s.kind === 'clam') { built = buildClam(); o = { kind: 'clam', id: 'clam', state: 'open', cool: 0, shake: 0 }; }
-  else { built = buildJelly(); o = { kind: 'obstacle', id: 'jelly' }; }
+  else { built = buildJelly(); o = { kind: 'obstacle', id: 'jelly', hue: built.hue }; }
   if (s.kind === 'fish') o.group = built.group; else { o.group = new THREE.Group(); built.group.scale.setScalar(s.kind === 'clam' ? 1 : .78); o.group.add(built.group); }
-  o.parts = built; o.rad = s.kind === 'fish' ? built.hx * .95 + .07 : (s.kind === 'urchin' ? .4 : s.kind === 'clam' ? .42 : s.kind === 'squid' ? .36 : .34); o.pos = pos.clone(); o.dir = new THREE.Vector3(rand(-1, 1), 0, rand(-1, 1)).normalize();
+  o.parts = built; o.rad = s.kind === 'fish' ? built.hx * .95 + .07 : (s.kind === 'urchin' ? .4 : s.kind === 'clam' ? .42 : s.kind === 'squid' ? .5 : .34); o.pos = pos.clone(); o.dir = new THREE.Vector3(rand(-1, 1), 0, rand(-1, 1)).normalize();
   o.speed = s.kind === 'fish' ? rand(.62, .95) : s.kind === 'clam' ? 0 : s.kind === 'squid' ? rand(.14, .24) : rand(.05, .14); o.wp = pos.clone(); o.wpT = 0; o.phase = rand(0, 6.28); o.wag = rand(6, 9); o.turn = rand(1, 2.2);
-  if (s.kind === 'fish') { o.sz = built.big ? 1 : G.cfg.sizeK; o.rf = Math.min(RF, R - .4 - built.hx * o.sz * .95); o.ym = Math.max(.42, (built.hy || 0) + .26); o.big = !!built.big; if (o.big) { o.speed *= .7; o.turn *= .6; } } else { o.rf = RF; o.ym = .42; }
+  if (s.kind === 'fish') { o.sz = built.big ? 1 : G.cfg.sizeK; o.rf = Math.min(RF, R - .3 - built.hx * o.sz * .8); o.ym = Math.max(.42, (built.hy || 0) + .26); o.big = !!built.big; if (o.big) { o.speed *= .7; o.turn *= .6; } } else { o.rf = RF; o.ym = .42; }
   if (s.kind === 'fish' && G && G.cfg) o.speed *= G.cfg.speedK;
   if (s.kind === 'fish' && built.model3d) { o.speed *= 1.45; o.noHang = true; o.turn *= .8; }   // 3D fish cross the tank in long, flowing swims and never hang still
   o.weaveA = rand(.25, .55); o.weaveF = rand(.9, 1.7); o.spawnAt = Math.min(idx * .006, 1.3); o.alive = true; o.scale = 0; o.hv = 0; o.hvT = 0; o.boost = 0;
   const hit = new THREE.Mesh(new THREE.SphereGeometry(s.kind === 'fish' ? Math.max(.27, built.hx * 1.05) : s.kind === 'clam' ? .5 : .46, 8, 6), new THREE.MeshBasicMaterial({ visible: false })); hit.userData.thing = o; o.group.add(hit); o.hit = hit;
-  if (!o.sz) o.sz = 1;
-  if (s.bounty === 'tiny') o.sz = .5; else if (s.bounty === 'fast') { o.speed *= 2.6; o.turn *= 1.7; o.noHang = true; o.wag *= 1.4; }
+  if (!o.sz) o.sz = s.kind === 'squid' ? (G && G.cfg ? G.cfg.sizeK : 1.4) * OCT_TANK_K : 1;   /* the octopus is a big thing in the tank */
+  if (s.bounty === 'tiny') o.sz = .5; else if (s.bounty === 'fast') { o.speed *= 1.8; o.turn *= 1.7; o.noHang = true; o.wag *= 1.4; o.fastB = true; o.fbT = rand(2, 4); o.fk = 1; }
   o.group.position.copy(o.pos); o.group.scale.setScalar(.0001); fishRoot.add(o.group); G.things.push(o); pickRegister(o);
 }
 
@@ -1782,9 +2032,10 @@ function themeBoxes(i) {
   const s0 = tank.scale.clone(); tank.scale.set(1, 1, 1); tank.updateMatrixWorld(true);
   const out = [], bx = new THREE.Box3(), sz = new THREE.Vector3(), def = THREE.Material.prototype.onBeforeCompile;
   for (const c of g.children) {
+    if (!c.visible) continue;
     let solid = false; c.traverse(m => { if (!m.isMesh) return; const gt = m.geometry.type; if (m.material && m.material.onBeforeCompile === def && gt !== 'PlaneGeometry' && gt !== 'CircleGeometry') solid = true; });   // kelp, anemones and fans are soft: fish may brush through those
-    if (!solid) continue;
-    bx.setFromObject(c); bx.getSize(sz); if (Math.max(sz.x, sz.y, sz.z) < .3 || sz.y < .15) continue;
+    bx.setFromObject(c); bx.getSize(sz);
+    if (!solid && !(sz.x >= .4 && sz.z >= .4 && sz.y >= .3)) continue;   /* thin kelp is left soft, but a coral or sponge you can see is solid: fish used to swim through those */ if (Math.max(sz.x, sz.y, sz.z) < .3 || sz.y < .15) continue;
     const b = bx.clone(); if ((g.userData.houses || []).some(h => h.door && b.clone().expandByScalar(.3).containsPoint(h.c))) continue;   // houses the fish are meant to swim into
     out.push(b);
   }
@@ -1795,8 +2046,9 @@ function bodyR(o) { return Math.max(.2, Math.min(.95, ((o.kind === 'fish' && o.p
 const PIPE_R = .8;   // pipe lip + the lid swung open above the mouth
 function pipeAxis() { tubeW(_pa.set(3.45, 1.8, 0)); tubeW(_pb.set(2.7, 1.8, 0)); }
 function colPush(o, P, r) {   // returns true when the point was inside a solid and got pushed out
-  let hit = false;
-  for (const b of themeBoxes(curTheme)) {
+  let hit = false, boxes = themeBoxes(curTheme);
+  if (G && !(o && o.clamPeek)) { if (!G.clams) G.clams = G.things.filter(t => t.kind === 'clam').map(t => ({ min: new THREE.Vector3(t.pos.x - .55, FLOOR_Y, t.pos.z - .55), max: new THREE.Vector3(t.pos.x + .55, t.pos.y + .45, t.pos.z + .55) })); if (G.clams.length) { if (G.clamAll?.th !== curTheme) G.clamAll = { th: curTheme, a: boxes.concat(G.clams) }; boxes = G.clamAll.a; } }   /* the clam is solid: fish swim round and over it, not through it */
+  for (const b of boxes) {
     if (P.x <= b.min.x - r || P.x >= b.max.x + r || P.y <= b.min.y - r || P.y >= b.max.y + r || P.z <= b.min.z - r || P.z >= b.max.z + r) continue;
     const c = [[P.x - (b.min.x - r), -1, 0, 0], [(b.max.x + r) - P.x, 1, 0, 0], [(b.max.y + r) - P.y, 0, 1, 0], [P.z - (b.min.z - r), 0, 0, -1], [(b.max.z + r) - P.z, 0, 0, 1]];
     if (b.min.y > FLOOR_Y + .1) c.push([P.y - (b.min.y - r), 0, -1, 0]);
@@ -1827,7 +2079,8 @@ function randomPoint0(o) {
     const cl = G.things.filter(c => c.kind === 'clam' && c.state === 'open' && c.alive); if (cl.length) { const c = pick(cl); o.clamGo = c; return new THREE.Vector3(c.pos.x + rand(-.25, .25), FLOOR_Y + rand(.5, .85), c.pos.z + rand(-.25, .25)); } }
   if (o.kind === 'fish' && HOUSES.length && Math.random() < .3) { const h = pick(HOUSES), s = h.door ? 1 : (Math.random() < .5 ? -1 : 1); const q = h.c.clone().addScaledVector(h.axis, s * (h.door ? .15 : 1.4)); q.x += rand(-.15, .15); q.z += rand(-.15, .15); if (!h.door) q.y += rand(-.2, .15); return q; }
   if (o.kind === 'fish' && !o.big) {   // long swims: of a few candidate spots take the farthest one, so fish cross the tank instead of dithering
-    let best = null, bd = -1; for (let k = 0, kn = o.parts && o.parts.model3d ? 9 : 4; k < kn; k++) { const a = rand(0, 6.28), r = Math.sqrt(Math.random()) * (o.rf || RF) * shK(Math.cos(a), Math.sin(a)), v = new THREE.Vector3(Math.cos(a) * r, rand(FLOOR_Y + .6, WATER_Y - .55), Math.sin(a) * r), d = v.distanceTo(o.pos); if (d > bd) { bd = d; best = v; } }
+    let best = null, bd = -1; const zone = Math.random(), z0 = zone < .3 ? 0 : zone < .6 ? .72 : 0, z1 = zone < .3 ? .5 : zone < .6 ? 1 : 1;   /* this leg: the middle of the tank (30%), the rim (30%) or anywhere (40%) */
+    for (let k = 0, kn = o.parts && o.parts.model3d ? 9 : 4; k < kn; k++) { const a = rand(0, 6.28), r = (zone < .6 ? rand(z0, z1) : Math.sqrt(Math.random())) * (o.rf || RF) * shK(Math.cos(a), Math.sin(a)), v = new THREE.Vector3(Math.cos(a) * r, rand(FLOOR_Y + .6, WATER_Y - .55), Math.sin(a) * r), d = v.distanceTo(o.pos); if (d > bd) { bd = d; best = v; } }
     const q = Math.random(); if (q < .2) best.y = rand(FLOOR_Y + .5, FLOOR_Y + 1.4); else if (q < .4) best.y = rand(WATER_Y - 1.2, WATER_Y - .5); return best;
   }
   const a = rand(0, 6.28), r = Math.sqrt(Math.random()) * (o.rf || RF) * shK(Math.cos(a), Math.sin(a));
@@ -1855,6 +2108,26 @@ function tickBlink(o, built, t) {   // eyes close briefly every few seconds
 }
 const Y = new THREE.Euler(); const qT = new THREE.Quaternion(); const dTmp = new THREE.Vector3();
 const SWAY = { tail: .8, body: .22 };   // body-sway amplitudes while swimming
+/* the fall into the tank (fish and octopus): in the air it speeds up under gravity from the speed the flying picture had; at the water the water brakes it smoothly (the speed dies away exponentially, no stop), and while it slows down it swims ahead more and more, so the vertical speed turns into the swimming speed without a break */
+const DIVE_G = 7, DIVE_WATER = 1.7;
+/* the fall into the tank: in the air it speeds up under gravity from the speed the flying picture had; in the water it does NOT stop: it keeps its speed, which fades slowly to its swimming speed, while its path bends from straight down to forward (like a fish pulling out of a dive). How tight the bend is depends on how deep it may go (decoration under the column) */
+const diveSmooth = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+function diveSim(D, tw, tauR) {
+  const ve = D.ve, cr = D.cruise || 1, tS = .9; let y = WATER_Y, h = 0, last = { s: ve, th: -Math.PI / 2 };
+  for (let t = 0; t < tw; t += .01) { const dt = Math.min(.01, tw - t), s = cr + (ve - cr) * Math.exp(-t / tS), th = -Math.PI / 2 * (1 - diveSmooth(t / tauR)); y += s * Math.sin(th) * dt; h += (s * Math.cos(th) + (D.vh0 || 0) * Math.exp(-(t / .8) * (t / .8))) * dt; last = { s, th }; }
+  return { y, h, s: last.s, th: last.th };
+}
+function diveMove(D, hOff, lim) {   /* it moves ahead along its heading; at the wall it slides along the glass (the heading turns to the tangent) instead of being pinned to it */
+  if (D.px === undefined) { D.px = D.x; D.pz = D.z; D.hPrev = 0; } const dh = hOff - D.hPrev; D.hPrev = hOff; let nx = D.px + D.hx * dh, nz = D.pz + D.hz * dh; const rr = Math.hypot(nx, nz);
+  if (rr > lim) { const ux = nx / rr, uz = nz / rr, tx = -uz, tz = ux, sg = Math.sign(tx * D.hx + tz * D.hz) || 1; D.hx = tx * sg; D.hz = tz * sg; nx = ux * lim; nz = uz * lim; } D.px = nx; D.pz = nz;
+}
+function diveState(D, t) {
+  const v0 = D.v0, Ta = (-v0 + Math.sqrt(v0 * v0 + 2 * DIVE_G * Math.max(.05, D.y0 - WATER_Y))) / DIVE_G;
+  if (D.ve === undefined) { D.ve = v0 + DIVE_G * Ta; const yMin = D.yMin === undefined ? FLOOR_Y + 1.2 : D.yMin; D.tauR = .22; for (const tr of [1, .8, .65, .5, .4, .3]) { if (diveSim(D, 2.4, tr).y >= yMin) { D.tauR = tr; break; } } }
+  if (t < Ta) return { y: D.y0 - v0 * t - .5 * DIVE_G * t * t, vy: v0 + DIVE_G * t, hOff: (D.vh0 || 0) * t, th: -Math.PI / 2, thv: -Math.atan2(v0 + DIVE_G * t, Math.max(D.vh0 || 0, .25)), water: false, tw: 0, Ta };   /* (thv: the way the nose points = the way it is really going, so it matches the flying picture's angle) */
+  const tw = t - Ta, r = diveSim(D, tw, D.tauR);
+  const hv = r.s * Math.cos(r.th) + (D.vh0 || 0) * Math.exp(-(tw / .8) * (tw / .8)); return { y: r.y, vy: -r.s * Math.sin(r.th), hOff: (D.vh0 || 0) * Ta + r.h, th: r.th, thv: -Math.atan2(-r.s * Math.sin(r.th), Math.max(hv, .25)), spd: r.s, water: true, tw, Ta };
+}
 function updateThing(o, dt, t) {
   if (!o.alive && o.launch) { // leap out of the water
     const L = o.launch; L.t += dt; const k = Math.min(1, L.t / L.dur), e = Math.pow(k, 1.45);
@@ -1868,17 +2141,29 @@ function updateThing(o, dt, t) {
   if (!o.alive) { // pop-out
     o.scale -= dt * 7; if (o.scale <= 0) { fishRoot.remove(o.group); o.gone = true; return; } o.group.scale.setScalar(o.scale); return;
   }
-  if (o.dive) {   // dropping into the tank through its open top: seen in profile, head first, steep at the water, then levelling off under the surface
-    const D = o.dive; D.t += dt; const k = Math.min(1, D.t / D.dur), e = k * (.7 + .3 * k), sz = o.sz || 1, T2 = Math.max(0, D.t - D.dur), u2 = Math.min(1, T2 / .75);   /* u2: after the dive it goes on down a little by its inertia, then lifts its nose and rises back */   // falls faster and faster, but already moving at the first frame (it used to start at speed 0: the fish hung still above the water, then dropped)
-    if (T2 > 0) o.pos.set(D.x + D.hx * 1.3 * u2, D.y1 - .9 * Math.sin(Math.PI * u2), D.z + D.hz * 1.3 * u2); else o.pos.set(D.x, D.y0 + (D.y1 - D.y0) * e, D.z); o.group.position.copy(o.pos);
-    const pitch = T2 > 0 ? -.45 * (1 - smooth01(u2)) + .38 * Math.sin(Math.PI * u2) * (1 - .3 * u2) : -(.78 + .42 * Math.sin(Math.min(1, k * 1.3) * Math.PI / 2)) * (1 - .6 * smooth01((k - .72) / .28));   // nose-down angle
-    Y.set(0, D.yaw, pitch, 'YZX'); qT.setFromEuler(Y); if (D.first) { D.first = false; o.group.quaternion.copy(qT); } else o.group.quaternion.slerp(qT, 1 - Math.exp(-dt * 26));
-    if (o.kind === 'fish') { o.parts.tail.rotation.y = Math.sin(t * 38) * .8; o.parts.body.rotation.y = Math.sin(t * 38 + 1) * .15; }
-    o.group.scale.setScalar(sz * (1 + .08 * Math.sin(k * Math.PI)));
-    if (!D.splashed && o.pos.y <= WATER_Y) { D.splashed = true; surfaceSplash(D.x, D.z, 1, true); addRipple(D.x, D.z, .09); burstFx.emit(new THREE.Vector3(D.x, WATER_Y - .05, D.z), 0xffffff, 10, 1.1); Snd.play('totank'); }
-    if (k >= 1 && u2 >= 1) {   // carry on swimming the way it was heading: no snap to a random direction
-      o.dive = null; o.group.scale.setScalar(sz); o.boost = 1.4; o.dir.set(D.hx, 0, D.hz).normalize();
-      o.wp = new THREE.Vector3(o.pos.x + D.hx * 1.6, clamp(D.y1 - .1, FLOOR_Y + .8, WATER_Y - .7), o.pos.z + D.hz * 1.6); clampXZ(o.wp, RF - .2); o.wpT = rand(3, 5);
+  if (o.dive && o.id === 'squid') {   /* the octopus falls upright down the middle of the opening (see diveState), arms trailing up, then they spread as the water brakes it, and it swims on */
+    const D = o.dive, b = o.parts, S = o.oc || (o.oc = { mode: 'swim', t: 0, next: rand(6, 10), wt: rand(0, 6), ph: 0, fk: 0, wk: 0, a: 0, wy: 2, wa: 0, wyT: 2, pk: 0, walk: 0, gait: 0, land: 0, wind: 0, ink: 0, lean: 0, fwp: new THREE.Vector3(), mv: new THREE.Vector3(0, 1, 0), v: new THREE.Vector3(), pp: o.pos.clone(), vyaw: 0, yawP: 0 });
+    D.t += dt; D.cruise = Math.max(.8, (o.speed || .3) * 3); const st = diveState(D, D.t); diveMove(D, st.hOff, RF - 1.1);
+    o.pos.set(D.px, st.y, D.pz); o.group.position.copy(o.pos); S.wt += dt * 3; S.yawP = D.yaw;
+    Y.set(0, Math.atan2(cam.position.x - D.px, cam.position.z - D.pz), 0, 'YXZ'); qT.setFromEuler(Y); if (D.first) { D.first = false; o.group.quaternion.copy(qT); } else o.group.quaternion.slerp(qT, 1 - Math.exp(-dt * 8));   /* it faces the player while it falls (the flying picture did) */
+    const sw = st.water ? smooth01(st.tw / .5) * (1 - smooth01((st.tw - .5) / .8)) : 0, air = st.water ? 0 : 1;
+    octoAnim(b, dt, { wt: S.wt, flare: sw, thrust: air * .4 + (st.water ? .3 * Math.exp(-st.tw * 2) + .8 * smooth01((st.tw - .75) / .45) : 0), contract: .25 * air, glide: st.water ? smooth01((st.tw - .6) / .8) : 0, hp: -.25 * air }); octoBlink(b, dt);
+    b.inner.scale.set(1, 1 + .06 * air, 1); o.group.scale.setScalar(o.sz);
+    if (!D.splashed && o.pos.y <= WATER_Y) { D.splashed = true; surfaceSplash(D.px, D.pz, 1.4, true); addRipple(D.px, D.pz, .12); burstFx.emit(new THREE.Vector3(D.px, WATER_Y - .05, D.pz), 0xffffff, 14, 1.2); Snd.play('totank'); }
+    if (st.water && st.tw >= DIVE_WATER) { o.dive = null; S.mode = 'swim'; S.ph = .34; S.sp = Math.max(st.spd || 0, .6); S.cool = rand(14, 26); o.boost = 0;   /* the first swimming stroke starts right here: the arms were already pulling, so it keeps going without a pause */ o.dir.set(D.hx, .05, D.hz).normalize(); o.wp = new THREE.Vector3(o.pos.x + D.hx * 1.6, clamp(o.pos.y, FLOOR_Y + 1.2, WATER_Y - 1), o.pos.z + D.hz * 1.6); clampXZ(o.wp, RF - .6); o.wpT = rand(3, 5); }
+    return;
+  }
+  if (o.dive) {   // dropping into the tank through its open top (see diveState)
+    const D = o.dive; D.t += dt; D.cruise = (o.speed || 1) * 1.25; const st = diveState(D, D.t), sz = o.sz || 1; diveMove(D, st.hOff, RF - .3);
+    o.pos.set(D.px, st.y, D.pz); o.group.position.copy(o.pos);
+    const pitch = o.kind === 'fish' ? clamp(st.thv * .62, -.8, .5) : 0;   /* only fish dive nose-first; a jellyfish or an urchin goes down upright */   // nose-down while it is fast, levelling off as the water slows it
+    Y.set(0, D.yaw, pitch, 'YZX'); qT.setFromEuler(Y); if (D.first) { D.first = false; o.group.quaternion.copy(qT); } else o.group.quaternion.slerp(qT, 1 - Math.exp(-dt * 14));
+    if (o.kind === 'fish') { o.parts.tail.rotation.y = Math.sin(t * 38) * .8 * (st.water ? Math.exp(-st.tw * .8) * .6 + .4 : 1); o.parts.body.rotation.y = Math.sin(t * 38 + 1) * .15; }
+    o.group.scale.setScalar(sz);
+    if (!D.splashed && o.pos.y <= WATER_Y) { D.splashed = true; surfaceSplash(D.px, D.pz, 1, true); addRipple(D.px, D.pz, .09); burstFx.emit(new THREE.Vector3(D.px, WATER_Y - .05, D.pz), 0xffffff, 10, 1.1); Snd.play('totank'); }
+    if (st.water && st.tw >= DIVE_WATER) {   // it has levelled off and is going ahead at about its swimming speed: carry on the way it was heading
+      o.dive = null; o.boost = clamp((st.spd / Math.max(.4, o.speed || 1) - 1) / 1.25, .2, 1.4); o.dir.set(D.hx, -Math.sin(st.th) * -.2, D.hz).normalize();   /* it keeps the momentum: a burst that fades away at the usual rate */
+      o.wp = new THREE.Vector3(o.pos.x + D.hx * 1.6, clamp(o.pos.y, FLOOR_Y + .8, WATER_Y - .7), o.pos.z + D.hz * 1.6); clampXZ(o.wp, RF - .2); o.wpT = rand(3, 5);
     }
     return;
   }
@@ -1894,8 +2179,9 @@ function updateThing(o, dt, t) {
   } else if (o.kind === 'fish' && o.parts.setGlow && !(o.outline && o.hinted)) o.parts.setGlow(o.hv > .03 ? Math.min(1, o.hv * 1.7) : 0);
   if (o.scale < 1) { const k = clamp(age / .45, 0, 1); o.scale = k < 1 ? 1 - Math.pow(1 - k, 3) * Math.cos(k * 11) : 1; o.group.scale.setScalar(Math.max(o.scale, .0001) * o.sz); } else { o.group.scale.setScalar(o.sz * (1 + o.hv * .16)); if (o.grow !== undefined) { o.grow += dt / .55; const k = Math.min(1, o.grow), gb = o.gb || .36, f = gb + (1 - gb) * (1 - Math.pow(1 - k, 3) * Math.cos(k * 11)); o.group.scale.multiplyScalar(f); if (k >= 1) o.grow = undefined; } }
   if (o.winK !== undefined) { o.group.scale.multiplyScalar(Math.max(.0001, o.winK)); o.pos.y -= (1 - o.winK) * dt * .8; if (o.winK <= .01) o.group.visible = false; }   // the win swirl: the other fish of the tank sink and shrink away so the orbiting fish are seen
-  if (o.kind === 'clam') { clamUpdate(o, dt, t); o.group.position.copy(o.pos); if (o.state === 'closed') { const c = (t * 2.6 + o.phase) % 1, hop = c < .35 ? Math.sin(c / .35 * Math.PI) : 0; o.group.position.y += hop * .22; o.parts.group.scale.set(1 + hop * .06, 1 - hop * .08, 1 + hop * .06); } else o.parts.group.scale.set(1, 1, 1); return; }
+  if (o.kind === 'clam') { clamUpdate(o, dt, t); o.group.position.copy(o.pos); o.parts.group.scale.set(1, 1, 1); return; }
   if (o.kind === 'obstacle') {
+    if (o.id === 'squid') { squidUpdate(o, dt, t, age); const S = o.oc; if (S.wk < .5) colBodies(o, t); o.group.position.copy(o.pos); if (S.fk < .3 && S.wk < .3) o.group.position.y += Math.sin(t * .9 + o.phase) * .06; return; }
     if (o.pos.distanceTo(o.wp) < .4 || o.wpT <= 0) { o.wp = randomPoint(o); o.wpT = rand(6, 12); } o.wpT -= dt;
     dTmp.subVectors(o.wp, o.pos).normalize(); o.dir.lerp(dTmp, 1 - Math.exp(-dt * (o.id === 'squid' ? 1.6 : .8))).normalize(); separate(o, dt);
     if (o.id === 'squid') squidUpdate(o, dt, t, age); else o.pos.addScaledVector(o.dir, o.speed * dt);
@@ -1948,12 +2234,13 @@ function updateThing(o, dt, t) {
         else if (o.parts.model3d && r >= .16 && r < .18 && !o.dsp && !o.spinT && !G.things.some(x => x.dsp)) { o.dsp = { t: 0, dur: rand(2.1, 2.9), sg: Math.random() < .5 ? -1 : 1, ph: rand(0, 6.28), rt: 0, go: false }; o.moodT = rand(3, 6); } else if (r >= .18 && r < .3 && G.cfg.dash) { o.mood = 2; o.moodT = rand(.6, 1.1); } else o.moodT = rand(2.5, 6); } } }
   else o.mood = 0;
   o.moodK += ((o.dsp && o.dsp.t < .35 ? .3 : o.mood === 1 ? .55 : o.mood === 2 ? 1.45 : o.mood === 3 ? .85 : 1) - o.moodK) * (1 - Math.exp(-dt * 4));
+  if (o.fastB) { o.fbT -= dt; if (o.fbT < -1.2) o.fbT = rand(3, 5); o.fk += ((o.fbT < 0 ? .55 : 1) - o.fk) * (1 - Math.exp(-dt * 3)); } /* the fast bounty fish eases off for about 1.2 s every few seconds: a window to tap it */
   if (!o.evTight) separate(o, dt);
   // water drag from rotating the tank
   const drag = orbit.azV * dt * .035; o.pos.x += -o.pos.z * drag; o.pos.z += o.pos.x * drag;
-  if (o.evPin) { dTmp.subVectors(o.evPin.pos, o.pos).multiplyScalar(1 - Math.exp(-dt * (o.evPin.rate || 9))); const dl = dTmp.length(), cap = dt * 6; if (dl > cap) dTmp.multiplyScalar(cap / dl); o.pos.add(dTmp); }   /* an event draws a fish in at no more than 6 units a second: it used to cover a few units in a frame when the event started, which looked like a teleport */ else o.pos.addScaledVector(o.dir, o.speed * dt * (1 + .2 * Math.sin(t * 2 + o.phase)) * (1 + o.boost * 1.25) * (near ? .6 : 1) * o.moodK);
-  { const ax = o.pos.x + o.dir.x * 1.1, az = o.pos.z + o.dir.z * 1.1, ar = Math.hypot(ax, az), al = (o.rf - .1) * shK(ax, az, o.pos.y); if (ar > al) { const rr3 = Math.hypot(o.pos.x, o.pos.z) || 1, k3 = Math.min(1, (ar - al) / .5); o.dir.x -= o.pos.x / rr3 * dt * 7 * k3; o.dir.z -= o.pos.z / rr3 * dt * 7 * k3; o.dir.normalize(); } }   // looks ahead: the wall of a heart or a star comes in near the notches, so the fish turns before it gets there instead of being snapped back
-  { const rr2 = Math.hypot(o.pos.x, o.pos.z), lim2 = (o.rf + .05) * shK(o.pos.x, o.pos.z, o.pos.y); if (rr2 > lim2 * .86 && rr2 < lim2) { const q2 = (rr2 / lim2 - .86) / .14; o.dir.x -= o.pos.x / rr2 * dt * 5 * q2; o.dir.z -= o.pos.z / rr2 * dt * 5 * q2; o.dir.normalize(); } if (rr2 > lim2) { const ex = rr2 - lim2, cr = Math.min(ex, Math.max(.012, ex * dt * 7)), kk = (rr2 - cr) / rr2; o.pos.x *= kk; o.pos.z *= kk; o.dir.x -= o.pos.x / rr2 * dt * 4; o.dir.z -= o.pos.z / rr2 * dt * 4; o.dir.normalize(); } o.pos.y = clamp(o.pos.y, FLOOR_Y + o.ym, WATER_Y - o.ym); }   /* pulled back gradually: the limit changes with height and shape (a bowl narrows towards the top), and snapping a fish to it at once was the teleport */   // fish are ~1 unit long: keep their whole body inside the glass and under the surface
+  if (o.evPin) { dTmp.subVectors(o.evPin.pos, o.pos).multiplyScalar(1 - Math.exp(-dt * (o.evPin.rate || 9))); const dl = dTmp.length(), cap = dt * 6; if (dl > cap) dTmp.multiplyScalar(cap / dl); o.pos.add(dTmp); }   /* an event draws a fish in at no more than 6 units a second: it used to cover a few units in a frame when the event started, which looked like a teleport */ else o.pos.addScaledVector(o.dir, o.speed * dt * (1 + .2 * Math.sin(t * 2 + o.phase)) * (1 + o.boost * 1.25 * (o.fastB ? .5 : 1)) * (near ? .6 : 1) * o.moodK * (o.fk || 1));
+  { const ax = o.pos.x + o.dir.x * .8, az = o.pos.z + o.dir.z * .8, ar = Math.hypot(ax, az), al = (o.rf - .1) * shK(ax, az, o.pos.y); if (ar > al) { const rr3 = Math.hypot(o.pos.x, o.pos.z) || 1, k3 = Math.min(1, (ar - al) / .5); o.dir.x -= o.pos.x / rr3 * dt * 7 * k3; o.dir.z -= o.pos.z / rr3 * dt * 7 * k3; o.dir.normalize(); } }   // looks ahead: the wall of a heart or a star comes in near the notches, so the fish turns before it gets there instead of being snapped back
+  { const rr2 = Math.hypot(o.pos.x, o.pos.z), lim2 = (o.rf + .05) * shK(o.pos.x, o.pos.z, o.pos.y); if (rr2 > lim2 * .93 && rr2 < lim2) { const q2 = (rr2 / lim2 - .93) / .07; o.dir.x -= o.pos.x / rr2 * dt * 5 * q2; o.dir.z -= o.pos.z / rr2 * dt * 5 * q2; o.dir.normalize(); } if (rr2 > lim2) { const ex = rr2 - lim2, cr = Math.min(ex, Math.max(.012, ex * dt * 7)), kk = (rr2 - cr) / rr2; o.pos.x *= kk; o.pos.z *= kk; o.dir.x -= o.pos.x / rr2 * dt * 4; o.dir.z -= o.pos.z / rr2 * dt * 4; o.dir.normalize(); } o.pos.y = clamp(o.pos.y, FLOOR_Y + o.ym, WATER_Y - o.ym); }   /* pulled back gradually: the limit changes with height and shape (a bowl narrows towards the top), and snapping a fish to it at once was the teleport */   // fish are ~1 unit long: keep their whole body inside the glass and under the surface
   colBodies(o, t);
   if (o.kind === 'fish' && !o.evPin && !o.dsp) {   // wedged between a decor piece and the glass: it pushes against both and goes nowhere. After a second of that, turn it to the middle and up
     if (!o.stkP) o.stkP = o.pos.clone(); o.stkT = (o.stkT || 0) + dt;
@@ -1989,14 +2276,14 @@ const INK_U = { uRight: { value: new THREE.Vector3(1, 0, 0) }, uUp: { value: new
 const INK_VS = 'uniform vec3 uRight; uniform vec3 uUp; uniform float uSize; varying vec2 vUv; varying vec3 vW; void main(){ vUv=uv; vec3 c=(modelMatrix*vec4(0.,0.,0.,1.)).xyz; vec3 w=c+(uRight*position.x+uUp*position.y)*uSize; vW=w; gl_Position=projectionMatrix*viewMatrix*vec4(w,1.); }';
 // a camera-facing soft puff that is clipped to the inside of the glass cylinder and the water volume, so the ink never spills outside the tank
 const INK_FS = WALL_GLSL + 'uniform sampler2D uMap; uniform vec3 uColor; uniform float uOp; uniform float uR; uniform float uBot; uniform float uTop; varying vec2 vUv; varying vec3 vW; void main(){ float a=texture2D(uMap,vUv).a; float r=length(vW.xz); float wl=uMode>1.5 ? wallRad(vW.xz) : (uMode>.5 ? 3.25*(.62+.38*sqrt(max(0.,1.-pow(min(1.,abs(vW.y-2.825)/2.375),2.)))) : 3.25); float W=wl-.12; float f=smoothstep(W,W-.3,r)*smoothstep(uBot,uBot+.25,vW.y)*smoothstep(uTop,uTop-.25,vW.y); gl_FragColor=vec4(uColor,a*uOp*f); }';
-function sprayInk(sq) {   // a dark cloud that hides whatever swims behind it for a few seconds
+function sprayInk(sq, jd) {   // a dark cloud that hides whatever swims behind it for a few seconds
   INK_U.uMap.value = inkTex();
   const grp = new THREE.Group(); grp.position.copy(sq.pos); fishRoot.add(grp); const puffs = [];
   for (let i = 0; i < 16; i++) {
     const m = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide, vertexShader: INK_VS, fragmentShader: INK_FS,
       uniforms: { uRight: INK_U.uRight, uUp: INK_U.uUp, uMap: INK_U.uMap, uColor: { value: new THREE.Color(pick([0x2a1055, 0x1c0c40, 0x3a1a6a])) }, uOp: { value: 0 }, uSize: { value: .5 }, uR: { value: R - .12 }, uBot: { value: FLOOR_Y }, uTop: { value: WATER_Y }, uWr: surfU.uWr, uMode: surfU.uMode, uSurfR: surfU.uSurfR } });
     const sp = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), m); sp.frustumCulled = false;
-    const to = new THREE.Vector3(rand(-1.25, 1.25), rand(-.9, .9), rand(-1.25, 1.25)); sp.position.copy(to).multiplyScalar(.2); sp.userData = { sc: rand(2, 3), d: rand(0, .3), ph: rand(0, 6.28), to }; sp.renderOrder = 6; grp.add(sp); puffs.push(sp);
+    const to = new THREE.Vector3(rand(-1.8, 1.8), rand(-1.62, .47), rand(-1.8, 1.8));   /* (10% less area than before) */ if (jd) { to.multiplyScalar(.8); to.addScaledVector(jd, rand(.1, .9)); } sp.position.copy(to).multiplyScalar(.2); sp.userData = { sc: rand(3.04, 4.56), d: rand(0, .3), ph: rand(0, 6.28), to }; sp.renderOrder = 6; grp.add(sp); puffs.push(sp);
   }
   inks.push({ grp, puffs, t: 0, dur: 9 }); burstFx.emit(sq.pos, 0x7a4ae0, 26, 1.4); Snd.play('squid');
 }
@@ -2005,19 +2292,10 @@ function inkUpdate(dt) {
   for (let i = inks.length - 1; i >= 0; i--) {
     const k = inks[i]; k.t += dt;
     for (const p of k.puffs) { const u = clamp((k.t - p.userData.d) / .6, 0, 1), out = clamp((k.dur - k.t) / 2.2, 0, 1), uu = p.material.uniforms;
-      p.position.copy(p.userData.to).multiplyScalar(.2 + .8 * (1 - Math.pow(1 - clamp(k.t / 3, 0, 1), 3)) + .08 * clamp((k.t - 3) / 6, 0, 1));
+      p.position.copy(p.userData.to).multiplyScalar(.2 + .8 * (1 - Math.pow(1 - clamp(k.t / 3, 0, 1), 3)) + .55 * clamp((k.t - 1) / 7, 0, 1));
       uu.uOp.value = .94 * Math.min(u, out); uu.uSize.value = p.userData.sc * (.35 + .65 * (1 - Math.pow(1 - u, 3))) * (1 + .05 * Math.sin(k.t * 1.6 + p.userData.ph)); }
     if (k.t >= k.dur) { fishRoot.remove(k.grp); k.puffs.forEach(p => { p.material.dispose(); p.geometry.dispose(); }); inks.splice(i, 1); }
   }
-}
-function squidUpdate(o, dt, t, age) {
-  const jet = Math.pow(Math.max(0, Math.sin(t * 1.7 + o.phase)), 3), dash = o.dash > 0 ? 1 : 0; o.dash = Math.max(0, (o.dash || 0) - dt);
-  o.pos.addScaledVector(o.dir, o.speed * dt * (1 + jet * 2.6 + dash * 4));
-  const p = o.parts; p.mantle.scale.set(1 - jet * .16, 1.9 + jet * .22, 1 - jet * .16); p.fins.forEach((f, i) => { f.rotation.x = Math.sin(t * 6 + i * 2) * .22; });
-  p.tents.forEach((m, i) => { m.rotation.x = Math.sin(t * 2.4 + i + o.phase) * .2 - jet * .5; m.rotation.z = Math.cos(t * 2 + i * 1.3) * .2; });
-  const yaw = Math.atan2(o.dir.x, o.dir.z); let dy = yaw - p.group.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); p.group.rotation.y += dy * Math.min(1, dt * 4);
-  if (o.inkT === undefined) o.inkT = rand(5, 9); o.inkT -= dt;
-  if (o.inkT <= 0 && age > 1) { sprayInk(o); o.inkT = rand(13, 19); o.dash = .9; o.wp = randomPoint(o); o.wpT = rand(6, 10); o.dir.lerp(dTmp.subVectors(o.wp, o.pos).normalize(), .8).normalize(); }
 }
 const CLAM_COOL = 6, CLAM_R = .95;
 const perOf = type => (G.perMap && G.perMap[type] != null) ? G.perMap[type] : G.cfg.per;   // fish a target tank needs: 1 to 3 (a bounty target needs just one)
@@ -2028,28 +2306,38 @@ function clamUpdate(o, dt, t) {
   if (o.state === undefined) { o.state = 'open'; o.cool = 0; o.shake = 0; }
   const cx = o.pos.x, cy = FLOOR_Y + .6, cz = o.pos.z; let alert = false;
   if (o.state === 'cool') { o.cool -= dt; if (o.cool <= 0) o.state = 'open'; }
-  if (o.state === 'open' && G.status === 'play') {   // hunt: any needed fish that comes near gets snapped up
+  if (o.peek) {   /* CURIOUS: a needed fish that came near stops by the pearl and puts its nose to it for a moment (the clam wide open) before the shell snaps shut on it */
+    const f = o.peek.f;
+    if (!f.alive || f.locked || o.state !== 'open') { if (f.evPin) f.evPin = null; f.clamPeek = false; o.peek = null; }
+    else {
+      o.peek.t += dt; alert = true; const pr = _pb.set(cx, o.pos.y + .3, cz); _pc.set(f.pos.x - cx, 0, f.pos.z - cz); if (_pc.lengthSq() < 1e-4) _pc.set(1, 0, 0); _pc.normalize();
+      const T = _pa.copy(pr).addScaledVector(_pc, .62); T.y += .5; dTmp.subVectors(pr, T).normalize();   /* it hangs a little above and in front of the pearl, the nose pointing down at it */
+      f.clamPeek = true; const held = evPinTo(f, T, dTmp, 2.2, 1.7); if (held) o.peek.held = (o.peek.held || 0) + dt;
+      if ((o.peek.held || 0) > 1.1 || o.peek.t > 3.2) { f.evPin = null; f.clamPeek = false; o.peek = null; clamCapture(o, f); }
+    }
+  }
+  if (o.state === 'open' && G.status === 'play' && !o.peek && now - G.t0 > (G.clamFrom || 0) && !introOn && !guide.on && !camTutBusy()) {   /* like the swarm: it only hunts once the level is really under way (the entrance, the pop-up and the camera swing are over) */   // hunt: a needed fish that comes near gets a look at the pearl, then it is snapped up
     const need = G.need || needSet();
     for (const f of G.things) {
       if (f.kind !== 'fish' || !f.alive || f.locked || f.scale < .9 || !need.has(f.type) || (f.immune || 0) > now) continue;
       const dx = f.pos.x - cx, dy = f.pos.y - cy, dz = f.pos.z - cz, d2 = dx * dx + dy * dy + dz * dz;
-      if (d2 < CLAM_R * CLAM_R) { clamCapture(o, f); break; }
+      if (d2 < (CLAM_R * 1.7) * (CLAM_R * 1.7)) { o.peek = { f, t: 0 }; break; }
       if (d2 < 2.2 * 2.2) alert = true;
     }
   }
   const target = o.state === 'closed' ? .02 : alert ? .95 : .5 + (o.state === 'open' ? .05 * Math.sin(t * 3 + o.phase) : 0);
   p.open += (target - p.open) * (1 - Math.exp(-dt * (o.state === 'closed' ? 26 : 9))); p.lid.rotation.x = -p.open;
-  o.shake = Math.max(o.state === 'closed' ? .55 : 0, o.shake - dt * 3); p.group.rotation.z = Math.sin(t * 70) * .09 * o.shake; p.group.rotation.x = Math.cos(t * 63) * .05 * o.shake;
+  o.shake = Math.max(o.state === 'closed' ? .8 : 0, o.shake - dt * 3); p.group.rotation.z = (Math.sin(t * 15 + o.phase) * .46 + Math.sin(t * 6.1) * .16) * o.shake; p.group.rotation.x = 0; p.group.position.x = Math.sin(t * 15 + o.phase + 1.2) * .09 * o.shake;   /* thrashing to get free: hard left-right, never up */   /* it rocks from side to side (it no longer hops) */
   p.pearl.visible = o.state !== 'closed';
   if (o.state === 'closed') {
     p.lock.position.y = .62 + .04 * Math.sin(t * 3 + o.phase); p.lock.scale.setScalar((glowing ? .52 : .4) * (1 + (glowing ? .12 * Math.sin(t * 10) : 0)));
     p.held.position.y = 1.08 + .04 * Math.sin(t * 3 + o.phase + 1);
-    p.glow.material.opacity = .45 + .2 * Math.sin(t * 4) + (glowing ? .35 : 0); p.glow.scale.setScalar(1.3 + (glowing ? .5 : 0));
-  } else { p.glow.material.opacity = (alert ? .75 : o.state === 'cool' ? .08 : .3 + .15 * Math.sin(t * 3 + o.phase)); p.glow.scale.setScalar(alert ? 1.7 : 1.2); }
+    p.glow.material.opacity = p.model ? (glowing ? .22 : 0) : .45 + .2 * Math.sin(t * 4) + (glowing ? .35 : 0); p.glow.scale.setScalar(1.3 + (glowing ? .5 : 0));   /* (the artist's clam has no halo of its own) */
+  } else { p.glow.material.opacity = p.model ? 0 : (alert ? .75 : o.state === 'cool' ? .08 : .3 + .15 * Math.sin(t * 3 + o.phase)); p.glow.scale.setScalar(alert ? 1.7 : 1.2); }
   p.lock.visible = false; p.pips.visible = false; p.held.visible = false;
 }
 function clamCapture(o, f) {
-  o.state = 'closed'; o.fish = f; o.taps = G.cfg.clamTaps; o.shake = 1; f.locked = true; f.clam = o; f.group.visible = false; f.hv = 0; f.hvT = 0;
+  o.state = 'closed'; o.fish = f; o.taps = G.cfg.clamTaps; o.shake = 1; f.locked = true; f.evPin = null; f.clam = o; f.group.visible = false; f.hv = 0; f.hvT = 0;
   const P = o.pos.clone(); P.y += .3; burstFx.emit(P, 0xffffff, 28, 1.7); burstFx.emit(P, 0xff9ad9, 22, 1.3); burstFx.emit(P, 0xfff2a8, 14, 2.2); Snd.play('clamsnap'); kick(1.6);
   const p = o.parts; drawPips(p, o.taps, o.taps);
   const id = f.id; if (!heldTex[id] && THUMB[id]) { heldTex[id] = new THREE.TextureLoader().load(THUMB[id]); heldTex[id].colorSpace = THREE.SRGBColorSpace; }
@@ -2145,7 +2433,7 @@ let rock = null;
 function rockClear() { if (rock) { evCool(); fishRoot.remove(rock); rock.geometry.dispose(); rock.material.dispose(); rock = null; } }
 function startleUpdate(dt) {
   if (!G || G.status !== 'play' || !G.cfg.startle) return;
-  if (!rock && U.uTime.value - G.t0 > G.nextStartle && eventsIdle()) {
+  if (!rock && ((U.uTime.value - G.t0 > G.nextStartle && eventsIdle()) || G.devRock)) { G.devRock = false;
     rock = new THREE.Mesh(new THREE.DodecahedronGeometry(.22, 0), new THREE.MeshPhongMaterial({ color: 0x7a8a9a, emissive: 0x28323e, flatShading: true }));
     const a = rand(0, 6.28), r = rand(0, RF * .7); rock.position.set(Math.cos(a) * r, TANK_H + 3, Math.sin(a) * r); rock.userData = { vy: 0, hit: false }; fishRoot.add(rock);
   }
@@ -2178,16 +2466,24 @@ function evStart(kind) {
   const L = G.level, N = G.things.filter(evOk).length; let m = [], d = 7, st = {};
   const pairsOf = n => { const r = []; for (let i = 0; i < n; i++) { const a = evFish(1).filter(x => !m.includes(x))[0]; if (!a) break; const b = evFish(12, a.pos).find(x => x !== a && !m.includes(x)); if (!b) break; m.push(a, b); r.push({ flip: 0, cd: 0 }); } return r; };
   if (kind === 'squabble') { st.pr = pairsOf(Math.min(4, 2 + (N / 22 | 0))); st.pr.forEach((pr, i) => { const a = m[i * 2], b = m[i * 2 + 1]; pr.c = a.pos.clone().add(b.pos).multiplyScalar(.5).clampLength(0, RF * .55); pr.c.y = clamp(pr.c.y, FLOOR_Y + 1, WATER_Y - 1); pr.th = rand(0, 6.28); pr.ph = rand(0, 6.28); pr.v = new THREE.Vector3(rand(-.25, .25), 0, rand(-.25, .25)); }); d = rand(6, 8); }
-  else if (kind === 'conga') { const lead = evFish(1)[0]; if (lead) m = [lead, ...evFish(34, lead.pos).filter(x => x !== lead).slice(0, Math.min(14, 8 + (L >> 1)))]; d = rand(22, 26); { const rest = m.slice(1), ord = [m[0]]; while (rest.length) { const last = ord[ord.length - 1]; let bi = 0; rest.forEach((o, k) => { if (o.pos.distanceTo(last.pos) < rest[bi].pos.distanceTo(last.pos)) bi = k; }); ord.push(rest.splice(bi, 1)[0]); } m = ord; }  st.th0 = Math.atan2(lead ? lead.pos.z : 0, lead ? lead.pos.x : 1); st.r0 = lead ? Math.hypot(lead.pos.x, lead.pos.z) : 1; st.y0 = lead ? lead.pos.y : 2.5; st.sgn = Math.random() < .5 ? 1 : -1; st.ph = [rand(0, 6.28), rand(0, 6.28)]; }
-  else if (kind === 'swirl') { m = evFish(Math.min(44, 12 + L * 3)); st.ang = rand(0, 6.28); st.dir = Math.random() < .5 ? 1 : -1; d = rand(6, 8); }
-  else if (kind === 'waltz') { st.pr = pairsOf(Math.min(4, 2 + (N / 25 | 0))); st.c = []; for (let i = 0; i < m.length; i += 2) { const c = m[i].pos.clone().add(m[i + 1].pos).multiplyScalar(.5).clampLength(0, RF * .6); c.y = clamp(c.y, FLOOR_Y + 1, WATER_Y - 1); st.c.push(c); } st.th = 0; d = rand(6, 8); }
-  else if (kind === 'hide') { if (!HOUSES.length) return false; m = evFish(Math.min(40, 14 + L * 2)); d = 4; }
+  else if (kind === 'conga') {   /* a long line that snakes through the tank on one big smooth path: each fish has a slot on the path (the place the leader was a moment ago), so the spacing is even and every nose points along the line */
+    const n = Math.min(10, 7 + (L >> 2)); st.dly = .9; d = rand(22, 26); const mk = () => ({ th0: rand(0, 6.283), sgn: Math.random() < .5 ? 1 : -1, ph: [rand(0, 6.28), rand(0, 6.28), rand(0, 6.28)] });
+    st.P = (u, out) => { const th = st.th0 + st.sgn * .62 * u, r = RF * (.7 + .13 * Math.sin(.28 * u + st.ph[0])) + .3 * Math.sin(1.25 * u + st.ph[2]), y = (FLOOR_Y + WATER_Y) / 2 + .95 * Math.sin(.43 * u + st.ph[1]) + .25 * Math.sin(1.3 * u); out.set(Math.cos(th) * r, y, Math.sin(th) * r); clampXZ(out, RF * .92); out.y = clamp(out.y, FLOOR_Y + .7, WATER_Y - .6); return out; };
+    { const boxes = themeBoxes(curTheme), pt = new THREE.Vector3(); let best = null;   /* of several paths take the one that runs clear of the decor (a line pushed out of a rock broke up) */
+      for (let c = 0; c < 14; c++) { const cand = mk(); Object.assign(st, cand); let hits = 0; for (let u = -n * st.dly; u < d - 2; u += .4) { st.P(u, pt); for (const b of boxes) if (b.min.y < 4.2 && pt.x > b.min.x - .55 && pt.x < b.max.x + .55 && pt.y > b.min.y - .55 && pt.y < b.max.y + .55 && pt.z > b.min.z - .55 && pt.z < b.max.z + .55) { hits++; break; } } if (!best || hits < best.hits) best = { hits, cand }; if (hits === 0) break; }
+      Object.assign(st, best.cand); }
+    const pool = evFish(40).slice(0, Math.max(n, 6)), slot = new THREE.Vector3(); m = [];
+    for (let i = 0; i < n && pool.length; i++) { st.P(-i * st.dly, slot); let bi = 0; pool.forEach((o, k) => { if (o.pos.distanceTo(slot) < pool[bi].pos.distanceTo(slot)) bi = k; }); m.push(pool.splice(bi, 1)[0]); }   /* the fish nearest to each slot takes it, so they hardly have to cross the tank to join the line */
+  }
+  else if (kind === 'swirl') { m = evFish(Math.min(44, 12 + L * 3)); st.ang = rand(0, 6.28); st.dir = Math.random() < .5 ? 1 : -1; d = rand(9, 11); st.my = (FLOOR_Y + WATER_Y) / 2 + .1; d = rand(13, 15); }   /* the wheel sits in the middle of the room it has: as high as it can go without touching the surface or the sand */
+  else if (kind === 'waltz') { st.pr = pairsOf(Math.min(4, 2 + (N / 25 | 0))); st.c = []; for (let i = 0; i < m.length; i += 2) { const c = m[i].pos.clone().add(m[i + 1].pos).multiplyScalar(.5).clampLength(0, RF * .6); c.y = clamp(c.y, FLOOR_Y + 1, WATER_Y - 1); st.c.push(c); } st.th = 0; st.ph = rand(0, 6.28); d = rand(13, 15); }
+  else if (kind === 'hide') { if (!HOUSES.length) return false; m = evFish(Math.min(HOUSES.length * 5, 12, 8 + L)); d = 4; }
   else if (kind === 'drop') { if (rock) return false; m = evFish(46); st.ph = 0; st.vy = 0; st.t1 = 0;
     evItemClear(); evItem = new THREE.Mesh(new THREE.SphereGeometry(.3, 20, 14), new THREE.MeshPhongMaterial({ color: 0xfff1c8, emissive: 0xd9a040, shininess: 90, specular: 0xffffff, fog: false }));
     const a = rand(0, 6.28), r = rand(0, RF * .45); evItem.position.set(Math.cos(a) * r, TANK_H + 2.6, Math.sin(a) * r); fishRoot.add(evItem); d = 99; }
   if (m.length < 2) { evItemClear(); return false; }
   EVT.cur = { kind, m, t: 0, d, st, bt: 0 };
-  for (const o of m) { o.evOn = kind !== 'drop'; o.evTight = kind === 'squabble' || kind === 'waltz' || kind === 'conga'; } return true;
+  for (const o of m) { o.evOn = kind !== 'drop'; o.evTight = kind === 'squabble' || kind === 'waltz' || kind === 'conga' || kind === 'swirl'; } return true;
 }
 function evEnd() { const e = EVT.cur; if (!e) return; for (const o of e.m) { o.evOn = false; o.evTight = false; o.evPin = null; o.wpT = 0; } evItemClear(); EVT.cur = null; G.nextEv = U.uTime.value - G.t0 + rand(...G.cfg.evGap); evCool(); }
 function dropUpdate(e, dt) {   // something is thrown in: the school bolts away, drifts back to look at it, the pearl floats up and a few fish head-butt it back and forth, then it pops and they scatter
@@ -2237,26 +2533,30 @@ function evUpdate(dt) {
       const f = Math.pow(.5 + .5 * Math.cos(pr.ph), .8), h = .3 + .62 * f, ux = Math.cos(pr.th), uz = Math.sin(pr.th), uy = .12 * Math.sin(pr.th * 2);
       for (const [o, sg] of [[a, 1], [b, -1]]) { evPinTo(o, new THREE.Vector3(pr.c.x + ux * h * sg, pr.c.y + uy * h * sg, pr.c.z + uz * h * sg), new THREE.Vector3(-ux * sg, -uy * sg, -uz * sg), 9, .9); o.boost = Math.max(o.boost, 1.2); }
       if (f < .14 && pr.cd <= 0) { pr.cd = .75; a.wiggle = b.wiggle = 1; P.copy(pr.c); burstFx.emit(P, 0xffffff, 9, .7); burstFx.emit(P, 0xffd24a, 5, .5); evBubble(P, '💢'); } }
-  } else if (kind === 'conga') {   // follow-the-leader: everyone starts where it is and falls in behind the fish ahead, so a long line forms by itself and snakes round the whole tank
-    const lead = m[0], pathAt = (u, out) => { const uu = Math.max(0, u), th = st.th0 + st.sgn * .55 * uu, r = RF * (.5 + .34 * Math.sin(.4 * uu + st.ph[0])), y = (FLOOR_Y + WATER_Y) / 2 + 1.5 * Math.sin(.37 * uu + st.ph[1]);
-      out.set(Math.cos(th) * r, y, Math.sin(th) * r); const k = Math.min(1, uu / 3), sm = k * k * (3 - 2 * k); out.x = st.r0 * Math.cos(st.th0) * (1 - sm) + out.x * sm; out.y = st.y0 * (1 - sm) + out.y * sm; out.z = st.r0 * Math.sin(st.th0) * (1 - sm) + out.z * sm; return out; };
-    const a = new THREE.Vector3(); pathAt(e.t + 1.6, a); evWp(lead, a.clone(), 1); lead.boost = Math.max(lead.boost, .55);
-    st.tr = st.tr || new Map();   // every fish drops a breadcrumb trail; the fish behind steers along the exact trail of the fish ahead, nose to tail
-    for (const o of m) { let t = st.tr.get(o); if (!t) { t = []; st.tr.set(o, t); } const l = t[t.length - 1]; if (!l || l.distanceTo(o.pos) > .12) { t.push(o.pos.clone()); if (t.length > 500) t.shift(); } }
-    for (let i = 1; i < m.length; i++) { const f = m[i - 1], o = m[i], gap = (f.rad * (f.sz || 1) + o.rad * (o.sz || 1)) * 1.05 + .2, tr = st.tr.get(f);
-      let T = null, acc = f.pos.distanceTo(tr[tr.length - 1] || f.pos);
-      for (let k = tr.length - 1; k > 0 && !T; k--) { const seg = tr[k].distanceTo(tr[k - 1]); if (acc + seg >= gap) T = tr[k].clone().lerp(tr[k - 1], (gap - acc) / (seg || 1)); else acc += seg; }
-      if (!T) T = tr.length ? tr[0].clone() : f.pos.clone();
-      const d = o.pos.distanceTo(T); evWp(o, T); o.boost = d < .15 ? .45 : clamp(.55 + d * 1.0, .3, 1.7); }
-  } else if (kind === 'swirl') {
-    st.ang += st.dir * dt * 1.0;
-    m.forEach((o, i) => { const rho = RF * (.38 + .5 * ((i * 0.618) % 1)), a = st.ang + st.dir * .7 + i * .35; evWp(o, new THREE.Vector3(Math.cos(a) * rho, o.pos.y + Math.sin(e.t * 2 + i) * .2, Math.sin(a) * rho), 1.4); o.boost = Math.max(o.boost, .5); });
-  } else if (kind === 'waltz') {   // two fish circle each other with their heads together at the middle (noses in, tails out, turning like a pinwheel)
-    st.th += dt * 2.4;
-    for (let i = 0; i + 1 < m.length; i += 2) { const c = st.c[i / 2], ca = Math.cos(st.th + i), sa = Math.sin(st.th + i), bob = Math.sin(e.t * 2.2 + i) * .12;
-      for (const [o, sg] of [[m[i], 1], [m[i + 1], -1]]) { evPinTo(o, new THREE.Vector3(c.x + ca * .5 * sg, c.y + bob * sg, c.z + sa * .5 * sg), new THREE.Vector3(-ca * sg * .9 - sa * sg * .4, -.05 * sg, -sa * sg * .9 + ca * sg * .4).normalize(), 6, .9); o.boost = Math.max(o.boost, 1); } }
+  } else if (kind === 'conga') {   /* every fish swims to its slot on the path and, once there, is carried along it facing the way it goes */
+    const T = new THREE.Vector3(), T2 = new THREE.Vector3(), fc = new THREE.Vector3();
+    m.forEach((o, i) => { const u = e.t - i * st.dly; st.P(u, T); st.P(u + .12, T2); fc.subVectors(T2, T); fc.y = clamp(fc.y, -.12, .12) * (fc.length() > 0 ? 1 : 0); fc.normalize(); if (e.d - e.t < 2.5) { o.evPin = null; return; }
+      T.x += -fc.z * .2 * Math.sin(e.t * 1.5 + i * 1.9); T.z += fc.x * .2 * Math.sin(e.t * 1.5 + i * 1.9); T.y += .14 * Math.sin(e.t * 2 + i * 1.3);   /* each fish drifts a little to the side and up and down: a loose, living line, not a rigid chain */
+      evPinTo(o, T.clone(), fc.clone(), 4.5, 1.4); });
+  } else if (kind === 'swirl') {   /* a carousel: the whole school swims round and round in big rings that face the player (two rings, one inside the other), like a wheel turning in the middle of the tank */
+    st.ang += st.dir * dt * (.6 + 1.1 * Math.sin(Math.PI * clamp(e.t / e.d, 0, 1))); const rt0 = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0).setY(0).normalize(), fw0 = new THREE.Vector3(-rt0.z, 0, rt0.x), ph2 = Math.sin(e.t * .45) * .7, rt = rt0.clone().multiplyScalar(Math.cos(ph2)).addScaledVector(fw0, Math.sin(ph2)), fw = new THREE.Vector3(-rt.z, 0, rt.x), T = new THREE.Vector3(), fc = new THREE.Vector3(), cnt = [0, 0], nIn = Math.max(1, Math.round(m.length * .31)), tot = [m.length - nIn, nIn];   /* the inner ring is the shorter way round, so it takes its share of the fish: both rings end up with the same gap between neighbours */
+    m.forEach((o, i) => { const r = i < nIn ? 1 : 0, k = cnt[r]++, n2 = Math.max(1, tot[r]), R2 = (r ? 1.05 : 2.3) * (1 + .06 * Math.sin(e.t * 1.6 + r)), a = st.ang * (r ? 1.25 : .9) + k * 6.283 / n2 + r * .5, ex = .63;   /* wider rings, and flat enough that the top and bottom of the wheel are not squashed against the water and the sand (that squashing is what pushed the fish together) */
+      T.copy(rt).multiplyScalar(Math.cos(a) * R2).addScaledVector(fw, Math.sin(i * 2.1) * .35); T.y = st.my + Math.sin(a) * R2 * ex; clampXZ(T, RF * .9); T.y = clamp(T.y, FLOOR_Y + .8, WATER_Y - .6);
+      fc.copy(rt).multiplyScalar(-Math.sin(a) * st.dir).setY(Math.cos(a) * ex * st.dir).normalize();
+      if (e.d - e.t < 1.5) { o.evPin = null; return; } evPinTo(o, T.clone(), fc.clone(), 4.5, 1.8); if (Math.random() < dt * 7) burstFx.emit(o.pos, 0xbfeaff, 1, .3); });   /* a wake of bubbles behind every fish */
+  } else if (kind === 'waltz') {   /* a dance: each pair spins round each other in a ring that faces the player (like two dolphins chasing round a hoop), rings side by side in the middle of the tank */
+    st.th += dt * (1.8 + 1.5 * Math.sin(Math.PI * clamp(e.t / e.d, 0, 1))); const T = new THREE.Vector3(), fc = new THREE.Vector3(), rt0 = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0).setY(0).normalize(), fw0 = new THREE.Vector3(-rt0.z, 0, rt0.x), pa = e.t * .55, rt = rt0.clone().multiplyScalar(Math.cos(pa)).addScaledVector(fw0, Math.sin(pa)), np = Math.floor(m.length / 2);
+    for (let i = 0; i + 1 < m.length; i += 2) { const k = i / 2, big = np > 2, col = big ? k % 2 : k, ncol = big ? 2 : np, row = big ? Math.floor(k / 2) : 0, cx = (col - (ncol - 1) / 2) * (big ? 2.2 : 2.4), cy = (FLOOR_Y + WATER_Y) / 2 + (big ? (row - .5) * 1.7 : 0) + Math.sin(e.t * .5) * .2, R2 = (big ? .6 : .78) + .1 * Math.sin(e.t * 1.1);   /* many pairs stand in a tidy grid (two columns, two rows), all dancing exactly together: a chorus, easy to read at a glance */   /* the ring tilts round slowly (a 3D loop), speeds up to the middle of the dance and breathes in and out */
+      for (const [o, sg] of [[m[i], 1], [m[i + 1], -1]]) { const a = st.th + (sg > 0 ? 0 : Math.PI), dr = 1; T.copy(rt).multiplyScalar(cx + Math.cos(a) * R2); T.y = cy + Math.sin(a) * R2 * .85; clampXZ(T, RF * .9); T.y = clamp(T.y, FLOOR_Y + .7, WATER_Y - .6);
+        fc.copy(rt).multiplyScalar(-Math.sin(a) * dr).setY(Math.cos(a) * .85 * dr).normalize(); if (e.d - e.t < 1.5) { o.evPin = null; continue; } evPinTo(o, T.clone(), fc.clone(), 4.5, 1.6);
+        if (Math.random() < dt * 9) burstFx.emit(o.pos, sg > 0 ? 0xffb0d8 : 0xbfeaff, 1, .3); } }
+    /* the other fish keep clear of the dancers, so the dance has room and can be seen */
+    const cc = new THREE.Vector3(), ra = new THREE.Vector3(); for (let i = 0; i + 1 < m.length; i += 2) { cc.copy(m[i].pos).add(m[i + 1].pos).multiplyScalar(.5); for (const q of G.things) { if (q.kind !== 'fish' || !q.alive || q.big || m.includes(q)) continue; ra.subVectors(q.pos, cc); const d = ra.length(); if (d < 1.9) { ra.normalize(); q.pos.addScaledVector(ra, dt * (1.9 - d) * 1.4); q.dir.lerp(ra, Math.min(1, dt * 2)).normalize(); } } }
   } else if (kind === 'hide') {
-    m.forEach(o => { if (!o.evH) o.evH = HOUSES.reduce((b, h) => (!b || Math.hypot(h.c.x - o.pos.x, h.c.z - o.pos.z) < Math.hypot(b.c.x - o.pos.x, b.c.z - o.pos.z)) ? h : b, null); const h = o.evH; evWp(o, new THREE.Vector3(h.c.x + rand(-.05, .05), h.c.y, h.c.z + rand(-.05, .05)), 1.5); o.boost = Math.max(o.boost, 1); });
+    const cnt = e.st.hc || (e.st.hc = new Map());   /* a house takes a few fish at a time and each gets its own spot in front of it (side by side, above one another): they used to all aim at one point and stand there on top of each other */
+    m.forEach(o => { if (!o.evH) { const near = HOUSES.slice().sort((a, b) => Math.hypot(a.c.x - o.pos.x, a.c.z - o.pos.z) - Math.hypot(b.c.x - o.pos.x, b.c.z - o.pos.z)), h0 = near.find(h => (cnt.get(h) || 0) < 5) || near[0]; o.evH = h0; o.evSlot = cnt.get(h0) || 0; cnt.set(h0, o.evSlot + 1); }
+      const h = o.evH, i = o.evSlot || 0, ax = h.axis, sd = new THREE.Vector3(-ax.z, 0, ax.x).normalize(), q = h.c.clone().addScaledVector(sd, ((i % 3) - 1) * .42); q.y += (((i / 3) | 0) % 2 ? .3 : -.1) + (h.door ? 0 : .1); q.addScaledVector(ax, (h.door ? .12 : .5) + ((i / 6) | 0) * .4);
+      evWp(o, q, 1.5); o.boost = Math.max(o.boost, 1); });
     if (e.t < .3 && bub) P.set(0, WATER_Y - .8, 0);
   }
 }
@@ -2264,63 +2564,99 @@ function evUpdate(dt) {
 
 /* ---- fish-swarm obstacle (L9+): a big school pours out of a house / cave, whirls round the tank in a thick ribbon hiding the view, then streams back home ---- */
 const swarm = { on: false, meshes: [], fish: [], t: 0, D: 12, H: new THREE.Vector3(), th0: 0, sgn: 1, w: .8, ph: [0, 0, 0] };
-function makeSwarmHouse(ang) {   // a little rock cave on the floor near the glass, its dark doorway turned to the middle of the tank: the school pours out of it and goes back in
-  const g = new THREE.Group(), rock = new THREE.MeshPhongMaterial({ color: 0xf0a468, flatShading: true, emissive: 0x8a4420, emissiveIntensity: 1, shininess: 20, fog: false }), dark = new THREE.MeshBasicMaterial({ color: 0x03060c, fog: false });
-  const dome = new THREE.Mesh(new THREE.SphereGeometry(.66, 14, 9, 0, Math.PI * 2, 0, Math.PI / 2), rock); dome.scale.set(1.15, .9, 1); g.add(dome);
-  const door = new THREE.Mesh(new THREE.CircleGeometry(.27, 24), dark); door.scale.set(1, 1.15, 1); door.position.set(0, .27, .585); door.rotation.x = -.18; g.add(door);
-  const glow = new THREE.Mesh(new THREE.RingGeometry(.27, .5, 28), new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: .35, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide })); glow.scale.set(1, 1.15, 1); glow.position.set(0, .27, .6); glow.rotation.x = -.18; g.add(glow);
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(.285, .06, 8, 24), rock); rim.scale.set(1, 1.15, 1); rim.position.set(0, .27, .585); rim.rotation.x = -.18; g.add(rim);
-  for (let i = 0; i < 6; i++) { const a = (i / 6) * 6.283 + .4, r = new THREE.Mesh(new THREE.DodecahedronGeometry(rand(.1, .18), 0), rock); r.position.set(Math.cos(a) * .72 * 1.1, .06, Math.sin(a) * .66); r.rotation.set(rand(0, 3), rand(0, 3), 0); g.add(r); }
-  const rr = RF * .72; g.position.set(Math.cos(ang) * rr, FLOOR_Y + .02, Math.sin(ang) * rr); g.lookAt(0, g.position.y, 0);   // the doorway (local +z) faces the middle
-  g.scale.setScalar(1.3); g.updateMatrixWorld(true); g.userData.mouth = g.localToWorld(new THREE.Vector3(0, .3, .7)); g.scale.setScalar(.001); g.renderOrder = 5; scene.add(g); return g;
+function buildSwarmCave() {   // a rock cave: a lumpy mound, an arched doorway framed with stones (dark inside, a soft glow), moss on top, boulders round the back. Doorway on local +z, origin on the floor
+  const g = new THREE.Group(), mk = (c, e) => new THREE.MeshPhongMaterial({ color: c, flatShading: true, emissive: e, emissiveIntensity: 1, shininess: 12, fog: false });
+  const rock = mk(0x9a90b4, 0x2c2a44), rock2 = mk(0x7f7aa0, 0x232038), moss = mk(0x6cc58a, 0x1d4a30), dark = new THREE.MeshBasicMaterial({ color: 0x02050a, fog: false, side: THREE.DoubleSide });
+  const bump = (geo, k, sd) => { const P = geo.attributes.position, v = new THREE.Vector3(); for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i); const n = 1 + k * (Math.sin(v.x * 4.3 + sd) * Math.cos(v.z * 3.9 + sd * 1.7) * .6 + Math.sin(v.y * 5.1 + sd * .7) * .4); P.setXYZ(i, v.x * n, v.y * n, v.z * n); } geo.computeVertexNormals(); return geo; };
+  const mound = new THREE.Mesh(bump(new THREE.IcosahedronGeometry(1, 2), .09, 1.3), rock); mound.scale.set(1.25, .9, 1.05); g.add(mound);
+  const door = new THREE.Mesh(new THREE.ShapeGeometry((() => { const sh = new THREE.Shape(); sh.moveTo(-.36, 0); sh.lineTo(-.36, .34); sh.absarc(0, .34, .36, Math.PI, 0, true); sh.lineTo(.36, 0); sh.closePath(); return sh; })(), 20), dark); door.position.set(0, .02, .985); g.add(door);
+  const gl = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), new THREE.MeshBasicMaterial({ map: fvSoft(), color: 0x7fd8ff, transparent: true, opacity: .4, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); gl.position.set(0, .34, 1.0); g.add(gl);
+  const stone = (x, y, z, r, m2) => { const q = new THREE.Mesh(bump(new THREE.IcosahedronGeometry(r, 1), .16, x * 7 + y * 3), m2 || rock); q.position.set(x, y, z); q.scale.set(1, .85, .9); q.rotation.set(rand(0, 3), rand(0, 3), 0); g.add(q); };
+  for (let k = 0; k <= 8; k++) { const a = Math.PI * k / 8; stone(Math.cos(a) * .43, .36 + Math.sin(a) * .5, .93 + Math.sin(a) * .02, .1 + .05 * Math.sin(k * 2.3) ** 2); }
+  stone(-.43, .2, .94, .13); stone(.43, .2, .94, .13); stone(-.45, .02, .95, .12); stone(.45, .02, .95, .12);
+  for (const [x, z, r] of [[-.5, -.2, .17], [.35, -.35, .2], [.65, .1, .15], [-.1, .05, .18], [-.75, .25, .13]]) { const y = .9 * Math.sqrt(Math.max(.05, 1 - x * x / 1.5625 - z * z / 1.1025)) - .03; const m = new THREE.Mesh(bump(new THREE.IcosahedronGeometry(r, 1), .2, x * 5), moss); m.position.set(x, y, z); m.scale.set(1, .55, 1); g.add(m); }
+  for (let k = 0; k < 7; k++) { const a = 2.3 + k / 6 * 3.7, r = .12 + .1 * Math.abs(Math.sin(k * 1.9)); stone(Math.cos(a) * 1.3, r * .4, Math.sin(a) * 1.1, r, rock2); }
+  for (const [x, z, r] of [[-.45, 1.3, .08], [.5, 1.4, .1], [.15, 1.55, .07]]) stone(x, r * .3, z, r, rock2);
+  g.userData.mouthL = new THREE.Vector3(0, .34, 1.15); return g;
 }
-function swarmClear() { for (const m of swarm.meshes) { fishRoot.remove(m); m.dispose(); m.material.dispose(); } if (swarm.house) { scene.remove(swarm.house); swarm.house.traverse(n => { if (n.geometry) n.geometry.dispose(); }); swarm.house = null; } swarm.meshes = []; swarm.fish = []; swarm.on = false; }
-function swOff(f, u, out) {   // a fish's place in the school: its offset from the leader turns round the leader the same way for the whole school (a whirl, faster in the middle)
-  const k = 1 + .3 * Math.sin(1.3 * u + f.ph), r = Math.hypot(f.off.x, f.off.z) * k, a = swarm.sgn * 2.6 * u / (1 + .8 * r), c = Math.cos(a), sn = Math.sin(a);
-  out.x += (f.off.x * c - f.off.z * sn) * k; out.z += (f.off.x * sn + f.off.z * c) * k; out.y += f.off.y * k;
+function swarmHouseRemove() {
+  const S = swarm; if (S.house) { scene.remove(S.house); S.house.traverse(n => { if (n.geometry) n.geometry.dispose(); }); S.house = null; }
+  if (S.hidden && S.hidden.length) { const g = themeG[S.hidTheme]; for (const c of S.hidden) c.visible = true; if (g) { delete g.userData.cols; delete g.userData.allBoxes; if (g.userData.hAll) { g.userData.houses.length = 0; g.userData.houses.push(...g.userData.hAll); } } } S.hidden = [];
+  if (S.hcols && S.hbox) { const i = S.hcols.indexOf(S.hbox); if (i >= 0) S.hcols.splice(i, 1); } S.hcols = S.hbox = null;
 }
-const SWARM = { geo: null, tex: null, p: null };
-function loadSwarmFish() {   // one ordinary Unity fish (Fish_2, cut down to ~410 triangles by scripts/unity-fish-to-glb.py --ratio 0.1), baked into a static mesh in grey: the whole school is made of it
+function decorBoxes(i) {   /* every decoration of the look (soft ones like kelp and corals too), as boxes in tank space: the cave must not stand in any of them */
+  const g = themeG[i]; if (!g) return []; if (g.userData.allBoxes) return g.userData.allBoxes;
+  const s0 = tank.scale.clone(); tank.scale.set(1, 1, 1); tank.updateMatrixWorld(true);
+  const out = [], bx = new THREE.Box3(), sz = new THREE.Vector3();
+  for (const c of g.children) { if (!c.visible) continue; bx.setFromObject(c); if (bx.isEmpty()) continue; bx.getSize(sz); if (Math.max(sz.x, sz.y, sz.z) < .2 || (sz.y < .12 && Math.max(sz.x, sz.z) > 3)) continue; out.push(bx.clone()); }
+  tank.scale.copy(s0); tank.updateMatrixWorld(true); g.userData.allBoxes = out; return out;
+}
+function swarmHouseSetup() {   /* the cave stands in the tank for the whole level (only levels with the swarm): on the far side from the camera, its doorway to the front, clear of the decor and the pipe; the other fish swim round it */
+  swarmHouseRemove(); if (!G || !G.cfg || !G.cfg.swarm) return;
+  const tg = themeG[curTheme], hide = c => { if (!c.visible) return; c.visible = false; swarm.hidden.push(c); }, dropCaches = () => { if (!tg) return; delete tg.userData.cols; delete tg.userData.allBoxes; if (tg.userData.hAll) { tg.userData.houses.length = 0; tg.userData.houses.push(...tg.userData.hAll.filter(h => !h.src || h.src.g.visible)); } };
+  swarm.hidden = []; swarm.hidTheme = curTheme; if (tg) { if (!tg.userData.hAll && tg.userData.houses) tg.userData.hAll = tg.userData.houses.slice(); for (const c of tg.children) if (c.userData.pl && Math.random() < .35) hide(c); dropCaches(); }   /* levels with the cave have fewer decorations: a third are left out, and any that would stand in the cave */
+  const boxes0 = themeBoxes(curTheme), decor = decorBoxes(curTheme), cam0 = Math.atan2(cam.position.z, cam.position.x) + Math.PI, pipe = G.cfg.tube ? (tubeW(_pa.set(3.45, 1.8, 0)), _pa.clone()) : null, FP = 1.55;
+  let best = null;
+  for (let i = 0; i < 72; i++) for (const rf of [.5, .58, .66]) {
+    const a = i / 72 * 6.2832, rr = RF * rf, x = Math.cos(a) * rr, z = Math.sin(a) * rr; let bad = 0;
+    for (let t = 0; t < 12; t++) { const px = x + Math.cos(t / 12 * 6.2832) * FP * .95, pz = z + Math.sin(t / 12 * 6.2832) * FP * .95; if (Math.hypot(px, pz) > wallAt(px, pz, FLOOR_Y + .3) - .1) { bad += 3; break; } }
+    if (pipe && Math.hypot(x - pipe.x, z - pipe.z) < 2.1) bad += 2;
+    for (const b of decor) { if (b.min.y > 1.7) continue; const dx = Math.max(b.min.x - x, 0, x - b.max.x), dz = Math.max(b.min.z - z, 0, z - b.max.z); if (Math.hypot(dx, dz) < FP) bad += 1; }
+    const sc = bad * 10 + Math.abs(((a - cam0 + 9.4248) % 6.2832) - 3.1416) + Math.abs(rf - .58);
+    if (!best || sc < best.sc) best = { sc, a, rr };
+  }
+  const x = Math.cos(best.a) * best.rr, z = Math.sin(best.a) * best.rr;
+  if (tg) { const bb = new THREE.Box3(), s0 = tank.scale.clone(); tank.scale.set(1, 1, 1); tank.updateMatrixWorld(true); for (const c of tg.children) { if (!c.visible) continue; bb.setFromObject(c); if (bb.isEmpty() || bb.min.y > 1.7) continue; const dx = Math.max(bb.min.x - x, 0, x - bb.max.x), dz = Math.max(bb.min.z - z, 0, z - bb.max.z); if (Math.hypot(dx, dz) < FP && Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) < 3) hide(c); } tank.scale.copy(s0); tank.updateMatrixWorld(true); dropCaches(); }
+  const boxes = themeBoxes(curTheme), h = buildSwarmCave();
+  h.position.set(x, FLOOR_Y + .02, z); h.lookAt(0, h.position.y, 0); h.scale.setScalar(SWARM_HS); h.updateMatrixWorld(true); h.userData.mouth = h.localToWorld(h.userData.mouthL.clone());
+  h.renderOrder = 5; scene.add(h); swarm.house = h;
+  const bx = new THREE.Box3().setFromObject(h); bx.min.y = FLOOR_Y; bx.max.y = FLOOR_Y + 1.1; bx.expandByScalar(.05); swarm.hbox = bx; swarm.hcols = boxes; boxes.push(bx);
+}
+function swarmClear() { for (const m of swarm.meshes) { fishRoot.remove(m); m.dispose(); m.material.dispose(); } swarm.meshes = []; swarm.fish = []; swarm.on = false; }
+function swOff(f, u, out, F, wgt) {   /* a fish's place in the school: a dense, elongated body that moves as one (offsets are in the leader's own frame: along its heading, across, up), so the fish keep their neighbours like a real shoal; it grows out of a single-file stream at the doorway and gathers back into it */
+  const k = 1 + .05 * Math.sin(1.3 * u + f.ph) * wgt, ax = f.off.x * SWARM_LX * k * wgt, az = f.off.z * (SWARM_LZ * k * wgt + .34 * (1 - wgt));
+  out.x += F.x * ax - F.z * az; out.z += F.z * ax + F.x * az; out.y += f.off.y * (SWARM_LY * k * wgt + .26 * (1 - wgt)) + Math.sin(u * 2.1 + f.ph) * .06 * wgt;   /* at the doorway the fish come out side by side and one above another, not in a line */
+}
+const SWARM = { geo: null, tex: null, p: null }, SWARM_KEY = 'brown_stripe', SWARM_H = .85, SWARM_W = .7, SWARM_HS = 1, SWARM_LX = 2.2, SWARM_LY = .8, SWARM_LZ = .75;   /* SWARM_HS: size of the cave */
+function loadSwarmFish() {   // one of the ordinary fish (brown_stripe, ~1000 triangles), taken from its static mesh and drawn in grey: the whole school is made of it
   if (SWARM.p) return SWARM.p;
-  SWARM.p = (async () => {
-    const gltf = await new GLTFLoader().loadAsync(new URL('models/unity/swarm_fish.glb', document.baseURI).href), obj = gltf.scene, wrap = new THREE.Group(); wrap.add(SkeletonUtils.clone(obj)); wrap.rotation.y = Math.PI * 1.5; wrap.updateMatrixWorld(true);   // same turn as a game fish: head towards +x
-    let map = null; obj.traverse(n => { if (n.isMesh && !map) map = n.material.map; }); const pos = [], uv = [], idx = []; let off = 0, flip = false; wrap.traverse(m => { if (!m.isSkinnedMesh) return; m.skeleton.update(); const pa = m.geometry.attributes.position, ua = m.geometry.attributes.uv, v = new THREE.Vector3();
-      for (let k = 0; k < pa.count; k++) { v.fromBufferAttribute(pa, k); m.applyBoneTransform(k, v); v.applyMatrix4(m.matrixWorld); pos.push(v.x, v.y, v.z); uv.push(ua.getX(k), ua.getY(k)); }
-      const ia = m.geometry.index; for (let k = 0; k < ia.count; k++) idx.push(ia.getX(k) + off); off += pa.count; });
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeBoundingBox();
-    const b = g.boundingBox, c = b.getCenter(new THREE.Vector3()), L = b.max.x - b.min.x; g.translate(-c.x, -c.y, -c.z); g.scale(1 / L, 1 / L, 1 / L); g.computeVertexNormals(); void flip;   // length 1, centred
-    const im = map.image, cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const cg = cv.getContext('2d'); try { cg.filter = 'grayscale(1) contrast(.9) brightness(1.25)'; } catch (e) { } cg.drawImage(im, 0, 0);
-    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.flipY = map.flipY; t.anisotropy = 4; SWARM.geo = g; SWARM.tex = t;
-  })().catch(e => { console.warn('swarm fish not loaded', e); SWARM.p = null; });
+  SWARM.p = loadFish([SWARM_KEY]).then(() => {
+    const M = MODEL3D['fish_' + SWARM_KEY]; if (!M) throw new Error('no swarm model');
+    const g = M.geo.clone(); for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'uv' && k !== 'normal') g.deleteAttribute(k);
+    g.computeBoundingBox(); const b = g.boundingBox, c = b.getCenter(new THREE.Vector3()), L = b.max.x - b.min.x; g.translate(-c.x, -c.y, -c.z); g.scale(1 / L, SWARM_H / L, SWARM_W / L);   /* length 1, centred, nose to +x; flattened: the real fish are plump and tall-finned, a school of them has to be slim */
+    const im = M.img, cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const cg = cv.getContext('2d'); try { cg.filter = 'grayscale(1) contrast(1.25) brightness(1.05)'; } catch (e) { } cg.drawImage(im, 0, 0);
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.flipY = M.tex.flipY; t.anisotropy = 4; SWARM.geo = g; SWARM.tex = t;
+  }).catch(e => { console.warn('swarm fish not loaded', e); SWARM.p = null; });
   return SWARM.p;
 }
-loadSwarmFish();
+setTimeout(loadSwarmFish, 6000); setTimeout(loadOctopus, 5000); setTimeout(loadClam, 5200); setTimeout(loadJelly, 5500);   /* after the first level is up */
 const _swGeo = new Map();
 function swarmGeo(art) { if (_swGeo.has(art)) return _swGeo.get(art); const L = art.hx * 2.1, g = SWARM.geo.clone(); g.scale(L, L, L); g.userData.hx = L / 2; _swGeo.set(art, g); return g; }   // the model, as long as the species' picture was
 function swarmMat(art) {   // grey, lit; the tail sways in the vertex shader, each fish at its own phase
-  const hx = swarmGeo(art).userData.hx, m = new THREE.MeshPhongMaterial({ map: SWARM.tex, alphaTest: .5, emissive: 0x6a7480, emissiveIntensity: .55, shininess: 40, specular: 0x334455, side: THREE.DoubleSide, fog: false });
+  const hx = swarmGeo(art).userData.hx, m = new THREE.MeshPhongMaterial({ map: SWARM.tex, alphaTest: .5, emissive: 0x7a828a, emissiveIntensity: .22, shininess: 40, specular: 0x334455, side: THREE.DoubleSide, fog: false });
   m.onBeforeCompile = sh => { sh.uniforms.uTime = U.uTime; sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>',
     `vec3 transformed = vec3(position);\n #ifdef USE_INSTANCING\n float swPh = instanceMatrix[3].x * 3.1 + instanceMatrix[3].z * 2.3 + instanceMatrix[3].y * 1.7;\n #else\n float swPh = 0.;\n #endif\n float swT = smoothstep(.15, -1., position.x / ${hx.toFixed(4)});\n transformed.z += sin(uTime * 14. - position.x / ${hx.toFixed(4)} * 5. + swPh) * swT * ${(hx * .2).toFixed(4)};`); };
   return m;
 }
 function swarmStart() {
-  if (!SWARM.geo) return; swarmClear(); const N = 500, D = 18;   // fixed: 500 fish, each out for 18 s
+  if (!SWARM.geo || !swarm.house) return; swarmClear(); const N = 600, D = 18;   // fixed: 500 fish, each out for 18 s
   const small = []; for (const i of BASE) if (!((SPECIES[i].len || 0) >= .8) && FISHART[SPECIES[i].id]) small.push(i); const types = shuffle(small).slice(0, 2);
-  const house = makeSwarmHouse(Math.atan2(cam.position.z, cam.position.x) + (Math.random() < .5 ? -1 : 1) * rand(.75, .95)), H = house.userData.mouth.clone();   // every school comes out of its own cave
-  Object.assign(swarm, { on: true, t: 0, house, D, H, th0: Math.atan2(H.z, H.x), sgn: Math.random() < .5 ? 1 : -1, w: .9, ph: [rand(0, 6.28), rand(0, 6.28), rand(0, 6.28)], N, spread: 3 });
+  const house = swarm.house; if (!house) return; const H = house.userData.mouth.clone(), nrm = new THREE.Vector3(0, 0, 1).transformDirection(house.matrixWorld), Hin = house.localToWorld(new THREE.Vector3(0, .34, .55)), E = Hin.clone().addScaledVector(nrm, 2.0 * SWARM_HS + .4);   // the school starts inside the cave behind the doorway, leaves along its normal and comes back the same way   // the school comes out of the cave standing in the tank
+  Object.assign(swarm, { on: true, t: 0, house, D, H, Hin, E, th0: Math.atan2(E.z, E.x), sgn: Math.random() < .5 ? 1 : -1, w: .9, ph: [rand(0, 6.28), rand(0, 6.28), rand(0, 6.28)], N, spread: 4.5 });
   const live = G.things.filter(o => o.kind === 'fish' && o.alive && !o.big), needL = live.filter(o => G.need && G.need.has(o.type)), pickAnchor = () => (needL.length && Math.random() < .55 ? pick(needL) : pick(live));   // half of the swarm clings to the fish you are looking for
   types.forEach((ty, k) => { const art = FISHART[SPECIES[ty].id], n = k ? N >> 1 : N - (N >> 1);
     const mat = swarmMat(art);
     const m = new THREE.InstancedMesh(swarmGeo(art), mat, n); m.frustumCulled = false; m.renderOrder = 6; const c = new THREE.Color();
-    for (let i = 0; i < n; i++) { m.setColorAt(i, c.setRGB(1, 1, 1).multiplyScalar(rand(.8, 1.1))); swarm.fish.push({ m, i, d: .5 + rand(0, swarm.spread), off: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize().multiplyScalar(Math.cbrt(Math.random()) * rand(.9, 2.3)), ph: rand(0, 6.28), sz: rand(.5, .75), anchor: live.length && Math.random() > .25 ? pickAnchor() : null, ar: rand(.35, 1.0), aw: rand(.7, 1) }); }
+    for (let i = 0; i < n; i++) { m.setColorAt(i, c.setRGB(1, 1, 1).multiplyScalar(rand(.8, 1.1))); swarm.fish.push({ m, i, d: .5 + rand(0, swarm.spread), off: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize().multiplyScalar(Math.cbrt(Math.random())), ph: rand(0, 6.28), sz: rand(.46, .69), anchor: live.length && Math.random() < .2 ? pickAnchor() : null, ar: rand(.35, 1.0), aw: rand(.7, 1) }); }
     m.instanceColor.needsUpdate = true; fishRoot.add(m); swarm.meshes.push(m); });
 }
-const _swA = new THREE.Vector3(), _sw = new THREE.Vector3(), _sw2 = new THREE.Vector3(), _swM = new THREE.Matrix4(), _swQ = new THREE.Quaternion(), _swE = new THREE.Euler(), _swS = new THREE.Vector3();
-function swarmPath(u, out) {   // the leader's trajectory u seconds after leaving home: out of the house, whirl round, back in
-  const S = swarm, T1 = 2.4, D = S.D, th = S.th0 + S.sgn * S.w * u, r = RF * (.6 + .26 * Math.sin(.9 * u + S.ph[0])), y = (FLOOR_Y + WATER_Y) / 2 + 1.45 * Math.sin(.65 * u + S.ph[1]);
+const _swF = new THREE.Vector3(), _swL = new THREE.Vector3(), _swH = new THREE.Vector3(), _swA = new THREE.Vector3(), _sw = new THREE.Vector3(), _sw2 = new THREE.Vector3(), _swM = new THREE.Matrix4(), _swQ = new THREE.Quaternion(), _swE = new THREE.Euler(), _swS = new THREE.Vector3();
+function swarmPath(u, out) {   // the leader's trajectory u seconds after leaving home: out of the doorway (straight along its normal), whirl round, back in the same way
+  const S = swarm, TA = 1.1, TB = 2.4, D = S.D, th = S.th0 + S.sgn * S.w * u, r = RF * (.6 + .26 * Math.sin(.9 * u + S.ph[0])), y = (FLOOR_Y + WATER_Y) / 2 + 1.45 * Math.sin(.65 * u + S.ph[1]);
   out.set(Math.cos(th) * r, y, Math.sin(th) * r);
   const sm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
-  if (u < T1) out.lerpVectors(S.H, out, sm(u / T1)); else if (u > D - T1) out.lerpVectors(out, S.H, sm((u - (D - T1)) / T1));
+  if (u < TA) out.lerpVectors(S.Hin, S.E, sm(u / TA)); else if (u < TA + TB) out.lerpVectors(S.E, out, sm((u - TA) / TB));
+  else if (u > D - TA) out.lerpVectors(S.E, S.Hin, sm((u - (D - TA)) / TA)); else if (u > D - TA - TB) out.lerpVectors(out, S.E, sm((u - (D - TA - TB)) / TB));
   return out;
 }
 function swarmFit(v) { const r = Math.hypot(v.x, v.z), lim = wallAt(v.x, v.z, v.y) - .3; if (r > lim) { v.x *= lim / r; v.z *= lim / r; } v.y = clamp(v.y, FLOOR_Y + .25, WATER_Y - .25); }   // keep every swarm fish inside the glass and under the surface
@@ -2328,16 +2664,16 @@ function swarmUpdate(dt) {
   if (!G || G.status !== 'play') return; const now = U.uTime.value - G.t0;
   if (!swarm.on) { if (G.cfg.swarm && tube.state !== 'rumble' && tube.state !== 'emit' && now > G.nextSwarm && evFreeNow() && !EVT.cur && !feed.on && !rock && !introOn && !guide.on && !camTutBusy()) swarmStart(); return; }
   swarm.t += dt; const S = swarm, T = S.t, tot = S.D + S.spread + .5;
-  if (S.house) { const ci = clamp(T / .5, 0, 1), co = clamp((tot - T) / .6, 0, 1), k = Math.min(ci, co); S.house.scale.setScalar(Math.max(.001, 1.3 * k * k * (3 - 2 * k))); }   // the cave pops up before the school, and sinks away after it
   if (T > tot) { swarmClear(); evCool(); G.nextSwarm = now + rand(...G.cfg.swarmGap); return; }
   for (const f of S.fish) {
     const u = T - f.d; if (u <= 0 || u >= S.D) { _swS.setScalar(0); _swM.compose(_sw.set(0, -9, 0), _swQ.identity(), _swS); f.m.setMatrixAt(f.i, _swM); continue; }
-    swarmPath(u, _sw); swarmPath(u + .06, _sw2); const k = 1 + .3 * Math.sin(1.3 * u + f.ph), vis = Math.min(1, u / .5, (S.D - u) / .5);
-    swOff(f, u, _sw); swOff(f, u + .06, _sw2); if (f.anchor && f.anchor.alive && !f.anchor.gone) {   // cling to a real fish: swirl round it wherever it goes (also while the school crowds the food)
+    swarmPath(u, _sw); swarmPath(u + .06, _sw2); _swL.subVectors(_sw2, _sw); const vis = Math.min(1, u / .2, (S.D - u) / .2), wg = clamp(Math.min((u - .9) / 2.4, (S.D - u - .9) / 2.4), 0, 1), wgt = wg * wg * (3 - 2 * wg);
+    _swF.set(_swL.x, 0, _swL.z); if (_swF.lengthSq() < 1e-8) _swF.set(1, 0, 0); _swF.normalize(); swOff(f, u, _sw, _swF, wgt); _sw2.copy(_sw); if (f.anchor && f.anchor.alive && !f.anchor.gone) {   // cling to a real fish: swirl round it wherever it goes (also while the school crowds the food)
       const ramp = clamp(Math.min((u - 1.2) / 2, (S.D - u - 1.2) / 2), 0, 1) * f.aw, A = f.anchor.pos, q = (uu, out, base) => { const a = f.ph + S.sgn * uu * 1.7; return base.lerp(out.set(A.x + Math.cos(a) * f.ar, A.y + Math.sin(a * 1.3) * f.ar * .7, A.z + Math.sin(a) * f.ar), ramp); };
       q(u, _swA, _sw); q(u + .06, _swA, _sw2); }
     swarmFit(_sw); swarmFit(_sw2); _sw2.sub(_sw);
-    const yaw = Math.atan2(-_sw2.z, _sw2.x) + Math.sin(T * 9 + f.ph) * .16, pitch = Math.asin(clamp(_sw2.y / (_sw2.length() || 1), -1, 1)) * .8;
+    _swH.copy(_swL);   /* heading: exactly the way the whole school goes (no own whirl, no wobble), so they swim as one school */
+    const yaw = Math.atan2(-_swH.z, _swH.x), pitch = Math.asin(clamp(_swH.y / (_swH.length() || 1), -1, 1)) * .8;
     _swE.set(0, yaw, pitch, 'YZX'); _swQ.setFromEuler(_swE); _swS.setScalar(f.sz * vis); _swM.compose(_sw, _swQ, _swS); f.m.setMatrixAt(f.i, _swM);
   }
   for (const m of S.meshes) m.instanceMatrix.needsUpdate = true;
@@ -2433,7 +2769,7 @@ function winTitleUpdate(dt) {   // LEVEL COMPLETE!: the painted title bent along
   if (!I) { if (CHEER.win) winTitleClear(); return; }
   if (!CHEER.win) {
     if (!tex.userData.ok || !tex.image) return;
-    const w = Math.min(ov.W * .64, 290), h = w * tex.image.height / tex.image.width;
+    const w = Math.min(ov.W * .64, 290) * 1.1, h = w * tex.image.height / tex.image.width;
     const mat = new THREE.ShaderMaterial({ uniforms: { uMap: { value: tex }, uT: { value: 0 }, uArc: { value: 1 }, uHW: { value: w / 2 }, uA: { value: 0 } }, transparent: true, depthWrite: false, vertexShader: WIN_VS, fragmentShader: CHEER_FS });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h, 56, 12), mat); mesh.renderOrder = 32; ov.scene.add(mesh); CHEER.win = { mesh, mat, w, h };
   }
@@ -2471,7 +2807,7 @@ function lvTitleUpdate() {   // "LEVEL N" (with the fish bone(s) of a Hard / Sup
       for (const d of digs) { const b = J.d[d], dw = b[2] * dsc, dh = b[3] * dsc; glyph(b[0], b[1], b[2], b[3], x, ty - dh / 2 + 2, dw, dh); x += dw - 3; }
     } else { g.font = '92px "Lilita One", system-ui, sans-serif'; g.lineWidth = 16; g.strokeStyle = C ? C.stroke : '#0a3c6e'; g.strokeText('LEVEL ' + I.n, W / 2, ty); g.fillStyle = C ? C.fill : '#ffffff'; g.fillText('LEVEL ' + I.n, W / 2, ty); }
     const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4; const k = .5, w = W * k, h = H * k;
-    const my = (H / 2 - ty) * k, mat = new THREE.ShaderMaterial({ uniforms: { uMap: { value: tx }, uT: { value: 0 }, uAmp: { value: 0 }, uHW: { value: w / 2 }, uA: { value: 0 }, uGw: { value: 0 }, uR: { value: Math.hypot(w / 2, h / 2) * 1.1 }, uC: { value: new THREE.Vector2(0, -my) } }, transparent: true, depthWrite: false, vertexShader: LV_VS, fragmentShader: CHEER_FS });
+    const my = (ty - H / 2) * k,   /* the sheet is hung by the MIDDLE OF THE WORDS, not by the middle of the picture: with the fish bones above them (Hard / Super Hard) the whole canvas is taller, and hanging it by its own middle pushed the words below where they sit on a normal level */ mat = new THREE.ShaderMaterial({ uniforms: { uMap: { value: tx }, uT: { value: 0 }, uAmp: { value: 0 }, uHW: { value: w / 2 }, uA: { value: 0 }, uGw: { value: 0 }, uR: { value: Math.hypot(w / 2, h / 2) * 1.1 }, uC: { value: new THREE.Vector2(0, -my) } }, transparent: true, depthWrite: false, vertexShader: LV_VS, fragmentShader: CHEER_FS });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h, 100, 28), mat), grp = new THREE.Group(); mesh.position.y = my; grp.add(mesh); grp.renderOrder = 33; mesh.renderOrder = 33; grp.position.z = 70; ov.scene.add(grp); CHEER.lv = { id: I, g: grp, mesh, mat };
   }
   const E = CHEER.lv, fade = clamp(t / .35, 0, 1), kk = clamp(t / .45, 0, 1), pop = t < .45 ? 1 + 2.70158 * Math.pow(kk - 1, 3) + 1.70158 * Math.pow(kk - 1, 2) : 1;
@@ -2549,15 +2885,16 @@ ov.scene.add(new THREE.HemisphereLight(0xe6f6ff, 0x5a7aa0, 1.7));
 function appClip(el) { const a = document.getElementById('app'); if (!a || !el) return; const r = a.getBoundingClientRect(); el.style.clipPath = `inset(${Math.max(0, r.top)}px ${Math.max(0, innerWidth - r.right)}px ${Math.max(0, innerHeight - r.bottom)}px ${Math.max(0, r.left)}px)`; }   // full-window effect layers (the overlay 3D canvas, the curtains, the highlight dim) are cut to the phone-shaped game frame, so nothing spills over the blue side borders
 function ovResize() { appClip(ov.wrap); appClip(document.getElementById('spotOv')); ov.W = window.innerWidth; ov.H = window.innerHeight; ov.renderer.setPixelRatio(prFor()); ov.renderer.setSize(ov.W, ov.H, false); Object.assign(ov.cam, { left: -ov.W / 2, right: ov.W / 2, top: ov.H / 2, bottom: -ov.H / 2 }); ov.cam.updateProjectionMatrix(); }
 window.addEventListener('resize', ovResize); ovResize();
-function makeSprite(kind, id, type) {
-  const built = kind === 'fish' ? buildFish(SPECIES[type]) : id === 'urchin' ? buildUrchin() : id === 'squid' ? buildSquid() : buildJelly();
+function makeSprite(kind, id, type, hue) {
+  const built = kind === 'fish' ? buildFish(SPECIES[type]) : id === 'urchin' ? buildUrchin() : id === 'squid' ? buildSquid() : buildJelly(hue);
   const holder = new THREE.Group(), model = built.group; holder.rotation.order = 'ZYX'; holder.add(model);
   const box = built.bounds ? built.bounds.clone() : new THREE.Box3().setFromObject(model), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3()); model.position.sub(ctr);
   holder.visible = false; ov.scene.add(holder);
-  const sp = { holder, model, built, kind, id, sx: size.x, sy: size.y, dim: Math.max(size.x, size.y), ph: Math.random() * 6.28, yaw: 0, age: 0 }; ov.sprites.add(sp); return sp;
+  const sp = { holder, model, built, kind, id, sx: size.x, sy: size.y, dim: Math.max(size.x, size.y) / (id === 'jelly' ? 1.15 : 1), ph: Math.random() * 6.28, yaw: 0, age: 0 };   /* (the jellyfish is drawn a little bigger in the Backup and in flight) */ ov.sprites.add(sp); return sp;
 }
+const BK_RO = -17.5;
 function spTop(sp, on) {   /* a fish in flight is drawn above every layer of the overlay (the lids, the tanks, the Backup glass): it leaves the big tank and comes out over everything; once it lands it goes back between the back and the front of its tank */
-  if (!!sp.zTop === !!on) return; sp.zTop = !!on; sp.holder.traverse(o => { if (o.isMesh || o.isSprite) { if (o._ro === undefined) o._ro = o.renderOrder; o.renderOrder = on ? 60 : o._ro; } });
+  if (!!sp.zTop === !!on) return; sp.zTop = !!on; sp.holder.traverse(o => { if (o.isMesh || o.isSprite) { if (o._ro === undefined) o._ro = o.renderOrder; o.renderOrder = on ? 60 : o._ro; const mt = o.material; if (mt && !Array.isArray(mt)) { if (on) { if (o._tr0 === undefined) o._tr0 = mt.transparent; mt.transparent = true; } else if (o._tr0 !== undefined) { mt.transparent = o._tr0; o._tr0 = undefined; } } } });   /* in flight it is drawn in the TRANSPARENT pass too, sorted by renderOrder (60): an opaque animal is drawn before every transparent layer, so the Backup's bars and water (depth test off) were drawn over it and it seemed to go behind the slots */
 }
 function spPlace(sp, x, y, size, rotZ = 0, yaw = 0, rotX = 0) {
   sp.holder.visible = true; sp.holder.position.set(x - ov.W / 2, ov.H / 2 - y, sp.zTop ? 400 : 0); sp.holder.scale.setScalar(Math.max(.001, size) / sp.dim); sp.holder.rotation.set(rotX, yaw, rotZ);
@@ -2570,6 +2907,10 @@ function spFade(sp, a) {   // fades a whole sprite (all its materials), like the
 function spAnimate(sp, t, dt, speed) {
   if (sp.kind === 'fish') { if (sp.built.update) sp.built.update(dt * (.55 + speed * .5)); tickBlink(sp, sp.built, t); sp.built.tail.rotation.y = Math.sin(t * 7 * speed + sp.ph) * .55; sp.built.body.rotation.y = Math.sin(t * 7 * speed + sp.ph + 1.2) * .08; }
   else if (sp.id === 'jelly') { const p = (Math.sin(t * 2.2 + sp.ph) + 1) * .5; sp.built.bell.scale.set(1 + p * .12, 1 - p * .22, 1 + p * .12); sp.built.tents.forEach((m, i) => { m.rotation.x = Math.sin(t * 2.2 + i + sp.ph) * .2; m.rotation.z = Math.cos(t * 1.8 + i * 1.3) * .2; }); }
+  else if (sp.built.oct) {   /* speed: .6 sitting in the Backup, 3-4.5 flying / thrown at the glass: the arms flail, the push cycle is quick and the arms fly open */
+    const pc = clamp((speed - 1) / 3, 0, 1), cy = octoCycle(((t * (1 + 1.6 * pc) / 1.8) + sp.ph) % 1); sp.bkv = (sp.bkv || 0) + ((sp.inBk ? 1 : 0) - (sp.bkv || 0)) * (1 - Math.exp(-dt * 3));
+    octoAnim(sp.built, dt, { wt: t * (2.6 + 5 * pc), contract: cy.contract * (1 - sp.bkv), thrust: cy.thrust * .6 * (1 - sp.bkv), glide: cy.glide * (1 - sp.bkv), ink: pc * .55, hp: Math.sin(t * 1.3 + sp.ph) * (.15 + .3 * pc), hr: Math.sin(t * .9 + sp.ph) * (.12 + .3 * pc) }); octoBlink(sp.built, dt);
+  }
   else sp.model.rotation.y += dt * .5;
 }
 /* ============================== 3D tanks in the overlay: the two target tanks and the backup tank ============================== */
@@ -2819,7 +3160,7 @@ const tankFx = (() => {
           if (!frame && uHas > .5) { vec4 bt = texture2D(uFrame, vU); if (bt.a > .02) { col = mix(col, bt.rgb, bt.a); alpha = m * uA; isBar = true; } }
           else if (!frame) { for (int i = 1; i < 7; i++) { float w = uBw; float d = abs(vU.x - uBx[i]); if (d < w) { float t2 = d / w; float sh = vU.x > uBx[i] ? 1. : 0.; col = mix(vec3(.98, .99, 1.), vec3(.42, .52, .66), mix(t2 * t2, .35 + .65 * t2, sh)); col = mix(col, vec3(.35, .45, .6), smoothstep(.88, .91, vy) * .5 + smoothstep(.2, .165, vy) * .5); alpha = m * uA; isBar = true; } } }
           #if PASS == 1
-          if (!(frame || isBar)) discard;
+          if (!(frame || isBar)) { float by2 = (vU.y - .16) / .745; if (by2 > .86 || by2 < 0.) discard; col = mix(vec3(.5, .8, .9), vec3(.1, .32, .46), clamp((.86 - by2) / .86, 0., 1.) * .8 + .1); alpha = m * uA * (.2 + .14 * clamp((.86 - by2) / .86, 0., 1.)); col += vec3(.5, .8, .9) * caus(vU * vec2(uAsp, 1.) * .8, uT * .6) * .05; }   /* a veil of water IN FRONT of the animals in the cell, so they sit inside the water and not on top of it */
           #else
           if (frame || isBar) discard;
           #endif
@@ -3487,15 +3828,15 @@ function winOutUpdate() {   // after the swap the camera glides back from the ri
 }
 function nextLevel(c) {   // under the water: the pop-up words go and the next level is built (the first one again after the last, or the same one in the editor's play test)
   const L = G.level; window.__winText = undefined;
-  newLevel(PLAYTEST ? L : L >= MAX_LV ? 1 : L + 1);
+  newLevel(PLAYTEST ? L : L + 1);
 }
 // a tap during the sequence skips straight to the water
 document.addEventListener('pointerdown', () => { const W = G && G.win; if (W && W.gid === gid && !W.rinse && W.t > .4) { W.cover = true; startRinse({ az: orbit.az, el: orbit.el, dist: cam.position.distanceTo(orbit.target), ty: orbit.target.y }); } }, true);
 function ovRemove(sp) { if (!sp) return; ov.scene.remove(sp.holder); ov.sprites.delete(sp); }
 function ovClear() { for (const sp of ov.sprites) ov.scene.remove(sp.holder); ov.sprites.clear(); ov.flights.length = 0; ov.cel.length = 0; tankFx.reset(); paused = false; }
 /* a fish (same 3D model as in the big tank) leaps along an arc to a DOM element */
-function flySprite(sp, from, toEl, { delay = 0, dur = 700, size0 = 56, mode = 'target', lift, onland, proj = false, hop = 0, anticip = 0 } = {}) {   // proj: a projectile (squash in the slot, pop up, fall along a parabola with its nose following the path)
-  spTop(sp, true); ov.flights.push({ sp, x0: from.x, y0: from.y, toEl, delay, dur, size0, mode, liftPx: lift, t: 0, onland, last: 0, lx: 0, ly: 0, proj, hop, anticip }); if (delay > 0) sp.holder.visible = false; else spPlace(sp, from.x, from.y, size0);
+function flySprite(sp, from, toEl, { delay = 0, dur = 700, size0 = 56, mode = 'target', lift, onland, proj = false, hop = 0, anticip = 0, xs = 0 } = {}) {   // proj: a projectile (squash in the slot, pop up, fall along a parabola with its nose following the path)
+  if (!proj) spTop(sp, true); /* (a release starts INSIDE the Backup, behind its glass: it only comes in front once it has cleared the rim) */ ov.flights.push({ sp, x0: from.x, y0: from.y, toEl, delay, dur, size0, mode, liftPx: lift, t: 0, onland, last: 0, lx: 0, ly: 0, proj, hop, anticip, xs }); if (delay > 0) sp.holder.visible = false; else spPlace(sp, from.x, from.y, size0);
 }
 const plunge = a => a < 0 ? 0 : Math.sin(a * 7.2) * Math.exp(-a * 3.1);   /* a fish that has dived into water carries on down by its inertia, then the water pushes it back up and it settles: 0 at the surface, deepest after about 0.2 s, a small overshoot upwards, rest */
 function slotSize(r, mode) { return mode === 'target' ? Math.min(r.width, r.height) * 1.0 : r.width * .9; }
@@ -3507,15 +3848,18 @@ function ovUpdate(dt, time) {
   for (let i = ov.flights.length - 1; i >= 0; i--) {
     const f = ov.flights[i], sp = f.sp; f.t += dt * 1000;
     const r = f.toEl.getBoundingClientRect(); if (r.width) { f.lx = r.left + r.width / 2; f.ly = r.top + r.height / 2; f.size1 = slotSize(r, f.mode); }
-    const x1 = f.lx || f.x0, y1 = f.ly || f.y0, size1 = f.size1 || f.size0;
+    const x1 = (f.lx || f.x0) + (!f.proj && r.width ? f.xs * r.width : 0),   /* (the half-cell shift is only for the flight INTO the Backup, where the octopus takes two cells: it also applied to the flight out of it and made the picture land 39 px beside where the 3D octopus appears) */ y1 = f.ly || f.y0, size1 = sp.built.oct && r.width ? Math.min(slotSize(r, 'backup') * .8, r.height * .9) * OCT_REL : (f.size1 || f.size0);
     if (f.t < f.delay) { sp.holder.visible = false; continue; }
     if (f.proj) {
-      const tt = f.t - f.delay, ant = f.anticip, sxp = (x1 - f.x0) >= 0 ? 1 : -1, yaw = sxp > 0 ? 0 : Math.PI;
-      if (tt < ant) { const a = tt / ant; spPlace(sp, f.x0, f.y0 + 3 * a, f.size0, 0, yaw, 0); sp.holder.scale.x *= 1 + .14 * a; sp.holder.scale.y *= 1 - .22 * a; spAnimate(sp, time, dt, 1.5); continue; }   // crouches in the slot before it jumps
-      const u = Math.min(1, (tt - ant) / f.dur), Pj = uu => [f.x0 + (x1 - f.x0) * uu, f.y0 + (y1 - f.y0) * uu - f.hop * 4 * uu * (1 - uu)];
-      const [x, y] = Pj(u), [xn, yn] = Pj(Math.min(1, u + .04)), phi = clamp(Math.atan2(-(yn - y), Math.max(Math.abs(xn - x), 2)), -1.15, 1.15), eo = 1 - (1 - u) * (1 - u);
-      const size = (f.size0 + (size1 - f.size0) * eo) * (1 + .1 * Math.sin(Math.PI * Math.min(1, u * 1.6)));
-      spPlace(sp, x, y, size, sxp > 0 ? phi : -phi, yaw, 0); const sv = Math.abs(Math.sin(Math.PI * u)); sp.holder.scale.x *= 1 + .12 * (1 - u) * (u < .3 ? 1 : .6); sp.holder.scale.y *= 1 - .06 * sv;   // stretches a little while it is going fast
+      const tt = f.t - f.delay, ant = f.anticip, sxp = (x1 - f.x0) >= 0 ? 1 : -1, isO = sp.built.oct, yaw = isO ? 0 : sxp > 0 ? 0 : Math.PI;   /* the octopus leaves the Backup lying on its side, at the size it has there, and stands up and grows to its size in the tank on the way (one smooth change) */
+      if (tt < ant) { const a = tt / ant; spPlace(sp, f.x0, f.y0 + 3 * a, f.size0, isO ? Math.PI / 2 : 0, yaw, 0); if (isO) sp.holder.scale.y *= OCT_LEN; sp.holder.scale.x *= 1 + .14 * a; sp.holder.scale.y *= 1 - .22 * a; spAnimate(sp, time, dt, 1.5); continue; }   // crouches in the slot before it jumps
+      const u = Math.min(1, (tt - ant) / f.dur), Pj = uu => [f.x0 + (x1 - f.x0) * uu, f.y0 + (y1 - f.y0) * uu - f.hop * 4 * uu * (1 - uu)];   /* a real jump: it rises out of its cell, the top of the arc a third of the way along, and comes down along the same curve with its nose following the path */
+      const [x, y] = Pj(u), [xn, yn] = Pj(Math.min(1, u + .04)); if (sp._ly !== undefined && dt > 0) sp.lastVy = sp.lastVy === undefined ? (y - sp._ly) / dt : sp.lastVy + ((y - sp._ly) / dt - sp.lastVy) * .6; sp.endVx = (x1 - f.x0) * 1000 / f.dur; sp.endVy = ((y1 - f.y0) + 4 * f.hop) * 1000 / f.dur;   /* the exact speed it will have at the end (px/s) */
+      if (sp._lx !== undefined && dt > 0) sp.lastVx = sp.lastVx === undefined ? (x - sp._lx) / dt : sp.lastVx + ((x - sp._lx) / dt - sp.lastVx) * .6; sp._lx = x; sp._ly = y;
+      const phi = clamp(Math.atan2(-(yn - y), Math.max(Math.abs(xn - x), 2)) * .62, -.8, .8), eo = 1 - (1 - u) * (1 - u);   /* the nose follows the path but only about 60% of the way: a fish in a leap leans, it does not stand on its head */
+      const sz1 = isO && sp.octEnd ? sp.octEnd : size1, size = (f.size0 + (sz1 - f.size0) * eo) * (isO ? 1 : 1 + .1 * Math.sin(Math.PI * Math.min(1, u * 1.6)));
+      spPlace(sp, x, y, size, isO ? Math.PI / 2 * (1 - eo) : sxp > 0 ? phi : -phi, yaw, 0); if (isO) sp.holder.scale.y *= 1 + (OCT_LEN - 1) * (1 - eo); const sv = Math.abs(Math.sin(Math.PI * u)); sp.holder.scale.x *= 1 + .12 * (1 - u) * (u < .3 ? 1 : .6); sp.holder.scale.y *= 1 - .06 * sv;   // stretches a little while it is going fast
+      if (!sp.zTop && y + size * (isO ? .62 : .56) < $('backup').getBoundingClientRect().top + 2) spTop(sp, true);   /* it comes in front of the Backup's glass only when its whole body is above the rim, so nothing visibly switches layers */
       spAnimate(sp, time, dt, 3.6);
       if (time - f.last > .03) { f.last = time; ovFx.emit(x - Math.cos(phi) * sxp * size * .3, y + Math.sin(phi) * size * .3, 1, 40, 0xdff4ff, .7); }   // droplets fall off it, not bubbles: it is out of the water
       if (u >= 1) { ov.flights.splice(i, 1); spTop(sp, false); sp.age = 0; sp.yaw = yaw; f.onland && f.onland(sp); }
@@ -3523,12 +3867,18 @@ function ovUpdate(dt, time) {
     }
     const u = Math.min(1, (f.t - f.delay) / f.dur), e = ease(u), lift = f.liftPx !== undefined ? f.liftPx : -Math.min(190, Math.abs(y1 - f.y0) * .5 + 80);   // liftPx: small hop for fish leaving the Backup tray
     const P = (uu) => { const ee = ease(uu); return [f.x0 + (x1 - f.x0) * ee, f.y0 + (y1 - f.y0) * ee + lift * Math.sin(Math.PI * uu)]; };
-    const [x, y] = P(u), [xn, yn] = P(Math.min(1, u + .03)); const vx = xn - x, vyUp = -(yn - y); const sx = (x1 - f.x0) >= 0 ? 1 : -1;
-    const phi = Math.atan2(vyUp, Math.max(Math.abs(vx), 2)), size = (f.size0 + (size1 - f.size0) * e) * (1 + .4 * Math.sin(Math.PI * u));
-    spPlace(sp, x, y, size, sx > 0 ? phi : -phi, sx > 0 ? 0 : Math.PI, Math.sin(u * 11) * .22);
+    let [x, y] = P(u), [xn, yn] = P(Math.min(1, u + .03)); let vx = xn - x, vyUp = -(yn - y); const sx = (x1 - f.x0) >= 0 ? 1 : -1;
+    let phi = Math.atan2(vyUp, Math.max(Math.abs(vx), 2)), size = (f.size0 + (size1 - f.size0) * e) * (sp.built.oct ? 1 : 1 + .4 * Math.sin(Math.PI * u));
+    if (f.mode === 'backup' && r.width) {   /* INTO the Backup: one arc that goes up in front of the glass, over the rim, and comes down into its cell; the layer changes while it is still wholly above the rim (nothing can show it) and the fall carries it behind the glass */
+      const rimY = $('backup').getBoundingClientRect().top, hb = size1 * (sp.built.oct ? .62 : .56) + 6, D = y1 - f.y0, hop = Math.max(40, (f.y0 + .8 * D + hb - rimY) / .64), pq = vv => [f.x0 + (x1 - f.x0) * vv, f.y0 + D * vv - hop * 4 * vv * (1 - vv)];
+      [x, y] = pq(u); const [xa, ya] = pq(Math.min(1, u + .04)); vx = xa - x; vyUp = -(ya - y); phi = clamp(Math.atan2(vyUp, Math.max(Math.abs(vx), 2)) * .62, -.8, .8); size = (f.size0 + (size1 - f.size0) * u) * (sp.built.oct ? 1 : 1 + .25 * Math.sin(Math.PI * u));
+      if (sp.zTop && u > .5 && y + size * (sp.built.oct ? .62 : .56) > rimY - 8) spTop(sp, false);
+    }
+    const jf = sp.built.kind === 'jelly';   /* a jellyfish flies upright, facing the player the whole way: no tilt, no turning round */
+    spPlace(sp, x, y, size, jf ? 0 : (sx > 0 ? phi : -phi) + (sp.built.oct ? Math.PI / 2 : 0), jf ? 0 : sx > 0 ? 0 : Math.PI, jf ? 0 : Math.sin(u * 11) * .22); if (sp.built.oct) sp.holder.scale.y *= 1 + (OCT_LEN - 1) * e;   /* the octopus flies lying on its side from the start */
     spAnimate(sp, time, dt, 3.2);
     if (time - f.last > .034) { f.last = time; trailBubble(x, y); }
-    if (u >= 1) { ov.flights.splice(i, 1); spTop(sp, false); sp.age = 0; sp.yaw = sx > 0 ? 0 : Math.PI; f.onland && f.onland(sp); }
+    if (u >= 1) { ov.flights.splice(i, 1); spTop(sp, false); sp.age = 0; sp.yaw = jf || sx > 0 ? 0 : Math.PI; if (f.mode === 'backup') ovFx.emit(x1, y1 - size1 * .3, 9, 70, 0xdff4ff, .8); f.onland && f.onland(sp); }
   }
   celUpdate(dt); winOutUpdate(); beadFx.update(dt);
   if (G) {
@@ -3556,14 +3906,14 @@ function ovUpdate(dt, time) {
     G.backup.forEach((it, idx) => { const sp = it.res; if (!sp || !slots[idx]) return; const r = slots[idx].getBoundingClientRect(); sp.age += dt; const kk = Math.min(1, sp.age / .5);
       let bx = r.left + r.width / 2, by = r.top + r.height / 2 + Math.sin(time * 1.6 + sp.ph) * 1.5 + plunge(sp.age) * r.height * .18, bs = Math.min(slotSize(r, 'backup') * .8, r.height * .9) * (1 + .12 * Math.sin(kk * Math.PI)), rz = 0, yw = Math.sin(time * .8 + sp.ph) * .5, sqStretch = 1, sqLong = 'y';
       spTop(sp, false);   /* the squid lies behind the bars, like every fish of the Backup */
+      if (!sp._bkRO) { sp._bkRO = true; sp.holder.traverse(m => { if (m.isMesh || m.isSprite) { m.renderOrder = BK_RO; m._ro = BK_RO; } }); }   /* in the Backup every animal is drawn AFTER the water of the cell and BEFORE the bars: while the camera moves it turns transparent and is then drawn in the transparent pass, where the order is by renderOrder (the Backup's pieces are at -19 .. -16): at 0 it was drawn over the bars and the surface */
       if (it.id === 'squid' && !it.filler && it.landed) {   /* the squid is big: it lies on its side across the three cells it takes (the ink fills the outer two), shrunk to fit the height of the strip */
         const L0 = idx > 0 && G.backup[idx - 1].filler ? idx - 1 : idx, R0 = idx + 1 < G.backup.length && G.backup[idx + 1].filler ? idx + 1 : idx;
-        if (L0 !== R0 || true) { const rl = slots[L0].getBoundingClientRect(), rR = slots[R0].getBoundingClientRect(), spanW = rR.right - rl.left, spanX = (rl.left + rR.right) / 2, long = Math.max(sp.sx, sp.sy), thick = Math.min(sp.sx, sp.sy), tgt = Math.min(spanW * .94, r.height * .86 * long / thick), e = Math.min(1, sp.age / .7), ee = e * e * (3 - 2 * e);
-          sqStretch = 1 + (clamp(spanW * .94 / Math.max(1, tgt), 1, 2.2) - 1) * ee; sqLong = sp.sy > sp.sx ? 'y' : 'x';   /* its length is stretched to fill the three cells; its thickness stays what the strip allows */
-          bx = bx + (spanX - bx) * ee; bs = bs + (tgt - bs) * ee; rz = ee * (sp.sy > sp.sx ? Math.PI / 2 : 0) + Math.sin(time * 1.1 + sp.ph) * .03; yw = Math.sin(time * .6 + sp.ph) * .18; }
+        if (L0 !== R0 || true) { const rl = slots[L0].getBoundingClientRect(), rR = slots[R0].getBoundingClientRect(), spanW = rR.right - rl.left, spanX = (rl.left + rR.right) / 2, e = Math.min(1, sp.age / .7), ee = e * e * (3 - 2 * e);
+          sp.inBk = true; bx = spanX; bs = Math.min(slotSize(r, 'backup') * .8, r.height * .9) * OCT_REL; sqStretch = OCT_LEN; sqLong = 'y';   /* (no easing: it flew in at exactly this size and place, so it must not grow or slide after landing) */  rz = Math.PI / 2 + Math.sin(time * 1.1 + sp.ph) * .03; yw = Math.sin(time * .6 + sp.ph) * .15; by += Math.sin(time * 1.25 + sp.ph) * r.height * .07; if (!sp._ow || (sp.age < 8 && (sp._oc = (sp._oc || 0) + 1) % 20 === 0)) { const bb = new THREE.Box3().setFromObject(sp.holder); sp._ow = Math.max(sp._ow || 0, bb.max.x - bb.min.x); } bx += Math.sin(time * .85 + sp.ph * 1.7) * clamp((spanW - sp._ow) / 2 + 1, 2, 9); }   /* it sways left and right by exactly the room it has: its widest point (arms included) just reaches the glass of the two outer cells */   /* it drifts gently up and down inside the strip */   /* the octopus lies on its side (it flew in that way), its arms drawn together behind it, as long as the three cells it takes (the ink fills the outer two) */
       }
       const fp = tankFx.fishPos(idx, bx, by, bs);
-      if (fp) { spPlace(sp, fp[0], fp[1], fp[2], fp[3], Math.sin(time * 3 + sp.ph) * .6); spAnimate(sp, time, dt, 3); } else { spPlace(sp, bx, by, bs, rz, yw); if (sqStretch > 1.001) sp.holder.scale[sqLong] *= sqStretch; spAnimate(sp, time, dt, .6); } spFade(sp, window.__bkA ?? 1); });
+      if (fp) { spPlace(sp, fp[0], fp[1], fp[2], fp[3] + (sp.built.oct ? Math.PI / 2 : 0), Math.sin(time * 3 + sp.ph) * .6); if (sp.built.oct) sp.holder.scale.y *= OCT_LEN; spAnimate(sp, time, dt, 3); }   /* (the lose animation: the octopus keeps its long, slim, lying shape) */ else { spPlace(sp, bx, by, bs, sp.built.kind === 'jelly' ? 0 : rz, sp.built.kind === 'jelly' ? 0 : yw); if (sqStretch > 1.001) sp.holder.scale[sqLong] *= sqStretch; spAnimate(sp, time, dt, .6); } spFade(sp, (window.__bkA ?? 1) ** 2.2);   /* the animals fade a little faster than the cage: while the camera moves they must not stay solid in front of bars that are already thin */ });
   }
   if (!PROF.off.ov) ov.renderer.render(ov.scene, ov.cam);
 }
@@ -3627,7 +3977,7 @@ function scatter(P, strength = 1, quiet = false) {
     away.subVectors(o.pos, P); const d = away.length(); if (d > 4.6) continue;
     if (d < 1e-3) away.set(rand(-1, 1), rand(-.3, .3), rand(-1, 1)); away.normalize(); away.y *= .5; away.normalize();
     if (o.evOn) { o.evOn = false; o.evFleeT = 2; }   // a tap breaks a fish out of any event
-    const k = Math.max(0, 1 - d / 4.6) * strength; o.boost = Math.max(o.boost, (1.5 + 1.2 * k + rand(0, .5)) * G.cfg.boostK * .7); o.dir.lerp(away, .92).normalize();
+    const k = Math.max(0, 1 - d / 4.6) * strength; o.boost = Math.max(o.boost, (1.5 + 1.2 * k + rand(0, .5)) * G.cfg.boostK * .7 * (o.fastB ? .5 : 1)); o.dir.lerp(away, .92).normalize();
     const tgt = o.pos.clone().addScaledVector(away, rand(3.4, 5.4)); clampXZ(tgt, RF);
     tgt.y = clamp(tgt.y, FLOOR_Y + .6, WATER_Y - .55); o.wp = tgt; o.wpT = rand(3.2, 5);
   }
@@ -3659,6 +4009,19 @@ function nudgeBig(o) {
   o.wiggle = 1; o.boost = Math.max(o.boost, .9); const P = o.pos.clone(); burstFx.emit(P, 0x9fe8ff, 18, 1.4); burstFx.emit(P, 0xffffff, 8, .9);
   scatter(P, 1.35, true); Snd.play('ui'); kick(.8); vib(14);
 }
+function octBoxAt(M) {   /* the screen box of a new octopus at world point M: { top, bottom, size } */
+  const g = buildSquid(); g.group.scale.setScalar(G.cfg.sizeK * OCT_TANK_K); g.group.position.copy(M); g.group.rotation.y = Math.atan2(cam.position.x - M.x, cam.position.z - M.z); g.group.updateMatrixWorld(true); const bx = new THREE.Box3().setFromObject(g.root), pts = []; for (let i = 0; i < 8; i++) pts.push(projectToClient(new THREE.Vector3(i & 1 ? bx.max.x : bx.min.x, i & 2 ? bx.max.y : bx.min.y, i & 4 ? bx.max.z : bx.min.z)));
+  const xs = pts.map(q => q.x), ys = pts.map(q => q.y); return { cx: (Math.min(...xs) + Math.max(...xs)) / 2, cy: (Math.min(...ys) + Math.max(...ys)) / 2, top: Math.min(...ys), bottom: Math.max(...ys), size: Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) };
+}
+function octSizeAt(M) {   /* the screen size (longest side of the box, px) a new octopus has at world point M */
+  const g = buildSquid(); g.group.scale.setScalar(G.cfg.sizeK * OCT_TANK_K); g.group.position.copy(M); g.group.updateMatrixWorld(true); const bx = new THREE.Box3().setFromObject(g.root), pts = []; for (let i = 0; i < 8; i++) pts.push(projectToClient(new THREE.Vector3(i & 1 ? bx.max.x : bx.min.x, i & 2 ? bx.max.y : bx.min.y, i & 4 ? bx.max.z : bx.min.z)));
+  const xs = pts.map(q => q.x), ys = pts.map(q => q.y); return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+}
+function octScreenSize(o) {   /* how big the octopus really looks on screen right now (the longest side of its box, in px), so the flying picture starts at exactly that size */
+  o.group.updateMatrixWorld(true); const bx = new THREE.Box3().setFromObject(o.parts.root || o.group), c = [], pts = [];
+  for (let i = 0; i < 8; i++) pts.push(projectToClient(new THREE.Vector3(i & 1 ? bx.max.x : bx.min.x, i & 2 ? bx.max.y : bx.min.y, i & 4 ? bx.max.z : bx.min.z)));
+  const xs = pts.map(q => q.x), ys = pts.map(q => q.y); void c; return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+}
 function pickThing(o, booster = false) {   // booster: the Clear Tank booster catches the fish for the player (no combo, no tap sound)
   if (guide.on && !booster && o.kind === 'fish' && --guide.left <= 0) { guide.on = false; save.g1 = 1; persist(); }   // the "Tap a fish" guide ends after the first two taps on a fish
   if (o.kind === 'clam') { tapClam(o); return; } if (o.locked) return;
@@ -3672,7 +4035,7 @@ function pickThing(o, booster = false) {   // booster: the Clear Tank booster ca
   const exit = new THREE.Vector3(wp.x, TANK_H + .4, wp.z);
   o.launch = { t: 0, dur: LEAP, x: wp.x, z: wp.z, y0: wp.y, y1: exit.y, splashed: false, yaw: Math.atan2(-o.dir.z, o.dir.x) };
   const from = projectToClient(exit); const FD = LEAP * 1000;
-  const wp2 = exit.clone().addScaledVector(camRight, .45), pp = projectToClient(wp2); const fsz = clamp(Math.hypot(pp.x - from.x, pp.y - from.y) * 1.12, 34, 90);
+  const wp2 = exit.clone().addScaledVector(camRight, .45), pp = projectToClient(wp2); const ppu = Math.hypot(pp.x - from.x, pp.y - from.y) / .45, fsz = o.id === 'squid' ? octScreenSize(o) : clamp(Math.hypot(pp.x - from.x, pp.y - from.y) * 1.12, 34, 90);   /* (the octopus is as big as it looks in the tank) */
   burstFx.emit(wp, o.kind === 'fish' ? 0x7de3ff : 0xff6ab0, 20, 1.6); burstFx.emit(wp, 0xffffff, 8, 1); kick(1);
   scatter(wp.clone(), o.kind === 'obstacle' ? 1.2 : .9, true);
   let ti = -1;
@@ -3683,14 +4046,14 @@ function pickThing(o, booster = false) {   // booster: the Clear Tank booster ca
   // wrong -> backup
   const item = { id: o.id, type: o.type, junk: o.kind === 'obstacle', landed: false, res: null }; let slotIdx;
   if (o.id === 'squid') {   // the squid is big: it takes 3 backup slots (ink - squid - ink), fewer if the strip is nearly full
-    const free = BACKUP_MAX - G.backup.length, seq = free >= 3 ? ['f', 's', 'f'] : free === 2 ? ['f', 's'] : ['s'];
+    const free = BACKUP_MAX - G.backup.length, seq = free >= 3 ? ['f', 's', 'f'] : free === 2 ? ['s', 'f'] : ['s'];
     for (const k of seq) { if (k === 'f') G.backup.push({ id: 'ink', junk: true, filler: true, landed: true, res: null }); else { G.backup.push(item); slotIdx = G.backup.length - 1; } }
   } else { G.backup.push(item); slotIdx = G.backup.length - 1; }
   renderBackup();
   const slotEl = $('backup').querySelectorAll('.slot')[slotIdx]; const gi = gid;
   vib(item.junk ? [40, 30, 40] : 25);
-  const sp = makeSprite(o.kind === 'fish' ? 'fish' : 'obs', o.id, o.type);
-  flySprite(sp, from, slotEl, { size0: fsz, dur: 760, delay: FD, mode: 'backup', onland: () => {
+  const sp = makeSprite(o.kind === 'fish' ? 'fish' : 'obs', o.id, o.type, o.hue);
+  flySprite(sp, from, slotEl, { xs: (G.backup[slotIdx + 1] && G.backup[slotIdx + 1].filler ? .5 : 0) - (G.backup[slotIdx - 1] && G.backup[slotIdx - 1].filler ? .5 : 0), size0: fsz, dur: 760, delay: FD, mode: 'backup', onland: () => {
     if (gi !== gid) return; Snd.play('tobackup'); item.res = sp; item.landed = true; renderBackup(); G.targets.forEach((t, ti) => { if (t) pullFromBackup(ti); });   // a target may already be waiting for this fish
     const b = $('backup'); b.classList.remove('danger'); void b.offsetWidth; b.classList.add('danger');
     if (G.backup.length >= BACKUP_MAX && G.status === 'play' && G.backup.every(it => it.landed)) {   // (when the last fish has landed: fast taps can fill the strip while earlier fish are still flying)
@@ -3710,11 +4073,11 @@ function devLose() {   // developer tool (Settings): lose the level the way a fu
 }
 function loseNow() { G.status = 'lost'; tankFx.breakBackup(); setTimeout(showLose, 3700); }
 let popupOn = false;   // a pop-up is open: the music ducks, the open / close sounds play
-function hideOverlays() { const was = OVS.some(id => $(id).classList.contains('show')) || $('spotOv').classList.contains('show'); for (const id of OVS) $(id).classList.remove('show'); $('spotOv').classList.remove('show'); if (was && popupOn) { popupOn = false; Snd.bgmDuckTo(1); if (!introOn || true) Snd.play('popclose'); } }
+function hideOverlays() { document.querySelectorAll('.spotlit').forEach(e => e.classList.remove('spotlit')); const was = OVS.some(id => $(id).classList.contains('show')) || $('spotOv').classList.contains('show'); for (const id of OVS) $(id).classList.remove('show'); $('spotOv').classList.remove('show'); if (was && popupOn) { popupOn = false; Snd.bgmDuckTo(1); if (!introOn || true) Snd.play('popclose'); } }
 function showOnly(id) { hideOverlays(); $(id).classList.add('show'); if (id !== 'ovWin' && id !== 'ovLose') { popupOn = true; Snd.bgmDuckTo(.5); Snd.play(id === 'ovPlayOn' ? 'playon' : 'popopen'); } }
 function saveWin() {   // stars and the next level are saved when the level is won (the win pop-up with the stars is gone: the win sequence flows straight into the next level)
   const m = G.mistakes, st = m <= 3 ? 3 : m <= 6 ? 2 : 1;
-  save.stars[G.level] = Math.max(save.stars[G.level] || 0, st); save.unlocked = Math.max(save.unlocked, Math.min(MAX_LV, G.level + 1)); persist();
+  save.stars[G.level] = Math.max(save.stars[G.level] || 0, st); save.unlocked = Math.max(save.unlocked, G.level + 1); persist();
 }
 function setPoFish() { const ids = SPECIES.map((s, i) => i).filter(i => THUMB[SPECIES[i].id] && SPECIES[i].model3d && !SPECIES[i].hue); const k = ids.length ? ids[(Math.random() * ids.length) | 0] : -1; for (const id of ['poFish', 'loFish']) { const im = $(id); if (im) im.src = k >= 0 ? THUMB[SPECIES[k].id] : ''; } }
 function showLose() { setPoFish(); showOnly('ovLose'); Snd.bgmStop(); Snd.play('lose'); }
@@ -3745,31 +4108,30 @@ function fvScene() { const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLi
 let _fvSoft = null; function fvSoft() { if (!_fvSoft) { const c = document.createElement('canvas'); c.width = c.height = 128; const q = c.getContext('2d'), gr = q.createRadialGradient(64, 64, 4, 64, 64, 62); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.55, 'rgba(255,255,255,.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); q.fillStyle = gr; q.fillRect(0, 0, 128, 128); _fvSoft = new THREE.CanvasTexture(c); _fvSoft.colorSpace = THREE.SRGBColorSpace; } return _fvSoft; }
 function fvFish(i, dark) { const sp = SPECIES[i], b = buildFish(sp); if (dark) b.group.traverse(m => { if (m.isMesh && m.material && m.material.color) { m.material.color.setScalar(.3); if ('emissiveIntensity' in m.material) m.material.emissiveIntensity = .1; } }); return b; }
 function fvModelFish(n) { const ids = SPECIES.map((s, i) => i).filter(i => SPECIES[i].model3d && !SPECIES[i].hue); const out = []; for (let k = 0; k < n; k++) out.push(ids[(k * 3 + 1) % ids.length]); return out; }
-function fvSquid() {   // floats, pulses its jet (the game's own squid motion), squeezes, darts up and sprays an ink cloud that grows out of it and thins away
-  const sc = fvScene(), b = buildSquid(), grp = new THREE.Group(); b.group.scale.setScalar(1.25); grp.add(b.group); sc.add(grp);
+function fvSquid() {   // floats (the arms pull together on each push), then sprays an ink cloud: its arms fly open, the cloud grows out of it and thins away
+  const sc = fvScene(), b = buildSquid(), grp = new THREE.Group(); b.group.scale.setScalar(1.5); grp.add(b.group); sc.add(grp);
   const ink = new THREE.Group(); sc.add(ink); const puffs = [];
-  for (let i = 0; i < 18; i++) { const m = new THREE.SpriteMaterial({ map: fvSoft(), color: [0x2a1055, 0x1c0c40, 0x3a1a6a][i % 3], transparent: true, depthWrite: false, opacity: 0 }), sp = new THREE.Sprite(m); sp.userData = { to: new THREE.Vector3(rand(-.9, .9), rand(-.8, .8), rand(-1, -.15)), sc: rand(.8, 1.25), d: rand(0, .25), ph: rand(0, 6.28) }; ink.add(sp); puffs.push(sp); }
+  for (let i = 0; i < 18; i++) { const m = new THREE.SpriteMaterial({ map: fvSoft(), color: [0x2a1055, 0x1c0c40, 0x3a1a6a][i % 3], transparent: true, depthWrite: false, opacity: 0 }), sp = new THREE.Sprite(m); sp.userData = { to: new THREE.Vector3(rand(-1.2, 1.2), rand(-1, 1), rand(-1.3, -.3)), sc: rand(1.1, 1.7), d: rand(0, .25), ph: rand(0, 6.28) }; ink.add(sp); puffs.push(sp); }
   const CYC = 6;
-  return { sc, cam: [0, .2, 6.2, 0, .1, 0], step(t) {
-    const c = t % CYC, idle = Math.pow(Math.max(0, Math.sin(t * 1.7)), 3), spr = c > 2.5 && c < 3.4 ? Math.sin((c - 2.5) / .9 * Math.PI) : 0, jet = Math.max(idle * (c > 2.4 && c < 4.2 ? .3 : 1), spr);
-    b.mantle.scale.set(1 - jet * .16 - spr * .1, 1.9 + jet * .22 + spr * .15, 1 - jet * .16 - spr * .1);
-    b.fins.forEach((f, i) => { f.rotation.x = Math.sin(t * 6 + i * 2) * .22; });
-    b.tents.forEach((m, i) => { m.rotation.x = Math.sin(t * 2.4 + i) * .2 - jet * .5; m.rotation.z = Math.cos(t * 2 + i * 1.3) * .2; });
-    grp.position.y = Math.sin(t * 1.3) * .1 + (c > 2.5 ? Math.sin(Math.min(1, (c - 2.5) / 1.4) * Math.PI) * .28 : 0); grp.rotation.y = .5 + Math.sin(t * .6) * .35;
-    ink.position.copy(grp.position); const k = c - 2.85;
+  return { sc, cam: [0, .2, 6.4, 0, .1, 0], step(t, dt = .016) {
+    const c = t % CYC, push = Math.pow(Math.max(0, Math.sin(t * 2.3)), 2), spr = c > 2.4 && c < 3.8 ? Math.sin((c - 2.4) / 1.4 * Math.PI) : 0, jet = c > 2.2 && c < 4.2 ? push * .3 : push;
+    const cy = octoCycle((t / 1.5) % 1), wind = c > 2 && c < 2.4 ? smooth01((c - 2) / .4) : 0, ct = c > 2 && c < 3.9 ? Math.max(wind, 0) : cy.contract, th = c > 2 && c < 3.9 ? 0 : cy.thrust;
+    octoAnim(b, dt, { wt: t * 2.2, contract: ct, thrust: th, glide: c > 2 && c < 3.9 ? 0 : cy.glide, ink: spr, wind, hp: -.3 * ct + .35 * th }); octoBlink(b, dt);
+    b.inner.scale.set(1 - (th * .1 + ct * .04 + spr * .05) * .8, 1 + th * .14 + ct * .05 + spr * .07, 1 - (th * .1 + ct * .04 + spr * .05) * .8); b.inner.rotation.z = Math.sin(t * 1.1) * .06; b.inner.rotation.x = Math.sin(t * .8) * .05;
+    grp.position.y = Math.sin(t * 1.3) * .1 + push * .12 + (c > 2.5 ? Math.sin(Math.min(1, (c - 2.5) / 1.4) * Math.PI) * .22 : 0); grp.rotation.y = .5 + Math.sin(t * .6) * .35;
+    ink.position.copy(grp.position); ink.position.y -= .5; const k = c - 2.85;   /* the cloud starts under the octopus, where its arms begin */
     for (const p of puffs) { const u = clamp((k - p.userData.d) / .7, 0, 1), out = clamp((4.7 - c) / 1.5, 0, 1), e = 1 - Math.pow(1 - clamp(k / 1.5, 0, 1), 3);
       p.position.copy(p.userData.to).multiplyScalar(.15 + .85 * e); p.material.opacity = c > 2.85 && c < 4.7 ? .92 * Math.min(u, out) : 0; const sz = p.userData.sc * (.35 + .65 * (1 - Math.pow(1 - u, 3))) * (1 + .05 * Math.sin(t * 1.6 + p.userData.ph)); p.scale.set(sz, sz, 1); }
   } };
 }
 function fvClam() {   // opens, opens wide, snaps shut with a shake and hops, then opens again (the game's clam: open .5, alert .95, closed .02)
-  const sc = fvScene(), b = buildClam(), grp = new THREE.Group(); b.group.scale.setScalar(2.4); grp.add(b.group); sc.add(grp); b.lock.visible = false; b.held.visible = false; b.pips.visible = false;
+  const sc = fvScene(), b = buildClam(), grp = new THREE.Group(); b.group.scale.setScalar(1.5); grp.position.y = -.32; grp.add(b.group); sc.add(grp); b.lock.visible = false; b.held.visible = false; b.pips.visible = false;
   const CYC = 5.8; let open = .5;
   return { sc, cam: [0, 1.15, 4.9, 0, .3, 0], step(t, dt) {
     const c = t % CYC, closed = c >= 2.7 && c < 4.3, alert = c > 1.4 && c < 2.7, target = closed ? .02 : alert ? .95 : .5 + .05 * Math.sin(t * 3);
     open += (target - open) * (1 - Math.exp(-dt * (closed ? 26 : 9))); b.lid.rotation.x = -open;
-    const shake = closed ? Math.max(.55, 1 - (c - 2.7) * 1.4) : 0; b.group.rotation.z = Math.sin(t * 70) * .09 * shake; b.group.rotation.x = Math.cos(t * 63) * .05 * shake;
-    let hop = 0; if (closed) { const q = ((c - 2.7) * 2.6) % 1; hop = q < .35 ? Math.sin(q / .35 * Math.PI) : 0; }
-    grp.position.y = hop * .5; b.group.scale.set(2.4 * (1 + hop * .06), 2.4 * (1 - hop * .08), 2.4 * (1 + hop * .06)); b.pearl.visible = !closed;
+    const shake = closed ? Math.max(.55, 1 - (c - 2.7) * 1.4) : 0; b.group.rotation.z = (Math.sin(t * 15) * .46 + Math.sin(t * 6.1) * .16) * shake; b.group.rotation.x = 0; b.group.position.x = Math.sin(t * 15 + 1.2) * .16 * shake;
+    grp.position.y = -.32; b.group.scale.setScalar(1.5); b.pearl.visible = !closed;
     b.glow.material.opacity = closed ? .45 + .2 * Math.sin(t * 4) : alert ? .75 : .3 + .15 * Math.sin(t * 3); b.glow.scale.setScalar(alert ? 1.7 : 1.2);
   } };
 }
@@ -3815,7 +4177,7 @@ function fvSwarm() {   // the game's own grey school (same model, same grey, sam
 }
 function fvTick(dt) {
   const ov = $('ovIntro'); if (!FV.kind || !ov || !ov.classList.contains('show')) { FV.on = false; return; }
-  if (FV.kind === 'swarm' && !SWARM.geo) { FV.on = false; return; }
+  if ((FV.kind === 'swarm' && !SWARM.geo) || (FV.kind === 'squid' && !OCT.ready)) { FV.on = false; return; }
   fvInit(); let e = FV.cache[FV.kind]; if (!e) { const mk = { squid: fvSquid, clam: fvClam, pipe: fvPipe, swarm: fvSwarm }[FV.kind]; if (!mk) { FV.on = false; return; } e = FV.cache[FV.kind] = mk(); }
   if (FV.cur !== FV.kind) { FV.cur = FV.kind; FV.t = 0; }
   FV.t += dt; e.step(FV.t, dt); FV.cam.position.set(e.cam[0], e.cam[1], e.cam[2]); FV.cam.lookAt(e.cam[3], e.cam[4], e.cam[5]);
@@ -3829,10 +4191,11 @@ const INTRO = {
   clear: { spot: '#bClear', pic: 'ui/bf/ic_clear.png', booster: true, title: 'Clear Backup', text: () => 'Send Backup fish back' },
   feed: { rib: 'NEW EVENT', tag: 'EVENT', ev: true, img: 'hand', title: 'Feeding Time', text: () => 'Food drops in and the fish crowd the surface. Wait for them to spread out.' },
   swarm: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', school: true, fv: 'swarm', title: 'Fish Swarm', text: () => 'A huge school covers the fish.\nWait for it to pass!' },
-  squid: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', img: 'squid', fv: 'squid', title: 'Squid', text: () => 'It sprays ink over the fish. Tapping it fills 3 Backup slots!' },
+  squid: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', img: 'squid', fv: 'squid', title: 'Octopus', text: () => 'It sprays ink over the fish.\nTapping it fills 3 Backup slots!' },
   pump: { rib: 'NEW MECHANIC', tag: 'PIPE', fv: 'pipe', icon: () => THUMB[SPECIES[0].id], title: 'Fish Pipe', text: () => 'More fish are pumped in through the pipe as you clear tanks.' },
   clam: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', img: 'clam', fv: 'clam', title: 'Hungry Clam', text: n => 'It grabs a fish you need. Tap it to free the fish.' } };
 function showSpot(d) {   // no separate pop-up: dim the screen and light up the real UI element, with a short tip beside it
+  document.querySelectorAll('.spotlit').forEach(e => e.classList.remove('spotlit')); document.querySelectorAll(d.spot).forEach(e => e.classList.add('spotlit'));   /* while the tip is up the booster shows at full strength, even when it is greyed out (Backup empty) */
   const rs = [...document.querySelectorAll(d.spot)].map(e => e.getBoundingClientRect()), r = { left: Math.min(...rs.map(q => q.left)), top: Math.min(...rs.map(q => q.top)), right: Math.max(...rs.map(q => q.right)), bottom: Math.max(...rs.map(q => q.bottom)) }; r.width = r.right - r.left; r.height = r.bottom - r.top; const pad = 6, box = $('spotBox'), tip = $('spotTip');
   box.style.left = (r.left - pad) + 'px'; box.style.top = (r.top - pad) + 'px'; box.style.width = (r.width + pad * 2) + 'px'; box.style.height = (r.height + pad * 2) + 'px';
   box.style.borderRadius = Math.min(26, r.height / 2 + pad) + 'px';
@@ -3924,19 +4287,30 @@ function clearBackup(win) {   // booster: everything sitting in the backup strip
     // the fish enters through the open top, in the half of the opening nearest the camera, so it comes into view below the Backup tray and never crosses it
     const trayBottom = $('backup').getBoundingClientRect().bottom, dh = Math.max(1e-3, Math.hypot(cam.position.x, cam.position.z)), ux = cam.position.x / dh, uz = cam.position.z / dh;
     let P = null, M = null, c = null;
-    for (let tr = 0; tr < 14; tr++) {
-      const f = rand(.15, .62) * RF, l = rand(-.55, .55) * RF, px = ux * f - uz * l, pz = uz * f + ux * l, Pi = new THREE.Vector3(px, WATER_Y - .55, pz), Mi = new THREE.Vector3(px, TANK_H + .55, pz), ci = projectToClient(Mi);
-      if (!c || ci.y > c.y) { P = Pi; M = Mi; c = ci; } if (ci.y > trayBottom + 44) { P = Pi; M = Mi; c = ci; break; }
+    const solids = themeBoxes(curTheme); let bestBad = 1e9;
+    for (let tr = 0; tr < 40; tr++) {
+      const big0 = !!sp.built.oct, f = (big0 ? rand(.02, .1) : rand(.15, .62)) * RF, l = (big0 ? rand(-.08, .08) : rand(-.55, .55)) * RF, px = ux * f - uz * l, pz = uz * f + ux * l, Pi = new THREE.Vector3(px, WATER_Y - (big0 ? 1.3 : .55), pz), Mi = new THREE.Vector3(px, TANK_H + (big0 ? 1.15 : .55) + (window.__dbgLift || 0), pz), ci = projectToClient(Mi);   /* the octopus is big: it comes in down the middle of the opening, from well above the rim, so its arms never touch the glass */
+      /* the whole way down must be clear of decoration: a column of radius r (the octopus is wide), also where the sideways drift carries it, from the water to the lowest point it dives to */
+      const rr = big0 ? 1.5 : .55, sxx = ci.x >= from.x ? 1 : -1, hx0 = camRight.x * sxx, hz0 = camRight.z * sxx, hh = Math.hypot(hx0, hz0) || 1; let bad = 0;
+      for (const kk of [0, .7, 1.4]) { const qx = px + hx0 / hh * kk, qz = pz + hz0 / hh * kk; for (const b of solids) { if (b.min.y > WATER_Y || b.max.y < 1.4) continue; const dx = Math.max(b.min.x - qx, 0, qx - b.max.x), dz = Math.max(b.min.z - qz, 0, qz - b.max.z); if (Math.hypot(dx, dz) < rr) bad++; } if (Math.hypot(qx, qz) > RF - (big0 ? 1.1 : .3)) bad += 3; }
+      if (bad < bestBad || (bad === bestBad && (!c || ci.y > c.y))) { bestBad = bad; P = Pi; M = Mi; c = ci; } if (bad === 0 && ci.y > trayBottom + 44) { P = Pi; M = Mi; c = ci; break; }
     }
+    if (sp.built.oct) { while (M.y > WATER_Y + .25 && octBoxAt(M).top < trayBottom + 6) { M.y -= .12; } const bb0 = octBoxAt(M); c = { x: bb0.cx, y: bb0.cy }; }   /* the flying picture lands on the middle of the picture of the 3D octopus (not on its origin): no sideways jump at the hand-off */   /* it enters where the whole of it is in view, below the Backup tray (the tray is drawn over the 3D tank, so a high entry was half hidden) */
     const pp = projectToClient(M.clone().addScaledVector(camRight, .45)), fsz = clamp(Math.hypot(pp.x - c.x, pp.y - c.y) * 2.2, 34, 80);
     const anchor = document.createElement('div'); anchor.style.cssText = `position:fixed;left:${c.x - fsz / 2}px;top:${c.y - fsz / 2}px;width:${fsz}px;height:${fsz}px;pointer-events:none;opacity:0`; document.body.appendChild(anchor);
     setTimeout(() => {
       if (gi !== gid) { anchor.remove(); ovRemove(sp); return; }
-      flySprite(sp, from, anchor, { size0: slotSize(r, 'backup'), dur: 560, delay: 0, mode: 'target', proj: true, hop: 64 + Math.random() * 36, anticip: 120, onland: () => {
+      if (sp.built.oct) { sp.octEnd = octSizeAt(M);   /* the size it really has on screen where it will appear */ sp.holder.rotation.z = Math.PI / 2; }
+      const hopV = (() => { const sz0 = sp.built.oct ? Math.min(slotSize(r, 'backup') * .8, r.height * .9) * OCT_REL : slotSize(r, 'backup'), need = from.y - $('backup').getBoundingClientRect().top + (sp.built.oct ? .62 : .56) * sz0 + 10, D = c.y - from.y; for (let h = 50; h < 230; h += 4) { let best = -1e9; for (let u = .02; u < .6; u += .02) best = Math.max(best, 4 * h * u * (1 - u) - D * u); if (best >= need) return h; } return 230; })();   /* how high the arc must go for the animal to be wholly above the rim of the Backup before it leans out: only then does it come in front of the glass */
+      flySprite(sp, from, anchor, { size0: sp.built.oct ? Math.min(slotSize(r, 'backup') * .8, r.height * .9) * OCT_REL : slotSize(r, 'backup'), dur: 1050, delay: 0, mode: 'target', proj: true, hop: hopV, anticip: 120, onland: () => {
+        const spPos = { x: sp.holder.position.x + ov.W / 2, y: ov.H / 2 - sp.holder.position.y, size: sp.holder.scale.x * sp.dim }, anR = anchor.getBoundingClientRect();
         anchor.remove(); ovRemove(sp); if (gi !== gid || !G || (G.status !== 'play' && !(win && G.status === 'won'))) return; Snd.play('totank');
         spawnThing(it.junk ? { kind: it.id } : { kind: 'fish', type: it.type }, M, G.things.length); const th = G.things[G.things.length - 1]; th.spawnAt = U.uTime.value - G.t0; th.scale = 1;
         const sx = c.x >= from.x ? 1 : -1, hx = camRight.x * sx, hz = camRight.z * sx, hl = Math.hypot(hx, hz) || 1;   // heading: along the screen, the way the fish was flying
-        th.dive = { t: 0, dur: .55, x: P.x, z: P.z, y0: M.y, y1: P.y, hx: hx / hl, hz: hz / hl, yaw: Math.atan2(-hz / hl, hx / hl), first: true }; kick(.6);
+        if (window.__dbg && sp.built.oct) { const bt = octBoxAt(M); window.__hand = { c: { x: Math.round(c.x), y: Math.round(c.y) }, anchorCenter: { x: Math.round(anR.left + anR.width / 2), y: Math.round(anR.top + anR.height / 2) }, sprite: { x: Math.round(spPos.x), y: Math.round(spPos.y), size: Math.round(spPos.size) }, M: M.toArray().map(v => +v.toFixed(2)), P: P.toArray().map(v => +v.toFixed(2)), tempBox: { cx: Math.round(bt.cx), cy: Math.round(bt.cy), top: Math.round(bt.top), bot: Math.round(bt.bottom) }, projM: (q => ({ x: Math.round(q.x), y: Math.round(q.y) }))(projectToClient(M)), th3: [], tray: Math.round($('backup').getBoundingClientRect().bottom) }; let nf = 0; const tick = () => { const o3 = G.things[G.things.length - 1]; if (o3 && o3.parts && o3.parts.root) { o3.group.updateMatrixWorld(true); const bx = new THREE.Box3().setFromObject(o3.parts.root), pts = []; for (let i = 0; i < 8; i++) pts.push(projectToClient(new THREE.Vector3(i & 1 ? bx.max.x : bx.min.x, i & 2 ? bx.max.y : bx.min.y, i & 4 ? bx.max.z : bx.min.z))); const xs = pts.map(q => q.x), ys = pts.map(q => q.y), po = projectToClient(o3.pos); window.__hand.th3.push({ n: nf, scl: +o3.group.scale.x.toFixed(2), pos: o3.pos.toArray().map(v => +v.toFixed(2)), boxC: [Math.round((Math.min(...xs) + Math.max(...xs)) / 2), Math.round((Math.min(...ys) + Math.max(...ys)) / 2)], origin: [Math.round(po.x), Math.round(po.y)], yaw: +(2 * Math.atan2(o3.group.quaternion.y, o3.group.quaternion.w)).toFixed(2) }); } if (++nf < 6) requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
+        const ppuV = Math.max(20, Math.abs(projectToClient(M.clone().add(new THREE.Vector3(0, 1, 0))).y - c.y)), v0c = clamp((sp.endVy || 0) / ppuV, .6, 6);   /* the speed the flying picture really had when it landed (measured), in world units per second */
+        const colTop = (() => { let top = 0; for (const b of solids) { if (b.min.y > WATER_Y) continue; const dx = Math.max(b.min.x - P.x, 0, P.x - b.max.x), dz = Math.max(b.min.z - P.z, 0, P.z - b.max.z); if (Math.hypot(dx, dz) < (sp.built.oct ? 1.5 : .55)) top = Math.max(top, b.max.y); } return top; })();
+        th.dive = { t: 0, yMin: Math.max(FLOOR_Y + 1.2, colTop + (sp.built.oct ? 1.05 : .45)), v0: v0c, vh0: clamp(Math.abs(sp.endVx || 0) / Math.max(20, Math.hypot(pp.x - c.x, pp.y - c.y) / .45), 0, 7), x: P.x, z: P.z, y0: M.y, y1: P.y, hx: hx / hl, hz: hz / hl, yaw: Math.atan2(-hz / hl, hx / hl), first: true }; kick(.6);
       } });
     }, k * 110);
   });
@@ -4294,7 +4668,6 @@ const LS = x => v => { (window.__steps = window.__steps || []).push([x, Math.rou
   let active = 0;
   const pump = () => { while (active < 6 && q.length) { const u = q.shift(); active++; fetch(new URL(u, base)).then(r => r.arrayBuffer()).catch(() => { }).then(() => { active--; pump(); }); } };
   const get = u => { q.push(u); pump(); };
-  get('models/unity/swarm_fish.glb');
   ['target_back', 'target_front', 'backup_back', 'backup_front', 'bubble_orb', 'bubble'].forEach(n => get('ui/tanks/' + n + '.png'));
 })();
 const SAFE = f => v => Promise.resolve().then(() => f(v)).catch(e => { console.warn('loading step failed', e); });   // a step that fails or hangs must not freeze the loading screen
@@ -4311,7 +4684,47 @@ if (PLAYTEST) addEventListener('message', e => {
   if (useSeed) { Math.random = seeded(hashSeed(d.seed)); newLevel(lv); }
   Math.random = useSeed ? seeded(hashSeed(d.seed)) : ORIG_RANDOM; newLevel(lv);
 });
-window.__ff = { loadFish, cageCanvas: (w, h, l) => tankFx.cageCanvas(w, h, l), devWin, devLose, showIntro, THREE, FBXLoader, modelVariant, makeModelThumb, buildModelFish, THUMB, SPECIES, newLevel, feed, feedStart, themeG, tankG: tank, MODEL3D, celebrate, flySprite, makeSprite, completeTarget, giveToTarget, ov, tankFx, ovFx, onTap, renderer, scene, ringFx, sprayInk, themeBoxes, colPush, tube, tubeStart, applyCam, projectToClient, pullFromBackup, swarm, swarmStart, swarmUpdate, assignTarget, get item() { return evItem; }, nowT: () => U.uTime.value - G.t0, EVT, evStart, evEnd, comboHit, guide, startleUpdate, spawnThing, LENS, lensToContent, lensToScreen, lensClientToContent, lensContentToClient, pickAtDbg: (x, y) => pickAt(x, y, 1e9), pickAtRay: (x, y) => { const r = canvas.getBoundingClientRect(); raycaster.setFromCamera(new THREE.Vector2(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1), cam); return pickAtRay(); },
+window.__qa = {   /* automatic checks (see docs/qa.md): each returns a report with pass/fail numbers, so nobody has to look for these defects by eye */
+  async octRelease() {   /* the octopus tapped into the Backup and released back into the tank: size must change smoothly and one way, no jump in angle, nothing outside the glass */
+    const wait = ms => new Promise(r => setTimeout(r, ms)), rep = { name: 'octRelease', frames: 0, fails: [] };
+    const o0 = G.things.find(x => x.id === 'squid' && x.alive); if (!o0) { rep.fails.push('no octopus in this level'); return rep; }
+    pickThing(o0); await wait(4200); if (G.backup.some(it => !it.filler && !it.landed)) await wait(2000); $('bClear').click(); rep.backupBefore = G.backup.length;
+    const S = [], t0 = performance.now(); let last = 0;
+    while (performance.now() - t0 < 4500) { await new Promise(r => requestAnimationFrame(r)); const fl = ov.flights.find(f => f.sp.built.oct), th = G.things.find(x => x.id === 'squid' && x.alive), row = { t: performance.now() - t0 };
+      if (fl) { rep.lastSp = fl.sp; row.sz = fl.sp.holder.scale.x * fl.sp.dim; row.rz = fl.sp.holder.rotation.z; row.y = fl.sp.holder.position.y; row.cx = fl.sp.holder.position.x + ov.W / 2; row.cy = ov.H / 2 - fl.sp.holder.position.y; }
+      if (th && !fl) { th.group.updateMatrixWorld(true); const bx = new THREE.Box3().setFromObject(th.parts.root); let out = -9; for (let i = 0; i < 8; i++) { const x = i & 1 ? bx.max.x : bx.min.x, y = i & 2 ? bx.max.y : bx.min.y, z = i & 4 ? bx.max.z : bx.min.z; if (y < TANK_H) out = Math.max(out, Math.hypot(x, z) - wallAt(x, z, y)); } row.out = th.dive ? out : -9;   /* (only while it falls in: the box of a swimming octopus is bigger than the octopus) */ { const pts = []; for (let i = 0; i < 8; i++) pts.push(projectToClient(new THREE.Vector3(i & 1 ? bx.max.x : bx.min.x, i & 2 ? bx.max.y : bx.min.y, i & 4 ? bx.max.z : bx.min.z))); const xs = pts.map(q => q.x), ys = pts.map(q => q.y); row.cx = (Math.min(...xs) + Math.max(...xs)) / 2; row.cy = (Math.min(...ys) + Math.max(...ys)) / 2; row.top = Math.min(...ys); row.bot = Math.max(...ys); row.h = row.bot - row.top; const tr = $('backup').getBoundingClientRect(); row.hid = Math.max(0, Math.min(row.bot, tr.bottom) - Math.max(row.top, tr.top)) / Math.max(1, row.h); } row.py = th.pos.y; row.px = th.pos.x; row.pz = th.pos.z; row.t2 = performance.now(); row.dive = !!th.dive; row.scl = th.group.scale.x; }
+      S.push(row); rep.frames++; }
+    const fs = S.filter(r => r.sz !== undefined).slice(8);   /* (the first 8 frames are the crouch: a squash, not a size change) */ let maxJ = 0, maxR = 0, grew = 0, shrank = 0; for (let i = 1; i < fs.length; i++) { const j = Math.abs(fs[i].sz / fs[i - 1].sz - 1); if (j > maxJ) maxJ = j; const d = Math.abs(fs[i].rz - fs[i - 1].rz); if (d > maxR) maxR = d; if (fs[i].sz > fs[i - 1].sz * 1.002) grew++; if (fs[i].sz < fs[i - 1].sz * .998) shrank++; }
+    const th3 = S.filter(r => r.out !== undefined && r.scl > .5), maxOut = th3.length ? Math.max(...th3.map(r => r.out)) : null, sc3 = th3.map(r => r.scl); let sJump = 0; for (let i = 1; i < sc3.length; i++) sJump = Math.max(sJump, Math.abs(sc3[i] / sc3[i - 1] - 1));
+    let pause = 0; for (let i = 1; i < th3.length; i++) { const a0 = th3[i - 1], b0 = th3[i]; if (b0.dive && b0.py > WATER_Y && a0.dive) { const v = (a0.py - b0.py) / Math.max(1e-3, (b0.t2 - a0.t2) / 1000); if (v < .4) pause++; } }
+    const spLast = rep.lastSp ? Math.hypot(rep.lastSp.lastVx || 0, rep.lastSp.lastVy || 0) : null; delete rep.lastSp; const spd = (rs, k0, k1) => { const a0 = rs[k0], b0 = rs[k1]; return a0 && b0 && b0.t !== a0.t ? Math.hypot(b0.cx - a0.cx, b0.cy - a0.cy) / ((b0.t - a0.t) / 1000) : null; }; const sBefore = spLast, t3 = th3.filter(r => r.cx !== undefined && r.scl > .9), sAfter = spd(t3.map(r => ({ ...r, t: r.t2 })), 1, Math.min(5, t3.length - 1));
+    let maxAcc = 0, vPrev = null; for (let i = 3; i < th3.length; i++) { const a0 = th3[i - 3], b0 = th3[i], dtm = Math.max(1e-3, (b0.t2 - a0.t2) / 1000);   /* (speed over 3 frames: one late frame of the browser must not look like a jerk) */ if (a0.px === undefined || b0.px === undefined) continue; const v = Math.hypot(b0.px - a0.px, b0.py - a0.py, b0.pz - a0.pz) / dtm; if (vPrev !== null && b0.scl > .9 && a0.scl > .9 && i > 5) maxAcc = Math.max(maxAcc, Math.abs(v - vPrev)); vPrev = v; }
+    const lastF = fs[fs.length - 1], first3 = th3.find(r => r.scl > .9) || th3[0], hidMax = th3.length ? Math.max(...th3.map(r => r.hid || 0)) : 0, gap = lastF && first3 ? Math.hypot(lastF.cx - first3.cx, lastF.cy - first3.cy) : null, up = th3.length ? Math.max(0, ...th3.map((r, i) => i && th3[i - 1].cy !== undefined ? th3[i - 1].cy - r.cy : 0)) : 0;
+    { const li = S.reduce((q, r, i) => r.sz !== undefined ? i : q, -1); rep.handoffRows = S.slice(Math.max(0, li - 2), li + 9).map(r => r.sz !== undefined ? 'S t=' + Math.round(r.t) + ' c=(' + Math.round(r.cx) + ',' + Math.round(r.cy) + ') size=' + Math.round(r.sz) : '3D t=' + Math.round(r.t) + (r.cx !== undefined ? ' c=(' + Math.round(r.cx) + ',' + Math.round(r.cy) + ') h=' + Math.round(r.h) : '') + ' scl=' + (r.scl || 0).toFixed(2)); }
+    Object.assign(rep, { maxSpeedStepWorld: +maxAcc.toFixed(2), speedBeforePx: sBefore && Math.round(sBefore), speedAfterPx: sAfter && Math.round(sAfter), airPauseFrames: pause, handoffGapPx: gap === null ? null : Math.round(gap), hiddenByTray: +hidMax.toFixed(2), maxUpStepPx: Math.round(up), flightFrames: fs.length, sizeFrom: fs[0] && Math.round(fs[0].sz), sizeTo: fs.length && Math.round(fs[fs.length - 1].sz), maxSizeStep: +maxJ.toFixed(3), maxAngleStep: +maxR.toFixed(3), grewFrames: grew, shrankFrames: shrank, maxOutsideGlass: maxOut === null ? null : +maxOut.toFixed(3), tankScaleStep: +sJump.toFixed(3) });
+    if (!th3.length) rep.fails.push('the 3D octopus was never seen after the release: the run is not valid (the Backup did not release it)'); if (!fs.length) rep.fails.push('no flight seen'); else if (fs[0].sz < 20 || Math.max(...fs.map(r => r.sz)) < 40) rep.fails.push('flight not real (size ' + Math.round(fs[0].sz) + ' px): a popup or a pause is probably in the way'); if (paused || introOn) rep.fails.push('game paused / intro open: the run is not valid'); if (maxJ > .12) rep.fails.push('size jumps by ' + (maxJ * 100).toFixed(0) + '% in one frame'); if (maxR > .35) rep.fails.push('angle jumps ' + maxR.toFixed(2) + ' rad in one frame'); if (grew > 2 && shrank > 2) rep.fails.push('size goes both up and down (shrinks ' + shrank + ' frames)'); if (maxOut !== null && maxOut > .02) rep.fails.push('octopus pokes ' + maxOut.toFixed(2) + ' outside the glass'); if (gap !== null && gap > 6 + 1.6 * (fs.length > 1 && fs[fs.length - 1].cx !== undefined ? Math.hypot(fs[fs.length - 1].cx - fs[fs.length - 2].cx, fs[fs.length - 1].cy - fs[fs.length - 2].cy) : 8)) rep.fails.push('hand-off: the flying picture ends ' + Math.round(gap) + ' px from where the 3D octopus appears (it vanishes and re-appears elsewhere)'); if (sBefore && sAfter && (sAfter < sBefore * .65 || sAfter > sBefore * 1.5)) rep.fails.push('speed is not continuous at the hand-off: ' + Math.round(sBefore) + ' px/s before, ' + Math.round(sAfter) + ' px/s after'); if (maxAcc > 3.5) rep.fails.push('the 3D speed changes by ' + maxAcc.toFixed(1) + ' units/s between two frames (a jerk: a stop or a jump)'); if (pause > 4) rep.fails.push('the octopus hangs in the air for ' + pause + ' frames before going down'); if (hidMax > .1) rep.fails.push(Math.round(hidMax * 100) + '% of the octopus is hidden behind the Backup tray'); if (up > 25) rep.fails.push('the 3D octopus jumps UP ' + Math.round(up) + ' px in one frame'); if (sJump > .12) rep.fails.push('3D scale jumps ' + (sJump * 100).toFixed(0) + '%');
+    rep.pass = !rep.fails.length; return rep;
+  },
+  async fishRelease() {   /* a fish tapped into the Backup and released: smooth fall, braking at the water without a stop, no jump in speed */
+    const wait = ms => new Promise(r => setTimeout(r, ms)), rep = { name: 'fishRelease', fails: [] }, ids = new Set(G.things.filter(x => x.kind === 'fish').map(x => x.group));
+    let n = 0; for (const o of G.things.slice()) { if (n >= 2) break; if (o.kind === 'fish' && o.alive && !o.big && !(G.need && G.need.has(o.type))) { pickThing(o); n++; } } await wait(4500); $('bClear').click();
+    const t0 = performance.now(), tr = new Map(); while (performance.now() - t0 < 3500) { await new Promise(r => requestAnimationFrame(r)); const t = performance.now(); for (const o of G.things) if (o.kind === 'fish' && o.alive && !ids.has(o.group)) { const a = tr.get(o) || []; a.push({ t, x: o.pos.x, y: o.pos.y, z: o.pos.z, dive: !!o.dive }); tr.set(o, a); } }
+    let worst = 0, stopFrames = 0, n3 = 0; for (const [, a] of tr) { n3++; let prev = null, seenFast = false; for (let i = 3; i < a.length; i++) { const dt = (a[i].t - a[i - 3].t) / 1000; if (dt < .03) continue; const v = Math.hypot(a[i].x - a[i - 3].x, a[i].y - a[i - 3].y, a[i].z - a[i - 3].z) / dt;   /* over 3 frames: a single late frame of the browser is not a jerk */ if (v > 2.5) seenFast = true; if (prev !== null && i > 6 && Math.abs(v - prev) > worst) { worst = Math.abs(v - prev); rep.at = { i, of: a.length, v: +v.toFixed(2), prev: +prev.toFixed(2), y: +a[i].y.toFixed(2), dive: a[i].dive, around: a.slice(Math.max(1, i - 4), i + 3).map((q, k, arr) => k ? +(Math.hypot(q.x - arr[k - 1].x, q.y - arr[k - 1].y, q.z - arr[k - 1].z) / ((q.t - arr[k - 1].t) / 1000)).toFixed(1) : 0) }; } if (seenFast && v < .25 && a[i].dive) stopFrames++; prev = v; } }
+    Object.assign(rep, { fishSeen: n3, maxSpeedStep: +worst.toFixed(2), stopFramesDuringDive: stopFrames }); if (!n3) rep.fails.push('no fish released: the run is not valid'); if (worst > 3.5) rep.fails.push('speed jumps by ' + worst.toFixed(1) + ' units/s between two frames'); if (stopFrames > 3) rep.fails.push('stops for ' + stopFrames + ' frames while still diving'); rep.pass = !rep.fails.length; return rep;
+  },
+  async fishClip(sec = 20) {   /* fish bodies (middle, nose, tail) must never be inside a solid decoration */
+    const wait = ms => new Promise(r => setTimeout(r, ms)), rep = { name: 'fishClip', samples: 0, inSolid: 0, fails: [] }, t0 = performance.now(); while (performance.now() - t0 < sec * 1000) { await wait(250); const r = window.__ff.clipTest(); rep.samples += r.n; rep.inSolid += r.solid; } if (rep.inSolid) rep.fails.push(rep.inSolid + ' fish samples inside solid decor'); rep.pass = !rep.fails.length; return rep;
+  }
+};
+window.__ff = { G, newLevel, orbit, uiReady, guide, lvTitle: () => CHEER.lv && { gy: +CHEER.lv.g.position.y.toFixed(1), meshY: +CHEER.lv.mesh.position.y.toFixed(1), h: +CHEER.lv.mesh.geometry.parameters.height.toFixed(1), tier: window.__lvTier | 0, screenY: +(ov.H / 2 - CHEER.lv.g.position.y).toFixed(1) }, why: () => ({ paused, introOn, tutI, camIntro: !!camIntro, lvShown: window.__lvShown, lid: (window.__lid || []).map(v => +v.toFixed(2)), hud: performance.now() - (window.__hudInT0 || 0), status: G.status, tgtAlive: !!(guide.tgt && guide.tgt.alive), locked: !!(guide.tgt && guide.tgt.locked) }), clam: { loadClam, buildClam, CLAM }, ovScene: () => { const out = []; ov.scene.traverse(m => { if (m.isMesh && m.visible) { let go = 0, q = m.parent; const chain = []; while (q && q !== ov.scene) { chain.push(q.renderOrder); q = q.parent; } out.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' chain=[' + chain.join(',') + '] tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' z=' + +m.getWorldPosition(new THREE.Vector3()).z.toFixed(0) + ' ' + (m.material && m.material.type)); } }); return out; }, ovInfo: () => [...ov.sprites].map(sp => { const r = []; sp.holder.traverse(m => { if (m.isMesh) r.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' op=' + (m.material && +m.material.opacity.toFixed(2))); }); return { id: sp.id, zTop: sp.zTop, z: sp.holder.position.z, px: Math.round(sp.holder.position.x + ov.W / 2), py: Math.round(ov.H / 2 - sp.holder.position.y), meshes: r }; }), U, buildJelly, loadJelly, tapThing: id => { const o = G.things.find(x => x.id === id && x.alive); if (o) pickThing(o); return !!o; }, evInfo: () => { const e = EVT.cur; if (!e) return null; return { kind: e.kind, t: +e.t.toFixed(1), d: +e.d.toFixed(1), n: e.m.length, pinned: e.m.filter(o => o.evPin).length, fish: G.things.filter(o => o.kind === 'fish' && o.alive && !o.big).length, p: e.m.slice(0, 4).map(o => [+o.pos.x.toFixed(1), +o.pos.y.toFixed(1), +o.pos.z.toFixed(1), !!o.evPin]) }; }, devEvents: ['conga', 'waltz', 'swirl', 'squabble', 'drop', 'feed', 'startle', 'swarm', 'octo ink', 'octo floor', 'octo swim', 'pump'], devEvent: (n) => {   /* developer tool (Settings): start one event now, to test it */
+  if (!G || G.status !== 'play') return; hideOverlays(); paused = false;
+  if (EVT.cur) { for (const o of EVT.cur.m) { o.evOn = false; o.evTight = false; o.evPin = null; } EVT.cur = null; }
+  if (n === 'conga' || n === 'waltz' || n === 'swirl' || n === 'squabble' || n === 'drop') evStart(n);
+  else if (n === 'feed') { if (!feed.on) feedStart(); } else if (n === 'startle') { if (!G.cfg.startle) G.cfg.startle = true; G.devRock = true; }
+  else if (n === 'swarm') { if (!G.cfg.swarm) G.cfg.swarm = true; swarmHouseSetup(); swarm.on = false; swarmStart(); }
+  else if (n === 'pump') { if (G.waves && G.waves.length) tubeStart(); }
+  else if (n.startsWith('octo')) { const o = G.things.find(x => x.id === 'squid' && x.alive); if (!o || !o.oc) return; const S = o.oc, m = n.split(' ')[1]; if (m === 'ink') { o.inkT = 0; return; } S.t = 0; S.cool = 1e9; S.mode = m === 'swim' ? 'swim' : m; S.next = 25; if (m === 'floor') { S.fwp.copy(randomPoint(o)); S.fwp.y = FLOOR_Y + (OCT_FLY + .3) * o.sz; } if (m === 'wall') { S.a = Math.atan2(o.pos.z, o.pos.x); S.wy = clamp(o.pos.y, FLOOR_Y + 1, WATER_Y - 1.3); S.wa = S.a; S.wyT = S.wy; } }
+}, nose: () => G.things.filter(o => o.kind === 'fish' && o.alive && !o.big && o.dir.y < -.55).map(o => ({ y: +o.pos.y.toFixed(2), dy: +o.dir.y.toFixed(2), pin: !!o.evPin, ev: !!o.evOn, dsp: !!o.dsp, mood: o.mood, spin: !!o.spinT, stk: +(o.stkT || 0).toFixed(1), ev2: EVT.cur ? EVT.cur.kind : '', id: SPECIES[o.type] && SPECIES[o.type].id })), ev: k => { if (EVT.cur) { for (const o of EVT.cur.m) { o.evOn = false; o.evTight = false; o.evPin = null; } EVT.cur = null; } evStart(k); return EVT.cur ? EVT.cur.m.length : 0; }, conga: () => { evStart('conga'); const e = EVT.cur; return e ? e.m.length : 0; }, congaStat: () => { const e = EVT.cur; if (!e || e.kind !== 'conga') return null; const m = e.m, out = []; for (let i = 1; i < m.length; i++) { const f = m[i - 1], o = m[i]; _ov.subVectors(f.pos, o.pos); const d = _ov.length(); _ov.normalize(); out.push([+o.dir.dot(_ov).toFixed(2), +d.toFixed(2)]); } const lead = m[0]; return { t: +e.t.toFixed(1), out, leadSpeedDir: [+lead.dir.x.toFixed(2), +lead.dir.z.toFixed(2)] }; }, flightProbe: () => ov.flights.map(f => ({ s0: Math.round(f.size0), s1: Math.round(f.size1 || 0), t: Math.round(f.t), cur: Math.round(f.sp.holder.scale.x * f.sp.dim), dim: +f.sp.dim.toFixed(2), oct: !!f.sp.built.oct })), octInk: () => { const o = G.things.find(x => x.id === 'squid'); if (o) o.inkT = 0; return !!o; }, tapOcto: () => { const o = G.things.find(x => x.id === 'squid' && x.alive); if (o) pickThing(o); return !!o; }, tapWrong: n => { let c = 0; for (const o of G.things.slice()) { if (c >= n) break; if (o.kind === 'fish' && o.alive && !o.big && !(G.need && G.need.has(o.type))) { pickThing(o); c++; } } return c; }, bk: () => G.backup.map(i => i.id + (i.filler ? '*' : '') + (i.landed ? '' : '?')), camAng: () => Math.atan2(cam.position.z, cam.position.x), octSet: (m, ang) => { const o = G.things.find(x => x.id === 'squid'); if (!o || !o.oc) return null; const S = o.oc; S.t = 0; S.next = 999; S.mode = m; if (m === 'floor') { S.fwp.copy(randomPoint(o)); S.fwp.y = FLOOR_Y + OCT_FLY + .3; } if (m === 'wall') { S.a = Math.atan2(o.pos.z, o.pos.z === 0 && o.pos.x === 0 ? 1 : o.pos.x); S.wy = clamp(o.pos.y, FLOOR_Y + 1, WATER_Y - 1.3); if (ang !== undefined) S.a = ang; S.wa = S.a; S.wyT = S.wy; } return o.pos.toArray(); }, octInfo: () => { const o = G.things.find(x => x.id === 'squid'); if (!o) return null; const S = o.oc || {}; return { pos: o.pos.toArray().map(v => +v.toFixed(2)), mode: S.mode, fk: +(S.fk || 0).toFixed(2), wk: +(S.wk || 0).toFixed(2), walk: +(S.walk || 0).toFixed(2) }; }, oct: { loadOctopus, buildSquid, octoAnim, octoCycle, octoBlink, OCT }, clipTest: () => { const sol = themeBoxes(curTheme), all = decorBoxes(curTheme), r = { n: 0, solid: 0, soft: 0, ex: [] }; for (const o of G.things) { if (o.kind !== 'fish' || !o.alive || o.big) continue; r.n++; const P0 = o.pos, br = bodyR(o) * .9, pts = [P0, P0.clone().addScaledVector(o.dir, br), P0.clone().addScaledVector(o.dir, -br)]; let hs = false; for (const P of pts) { for (const b of sol) if (b.min.y < 1.7 && P.x > b.min.x + .12 && P.x < b.max.x - .12 && P.y > b.min.y + .1 && P.y < b.max.y - .1 && P.z > b.min.z + .12 && P.z < b.max.z - .12) { hs = true; if (r.ex.length < 3) r.ex.push([+P.x.toFixed(2), +P.y.toFixed(2), +P.z.toFixed(2), b.min.toArray().map(v => +v.toFixed(2)), b.max.toArray().map(v => +v.toFixed(2))]); } } if (hs) r.solid++; else { const P = P0; for (const b of all) if (!sol.includes(b) && P.x > b.min.x + .05 && P.x < b.max.x - .05 && P.y > b.min.y && P.y < b.max.y && P.z > b.min.z + .05 && P.z < b.max.z - .05) { r.soft++; break; } } } return r; }, decorInfo: () => { const out = []; const def = THREE.Material.prototype.onBeforeCompile, bx = new THREE.Box3(), sz = new THREE.Vector3(); themeG.forEach((g, i) => { const solids = new Set(themeBoxes(i)); g.children.forEach(c => { let sol = false, types = new Set(); c.traverse(m => { if (!m.isMesh) return; types.add(m.geometry.type.replace('Geometry', '')); if (m.material && m.material.onBeforeCompile === def && m.geometry.type !== 'PlaneGeometry' && m.geometry.type !== 'CircleGeometry') sol = true; }); bx.setFromObject(c); bx.getSize(sz); out.push([i, c.userData.pl || '-', c.visible ? 1 : 0, sol ? 'S' : 'soft', +sz.x.toFixed(2), +sz.y.toFixed(2), +sz.z.toFixed(2), [...types].slice(0, 3).join('+')].join(' ')); }); }); return out; }, fishPos: () => G.things.filter(o => o.kind === 'fish' && o.alive && !o.big).map(o => [o.pos.x, o.pos.y, o.pos.z, o.rf, o.boost, o.mood || 0, o.evOn ? 1 : 0]), RF_: () => RF, swarmStart: () => { swarm.on = false; swarmStart(); }, loadFish, cageCanvas: (w, h, l) => tankFx.cageCanvas(w, h, l), devWin, devLose, showIntro, THREE, FBXLoader, modelVariant, makeModelThumb, buildModelFish, THUMB, SPECIES, newLevel, feed, feedStart, themeG, tankG: tank, MODEL3D, celebrate, flySprite, makeSprite, completeTarget, giveToTarget, ov, tankFx, ovFx, onTap, renderer, scene, ringFx, sprayInk, themeBoxes, colPush, tube, tubeStart, applyCam, projectToClient, pullFromBackup, swarm, swarmStart, swarmUpdate, assignTarget, get item() { return evItem; }, nowT: () => U.uTime.value - G.t0, EVT, evStart, evEnd, comboHit, guide, startleUpdate, spawnThing, LENS, lensToContent, lensToScreen, lensClientToContent, lensContentToClient, pickAtDbg: (x, y) => pickAt(x, y, 1e9), pickAtRay: (x, y) => { const r = canvas.getBoundingClientRect(); raycaster.setFromCamera(new THREE.Vector2(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1), cam); return pickAtRay(); },
   pickStats: () => { pickRender(); const r = canvas.getBoundingClientRect(), out = {}; for (let y = 0; y < PICK.h; y++) for (let x = 0; x < PICK.w; x++) { const i = (y * PICK.w + x) * 4, id = PICK.buf[i] + PICK.buf[i + 1] * 256; if (!id) continue; const o = out[id] || (out[id] = { n: 0, x: 0, y: 0 }); o.n++; o.x += x; o.y += y; }
     return Object.entries(out).map(([id, o]) => ({ kind: PICK.map.get(+id)?.kind, id: +id, n: o.n, cx: r.left + o.x / o.n / PICK.w * r.width, cy: r.top + (PICK.h - 1 - o.y / o.n) / PICK.h * r.height })); }, PICKMAP: PICK.map, glassWater, showLose, tapClam, feed, inks, FISHART, cam, renderer, ov, surfaceSplash, waterBurst, miniSplash, boxEls: () => boxEls, get G() { return G; }, pickThing, orbit, newLevel, SPECIES, THUMB, scatter, onTap, missTap, hint, save, openLevels, showTut };
 

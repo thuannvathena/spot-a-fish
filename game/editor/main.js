@@ -18,7 +18,7 @@ const REF_BY_DIFF = { Easy: 3, Medium: 8, Hard: 13, 'Very Hard': 13 };
 /* ---------- storage ---------- */
 const sortLv = a => a.slice().sort((x, y) => String(x.id).localeCompare(String(y.id), undefined, { numeric: true }));
 class BrowserStorage {
-  constructor() { this.label = 'Browser storage'; this.d = { levels: {}, history: {}, collections: {} }; try { Object.assign(this.d, JSON.parse(lsGet('saf_editor_v1', '{}'))); } catch (e) { } }
+  constructor() { this.label = 'Browser storage'; this.d = { levels: {}, history: {}, collections: {}, base: {} }; try { Object.assign(this.d, JSON.parse(lsGet('saf_editor_v1', '{}'))); } catch (e) { } }
   _w() { lsSet('saf_editor_v1', JSON.stringify(this.d)); }
   async loadAll() { return { levels: sortLv(Object.values(this.d.levels)), collections: Object.values(this.d.collections) }; }
   async saveLevel(lv) { this.d.levels[lv.id] = clone(lv); const h = this.d.history[lv.id] || (this.d.history[lv.id] = []); h.push({ t: Date.now(), lv: clone(lv) }); while (h.length > HISTORY_KEEP) h.shift(); this._w(); }
@@ -79,7 +79,9 @@ function checks(lv) {
   else if (![1, 2, 3].includes(lv.per)) w.push('Fish per tank must be 1, 2 or 3');
   if (!s.tube && s.total > FISH_CAP) w.push(`Total fish ${s.total} is above the limit ${FISH_CAP}; extra decoys are dropped in game`);
   if (s.tube && s.start > TUBE_INIT) w.push(`Start fish ${s.start} is above the tube-level limit ${TUBE_INIT}`);
-  if (num(lv.species) && lv.species < lv.goal + 2) w.push(`Species ${lv.species} is less than target tanks + 2 (${lv.goal + 2})`);
+  const noDecoys = num(lv.decoyFish) && lv.decoyFish === 0;   // levels 1-2 have only target fish: as many species as tanks is right
+  if (num(lv.species) && !noDecoys && lv.species < lv.goal + 1) w.push(`Species ${lv.species} is less than target tanks + 1 (${lv.goal + 1}): there is no wrong fish species`);
+  if (num(lv.species) && noDecoys && lv.species > lv.goal) w.push(`Species ${lv.species} is more than target tanks (${lv.goal}) but the level has no wrong fish`);
   if (num(lv.species) && lv.species > SPECIES_MAX) w.push(`Species ${lv.species} is more than the ${SPECIES_MAX} available`);
   if (lv.goal > CATCHABLE) w.push(`Target tanks ${lv.goal} is more than the ${CATCHABLE} catchable species`);
   const waves = (lv.tube && lv.tube.waves) || [];
@@ -127,7 +129,7 @@ function renderLeft() {
     if (!S.levels.length) h += `<p class="mu">No levels yet.</p><button class="pr" id="bBuiltin">Add the ${DEFAULTS.length} built-in levels</button>`;
     h += S.levels.map(l => `<div class="row ${l.id === S.cur ? 'on' : ''}" data-id="${esc(l.id)}"><b>${esc(l.id)}</b> ${esc(l.name)}${l.id === S.cur && S.dirty ? ' *' : ''}<br><span class="mu sm">${l.goal} x ${l.per} · ${esc(l.difficulty || '')} · ${esc(l.status || '')}</span></div>`).join('');
     h += '<div class="bar"><button id="bNew">New</button><button id="bDup">Duplicate</button><button id="bImp">Import</button><button id="bDel">Delete</button></div><input type="file" id="fImp" accept=".json,application/json" multiple class="hide">';
-    if (S.levels.length) h += '<div class="bar"><button id="bBuiltin2" class="sm">Add missing built-in levels</button></div>';
+    if (S.levels.length) h += '<div class="bar"><button id="bBuiltin2" class="sm">Add or update built-in levels</button></div>';
   } else {
     h += '<h3>Collections</h3>';
     if (!S.cols.length) h += '<p class="mu">No collections yet.</p>';
@@ -229,7 +231,18 @@ async function loadStore(store) {
   status(`${store.label}: ${S.levels.length} levels, ${S.cols.length} collections`); renderAll();
 }
 async function addLevel(lv) { S.levels = sortLv(S.levels.concat(lv)); S.cur = lv.id; S.undo = []; S.redo = []; try { await S.store.saveLevel(lv); S.dirty = false; } catch (e) { status('Save failed: ' + e.message, true); } renderAll(); }
-async function addBuiltins() { let n = 0; for (const d of DEFAULTS) { if (!S.levels.some(l => l.id === d.id)) { const lv = clone(d); S.levels.push(lv); await S.store.saveLevel(lv); n++; } } S.levels = sortLv(S.levels); S.cur = S.cur || (S.levels[0] && S.levels[0].id); status(`Added ${n} built-in levels`); renderAll(); }
+async function addBuiltins(quiet) {   // the levels of the game (levels.json): the ones this browser does not have yet are added; a stored level that was never edited is replaced when the game's level has changed, an edited one is kept
+  let n = 0, u = 0; const base = S.store.d && S.store.d.base;
+  for (const d of DEFAULTS) {
+    const js = JSON.stringify(d), at = S.levels.findIndex(l => l.id === d.id);
+    if (at < 0) { const lv = clone(d); S.levels.push(lv); await S.store.saveLevel(lv); if (base) base[d.id] = js; n++; }
+    else if (base && base[d.id] && base[d.id] !== js && JSON.stringify(S.levels[at]) === base[d.id]) { const lv = clone(d); S.levels[at] = lv; await S.store.saveLevel(lv); base[d.id] = js; u++; }
+    else if (base && !base[d.id] && JSON.stringify(S.levels[at]) === js) base[d.id] = js;
+  }
+  if (base) S.store._w();
+  S.levels = sortLv(S.levels); S.cur = S.cur || (S.levels[0] && S.levels[0].id);
+  status(quiet ? `${S.store.label}: ${S.levels.length} levels` + (n || u ? ` (${n} added, ${u} updated from the game)` : '') : `Added ${n} built-in levels` + (u ? `, updated ${u}` : '')); renderAll();
+}
 function autoFill() {
   edit(lv => {
     const ref = REF_BY_DIFF[lv.difficulty] || 8, C = defaultsFor(ref), goal = Math.max(1, lv.goal | 0);
@@ -344,8 +357,9 @@ splitter('sL', 'saf_lw', 200, 1); splitter('sR', 'saf_rw', 260, -1);
 document.documentElement.dataset.theme = lsGet('saf_theme', 'dark');
 applyPanels();
 (async () => {
-  const mode = lsGet('saf_mode', '');
-  if (mode === 'browser') { await loadStore(new BrowserStorage()); return; }
+  let mode = lsGet('saf_mode', '');
+  if (!mode) { mode = 'browser'; lsSet('saf_mode', 'browser'); }   // nothing chosen yet: start in the browser storage with every level of the game, no clicking needed (a folder can still be chosen)
+  if (mode === 'browser') { await loadStore(new BrowserStorage()); await addBuiltins(true); return; }
   if (mode === 'folder') { const h = await idbGet('dir'); if (h) { try { if ((await h.queryPermission({ mode: 'readwrite' })) === 'granted') { await loadStore(new FolderStorage(h)); return; } } catch (e) { } S.pending = h; } }
   renderAll();
 })();
