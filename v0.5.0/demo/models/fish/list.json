@@ -1,0 +1,296 @@
+[
+ {
+  "key": "rainbow_wing",
+  "group": "ChatGPT",
+  "fbx": "models/fish/rainbow_wing/model.fbx",
+  "tex": "models/fish/rainbow_wing/tex.jpg"
+ },
+ {
+  "key": "shark",
+  "group": "ChatGPT",
+  "fbx": "models/fish/shark/model.fbx",
+  "tex": "models/fish/shark/tex.jpg"
+ },
+ {
+  "key": "red_stripe_wing",
+  "group": "ChatGPT",
+  "fbx": "models/fish/red_stripe_wing/model.fbx",
+  "tex": "models/fish/red_stripe_wing/tex.jpg"
+ },
+ {
+  "key": "red_wing",
+  "group": "ChatGPT",
+  "fbx": "models/fish/red_wing/model.fbx",
+  "tex": "models/fish/red_wing/tex.jpg"
+ },
+ {
+  "key": "sea_horse",
+  "group": "ChatGPT",
+  "fbx": "models/fish/sea_horse/model.fbx",
+  "tex": "models/fish/sea_horse/tex.jpg"
+ },
+ {
+  "key": "silver_line",
+  "group": "ChatGPT",
+  "fbx": "models/fish/silver_line/model.fbx",
+  "tex": "models/fish/silver_line/tex.jpg"
+ },
+ {
+  "key": "sunset_puffer",
+  "group": "ChatGPT",
+  "fbx": "models/fish/sunset_puffer/model.fbx",
+  "tex": "models/fish/sunset_puffer/tex.jpg"
+ },
+ {
+  "key": "violet_ripple",
+  "group": "ChatGPT",
+  "fbx": "models/fish/violet_ripple/model.fbx",
+  "tex": "models/fish/violet_ripple/tex.jpg"
+ },
+ {
+  "key": "violet_stripe",
+  "group": "ChatGPT",
+  "fbx": "models/fish/violet_stripe/model.fbx",
+  "tex": "models/fish/violet_stripe/tex.jpg"
+ },
+ {
+  "key": "whale",
+  "group": "ChatGPT",
+  "fbx": "models/fish/whale/model.fbx",
+  "tex": "models/fish/whale/tex.jpg"
+ },
+ {
+  "key": "yellow_shell_kid",
+  "group": "ChatGPT",
+  "fbx": "models/fish/yellow_shell_kid/model.fbx",
+  "tex": "models/fish/yellow_shell_kid/tex.jpg"
+ },
+ {
+  "key": "yellow_stripe",
+  "group": "ChatGPT",
+  "fbx": "models/fish/yellow_stripe/model.fbx",
+  "tex": "models/fish/yellow_stripe/tex.jpg"
+ },
+ {
+  "key": "abyss_tetra",
+  "group": "Codex",
+  "fbx": "models/fish/abyss_tetra/model.fbx",
+  "tex": "models/fish/abyss_tetra/tex.jpg"
+ },
+ {
+  "key": "blue_flash",
+  "group": "Codex",
+  "fbx": "models/fish/blue_flash/model.fbx",
+  "tex": "models/fish/blue_flash/tex.jpg"
+ },
+ {
+  "key": "red_fin",
+  "group": "Codex",
+  "fbx": "models/fish/red_fin/model.fbx",
+  "tex": "models/fish/red_fin/tex.jpg"
+ },
+ {
+  "key": "blue_chunker",
+  "group": "Codex",
+  "fbx": "models/fish/blue_chunker/model.fbx",
+  "tex": "models/fish/blue_chunker/tex.jpg"
+ },
+ {
+  "key": "blue_chuppy",
+  "group": "Codex",
+  "fbx": "models/fish/blue_chuppy/model.fbx",
+  "tex": "models/fish/blue_chuppy/tex.jpg"
+ },
+ {
+  "key": "blue_striper",
+  "group": "Codex",
+  "fbx": "models/fish/blue_striper/model.fbx",
+  "tex": "models/fish/blue_striper/tex.jpg"
+ },
+ {
+  "key": "emerald_blue",
+  "group": "Tripo",
+  "fbx": "models/fish/emerald_blue/model.fbx",
+  "tex": "models/fish/emerald_blue/tex.jpg"
+ },
+ {
+  "key": "golden_flame",
+  "group": "Tripo",
+  "fbx": "models/fish/golden_flame/model.fbx",
+  "tex": "models/fish/golden_flame/tex.jpg"
+ },
+ {
+  "key": "golden_scale",
+  "group": "Tripo",
+  "fbx": "models/fish/golden_scale/model.fbx",
+  "tex": "models/fish/golden_scale/tex.jpg"
+ },
+ {
+  "key": "goldie_tot",
+  "group": "Tripo",
+  "fbx": "models/fish/goldie_tot/model.fbx",
+  "tex": "models/fish/goldie_tot/tex.jpg"
+ },
+ {
+  "key": "green_orby",
+  "group": "Tripo",
+  "fbx": "models/fish/green_orby/model.fbx",
+  "tex": "models/fish/green_orby/tex.jpg"
+ },
+ {
+  "key": "green_finny",
+  "group": "Tripo",
+  "fbx": "models/fish/green_finny/model.fbx",
+  "tex": "models/fish/green_finny/tex.jpg"
+ },
+ {
+  "key": "orange_stripe",
+  "group": "Tripo",
+  "fbx": "models/fish/orange_stripe/model.fbx",
+  "tex": "models/fish/orange_stripe/tex.jpg"
+ },
+ {
+  "key": "pale_tide",
+  "group": "Tripo",
+  "fbx": "models/fish/pale_tide/model.fbx",
+  "tex": "models/fish/pale_tide/tex.jpg"
+ },
+ {
+  "key": "peach_anthias",
+  "group": "Tripo",
+  "fbx": "models/fish/peach_anthias/model.fbx",
+  "tex": "models/fish/peach_anthias/tex.jpg"
+ },
+ {
+  "key": "purp_bluefin",
+  "group": "Tripo",
+  "fbx": "models/fish/purp_bluefin/model.fbx",
+  "tex": "models/fish/purp_bluefin/tex.jpg"
+ },
+ {
+  "key": "rainbow_striper",
+  "group": "Tripo",
+  "fbx": "models/fish/rainbow_striper/model.fbx",
+  "tex": "models/fish/rainbow_striper/tex.jpg"
+ },
+ {
+  "key": "brown_stripe",
+  "group": "Tripo",
+  "fbx": "models/fish/brown_stripe/model.fbx",
+  "tex": "models/fish/brown_stripe/tex.jpg"
+ },
+ {
+  "key": "deep_lantern_fish",
+  "group": "Tripo",
+  "fbx": "models/fish/deep_lantern_fish/model.fbx",
+  "tex": "models/fish/deep_lantern_fish/tex.jpg"
+ },
+ {
+  "key": "ghostly_wave",
+  "group": "Tripo",
+  "fbx": "models/fish/ghostly_wave/model.fbx",
+  "tex": "models/fish/ghostly_wave/tex.jpg"
+ },
+ {
+  "key": "golden_spot",
+  "group": "Tripo",
+  "fbx": "models/fish/golden_spot/model.fbx",
+  "tex": "models/fish/golden_spot/tex.jpg"
+ },
+ {
+  "key": "golden_tide",
+  "group": "Tripo",
+  "fbx": "models/fish/golden_tide/model.fbx",
+  "tex": "models/fish/golden_tide/tex.jpg"
+ },
+ {
+  "key": "goldie",
+  "group": "Tripo",
+  "fbx": "models/fish/goldie/model.fbx",
+  "tex": "models/fish/goldie/tex.jpg"
+ },
+ {
+  "key": "green_beast",
+  "group": "Tripo",
+  "fbx": "models/fish/green_beast/model.fbx",
+  "tex": "models/fish/green_beast/tex.jpg"
+ },
+ {
+  "key": "green_spotty",
+  "group": "Tripo",
+  "fbx": "models/fish/green_spotty/model.fbx",
+  "tex": "models/fish/green_spotty/tex.jpg"
+ },
+ {
+  "key": "green_stripey",
+  "group": "Tripo",
+  "fbx": "models/fish/green_stripey/model.fbx",
+  "tex": "models/fish/green_stripey/tex.jpg"
+ },
+ {
+  "key": "ice_blue_fish",
+  "group": "Tripo",
+  "fbx": "models/fish/ice_blue_fish/model.fbx",
+  "tex": "models/fish/ice_blue_fish/tex.jpg"
+ },
+ {
+  "key": "orange_horn",
+  "group": "Tripo",
+  "fbx": "models/fish/orange_horn/model.fbx",
+  "tex": "models/fish/orange_horn/tex.jpg"
+ },
+ {
+  "key": "orange_sword_fish",
+  "group": "Tripo",
+  "fbx": "models/fish/orange_sword_fish/model.fbx",
+  "tex": "models/fish/orange_sword_fish/tex.jpg"
+ },
+ {
+  "key": "panda_puffer",
+  "group": "Tripo",
+  "fbx": "models/fish/panda_puffer/model.fbx",
+  "tex": "models/fish/panda_puffer/tex.jpg"
+ },
+ {
+  "key": "perple_stripe_wing",
+  "group": "Tripo",
+  "fbx": "models/fish/perple_stripe_wing/model.fbx",
+  "tex": "models/fish/perple_stripe_wing/tex.jpg"
+ },
+ {
+  "key": "pink_bubble",
+  "group": "Tripo",
+  "fbx": "models/fish/pink_bubble/model.fbx",
+  "tex": "models/fish/pink_bubble/tex.jpg"
+ },
+ {
+  "key": "pink_stripe",
+  "group": "Tripo",
+  "fbx": "models/fish/pink_stripe/model.fbx",
+  "tex": "models/fish/pink_stripe/tex.jpg"
+ },
+ {
+  "key": "pinky_puffer",
+  "group": "Tripo",
+  "fbx": "models/fish/pinky_puffer/model.fbx",
+  "tex": "models/fish/pinky_puffer/tex.jpg"
+ },
+ {
+  "key": "purple_sprite",
+  "group": "Tripo",
+  "fbx": "models/fish/purple_sprite/model.fbx",
+  "tex": "models/fish/purple_sprite/tex.jpg"
+ },
+ {
+  "key": "purple_wing",
+  "group": "Tripo",
+  "fbx": "models/fish/purple_wing/model.fbx",
+  "tex": "models/fish/purple_wing/tex.jpg"
+ },
+ {
+  "key": "rainbow_bluestripe",
+  "group": "Tripo",
+  "fbx": "models/fish/rainbow_bluestripe/model.fbx",
+  "tex": "models/fish/rainbow_bluestripe/tex.jpg"
+ }
+]
