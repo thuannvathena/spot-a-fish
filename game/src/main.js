@@ -4362,7 +4362,12 @@ function camTutUpdate() {
   box.className = 'show ' + camTut.step; const coarse = matchMedia('(pointer:coarse)').matches;
   $('camMsg').textContent = camTut.step === 'rot' ? 'Drag to look around' : camTut.step === 'tilt' ? 'Drag with two fingers to move the view up / down' : 'Pinch to zoom in / out';
 }
-const uiReady = () => performance.now() > (window.__hudInT0 || 0) + 1600 && !camIntro && window.__lvShown !== false && !!G && (G.targets || []).every((t, i) => !t || (window.__lid && window.__lid[i] >= .98));   // the first-time boards ("Tap a fish", the camera steps) and the hand wait until the UI has slid in completely (about 1.5 s after it starts) and the opening camera shot is over
+let uiRdyFor = -1;
+const uiReady = () => {   /* the first-time boards ("Tap a fish", the camera steps) and the hand wait until the UI has slid in completely (about 1.5 s after it starts) and the opening camera shot is over. It is asked ONCE per level: the lids of the target tanks swing shut and open again every time a tank is finished, and that was taking the guide and the hand off the screen in the middle of the level */
+  if (!G) return false; if (uiRdyFor === G.id) return true;
+  const ok = performance.now() > (window.__hudInT0 || 0) + 1600 && !camIntro && window.__lvShown !== false && (G.targets || []).every((t, i) => !t || (window.__lid && window.__lid[i] >= .98));
+  if (ok) uiRdyFor = G.id; return ok;
+};
 function guideUpdate() {
   camTutUpdate();
   const bar = $('goalMsg'); if (bar) { const on = !!G && G.level === 1 && G.status === 'play' && !paused && !introOn && guide.on && uiReady(); bar.classList.toggle('show', on); if (on) { const r = $('backup').getBoundingClientRect(); bar.style.top = (r.top + r.height / 2 - 22) + 'px'; } }

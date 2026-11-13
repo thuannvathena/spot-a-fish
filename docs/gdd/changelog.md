@@ -20,6 +20,7 @@ Changes since v0.4.0.
 - **No twin wrong fish:** when a wrong species is used more than once its later copies have their colours turned a little, so every fish in the tank reads as its own; the tinted copies still school together.
 - **Swirl event:** the two rings are wider and flatter, so the wheel no longer squashes against the water and the sand, and the fish are shared between the rings by the length of each ring. Measured over 5 s with 22 fish: the closest pair went from 0.42 to 0.55 and the average gap to the nearest fish from 0.65 to 0.74.
 - **LEVEL title on Hard / Super Hard levels** hangs by the middle of the words, not by the middle of the whole picture, so the words sit at the same height as on a normal level (measured: 299.5 px on both) with the fish bones above them.
+- **"Tap a fish" and the hand stay on screen** while a finished target tank shuts its lid and the next one opens (that lid movement used to take them off the screen for about 2.9 s in the middle of level 1).
 - **Boosters light up in their first-time tip:** a greyed-out booster (Clear Backup with an empty Backup) shows at full strength while its tip is open and goes back to grey when it closes.
 - **Tools:** `wr-sim.mjs` reports where in the level a lost run ended; `wr-tune-plan.mjs` tunes colour copies and obstacles on the new `levels.json`; `make-sheet-data.py` and `make-levels-doc.py` build the sheet tab and this GDD table.
 
