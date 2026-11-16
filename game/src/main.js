@@ -738,8 +738,10 @@ let thumbR = null;   // one renderer for all the thumbnails (a new one for each 
 function makeModelThumb(sp, yaw = -.25, store = true) {   // a small side-view picture for the UI (target boards, intro cards)
   const M = MODEL3D[sp.model3d], r = thumbR || (thumbR = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })); r.setPixelRatio(1); r.setSize(200, 160, false); r.setClearColor(0x000000, 0);
   const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xdff4ff, 0x335577, 1.6)); const dl = new THREE.DirectionalLight(0xffffff, 2.4); dl.position.set(2, 3, 4); sc.add(dl);
-  const b = buildAnyModel(sp); sc.add(b.group); b.seek(0); b.update(0); b.openEyes(); b.group.rotation.y = yaw;
-  const cam = new THREE.PerspectiveCamera(28, 200 / 160, .05, 20); cam.position.set(0, 0, M.len * 2.1); cam.lookAt(0, 0, 0); r.render(sc, cam);
+  const b = buildAnyModel(sp); sc.add(b.group); b.seek(0); b.update(0); b.openEyes(); b.group.rotation.y = yaw; b.group.updateMatrixWorld(true);
+  const bb = new THREE.Box3().setFromObject(b.group, true), ctr = bb.getCenter(new THREE.Vector3()), sz = bb.getSize(new THREE.Vector3()); b.group.position.sub(ctr);   /* the model is centred on its real extent (its origin is not always in the middle: a fish with its origin at the nose lost its tail off the edge of the picture) and the camera is set back just far enough to hold all of it */
+  const cam = new THREE.PerspectiveCamera(28, 200 / 160, .05, 40), th = Math.tan(14 * Math.PI / 180), dist = Math.max(sz.y / (2 * th), sz.x / (2 * th * 200 / 160), M.len * 1.2) * 1.12 + sz.z / 2; cam.position.set(0, 0, dist); cam.lookAt(0, 0, 0); r.render(sc, cam);
+  { const g0 = r.getContext(), px = new Uint8Array(4 * 200); /* (kept for the dev check: does anything touch the left / right edge of the picture?) */ const edge = (x) => { const col = new Uint8Array(4 * 160); g0.readPixels(x, 0, 1, 160, g0.RGBA, g0.UNSIGNED_BYTE, col); for (let i = 3; i < col.length; i += 4) if (col[i] > 20) return true; return false; }; void px; try { (window.__thumbClip = window.__thumbClip || {})[sp.id] = edge(0) || edge(199); } catch (e) { /* the check only */ } }
   const url = fitThumb(r.domElement); if (store) THUMB[sp.id] = url; return url;
 }
 function fitThumb(src) {   /* every fish picture is cut to its real outline and set in the same box (the same share of the height or width), so a tall or fat fish is not drawn bigger than a slim one */
