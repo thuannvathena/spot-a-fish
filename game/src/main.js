@@ -200,7 +200,7 @@ const Snd = (() => {
     loadSamples();
   }
   /* recorded sounds (public/sfx/*.m4a): decoded once, played through the same master gain; the old synthesised sounds remain for events that have no recording */
-  const VOICE = {}, SFX = {}, SAMPLES = ['bgm_ap', 'sfx_backup_break', 'sfx_bad', 'sfx_bubble_hit_gauge', 'sfx_clam_snap', 'sfx_clam_tap_open', 'sfx_combo_word_1', 'sfx_combo_word_2', 'sfx_combo_word_3', 'sfx_combo_word_4', 'sfx_curtain_close', 'sfx_curtain_open', 'sfx_gauge_fill', 'sfx_pearl_bounce', 'sfx_pipe_close', 'sfx_pipe_open', 'sfx_splash', 'sfx_tap_water', 'sfx_win_swirl', 'sfx_win_bubble_pop', 'sfx_fish_spawn', 'sfx_fish_tap', 'sfx_fish_to_backup', 'sfx_fish_to_tank_or_vice_versa', 'sfx_hint', 'sfx_level_start', 'sfx_lose', 'sfx_play_on', 'sfx_popup_close', 'sfx_popup_open', 'sfx_squid', 'sfx_tank_complete', 'sfx_win', 'ui_button_click', 'sfx_coin_spend_earn', 'sfx_booster_earn', 'sfx_booster_fly', 'sfx_coin_fly'];
+  const VOICE = {}, SFX = {}, SAMPLES = ['bgm_ap', 'sfx_backup_break', 'sfx_bad', 'sfx_bubble_hit_gauge', 'sfx_clam_snap', 'sfx_clam_tap_open', 'sfx_combo_word_1', 'sfx_combo_word_2', 'sfx_combo_word_3', 'sfx_combo_word_4', 'sfx_curtain_close', 'sfx_curtain_open', 'sfx_gauge_fill', 'sfx_pearl_bounce', 'sfx_pipe_close', 'sfx_pipe_open', 'sfx_splash', 'sfx_tap_water', 'sfx_win_swirl', 'sfx_win_bubble_pop', 'sfx_fish_spawn', 'sfx_fish_tap', 'sfx_fish_to_backup', 'sfx_fish_to_tank_or_vice_versa', 'sfx_hint', 'sfx_level_start', 'sfx_lose', 'sfx_play_on', 'sfx_popup_close', 'sfx_popup_open', 'sfx_squid', 'sfx_tank_complete', 'sfx_win', 'ui_button_click', 'sfx_coin_spend_earn', 'sfx_booster_earn', 'sfx_booster_fly', 'sfx_coin_fly', 'sfx_last_coin_fly'];
   let sampling = false, bgm = null, bgmWant = false, bgmDuck = 1;
   function loadSamples() {
     if (sampling) return; sampling = true;
@@ -239,7 +239,7 @@ const Snd = (() => {
     const nz = ctx.createBufferSource(); nz.buffer = noiseBuf; nz.loop = true; const nf = ctx.createBiquadFilter(); nf.type = 'lowpass'; nf.frequency.value = 260; const ng = ctx.createGain(); ng.gain.value = .05; nz.connect(nf); nf.connect(ng); ng.connect(master); nz.start();
     (function blip() { if (!save.muted) tone(rand(500, 1300), .09, { vol: .03, to: rand(900, 2000) }); setTimeout(blip, rand(900, 3600)); })();
   }
-  const SFX_MAP = { ui: ['ui_button_click', { vol: .8 }], miss: ['sfx_tap_water'], tapwater: ['sfx_tap_water'], bad: ['sfx_bad'], splash: ['sfx_splash'], pipeopen: ['sfx_pipe_open'], pipeclose: ['sfx_pipe_close'], clamtap: ['sfx_clam_tap_open'], clamsnap: ['sfx_clam_snap'], pearl: ['sfx_pearl_bounce'], gaugehit: ['sfx_bubble_hit_gauge'], gaugefill: ['sfx_gauge_fill'], swirl: ['sfx_win_swirl', { mono: true }], winpop: ['sfx_win_bubble_pop', { vol: .75 }], curtainclose: ['sfx_curtain_close'], curtainopen: ['sfx_curtain_open'], win: ['sfx_win'], lose: ['sfx_lose'], hint: ['sfx_hint'], tankdone: ['sfx_tank_complete'], levelstart: ['sfx_level_start'], squid: ['sfx_squid'], ftap: ['sfx_fish_tap'], tobackup: ['sfx_bad'], totank: ['sfx_fish_to_tank_or_vice_versa'], spawn: ['sfx_fish_spawn', { vol: .7 }], bbreak: ['sfx_backup_break'], playon: ['sfx_play_on'], popopen: ['sfx_popup_open'], popclose: ['sfx_popup_close'], coinspend: ['sfx_coin_spend_earn'], bearn: ['sfx_booster_earn'], bfly: ['sfx_booster_fly'], cfly: ['sfx_coin_fly'] };
+  const SFX_MAP = { ui: ['ui_button_click', { vol: .8 }], miss: ['sfx_tap_water'], tapwater: ['sfx_tap_water'], bad: ['sfx_bad'], splash: ['sfx_splash'], pipeopen: ['sfx_pipe_open'], pipeclose: ['sfx_pipe_close'], clamtap: ['sfx_clam_tap_open'], clamsnap: ['sfx_clam_snap'], pearl: ['sfx_pearl_bounce'], gaugehit: ['sfx_bubble_hit_gauge'], gaugefill: ['sfx_gauge_fill'], swirl: ['sfx_win_swirl', { mono: true }], winpop: ['sfx_win_bubble_pop', { vol: .75 }], curtainclose: ['sfx_curtain_close'], curtainopen: ['sfx_curtain_open'], win: ['sfx_win'], lose: ['sfx_lose'], hint: ['sfx_hint'], tankdone: ['sfx_tank_complete'], levelstart: ['sfx_level_start'], squid: ['sfx_squid'], ftap: ['sfx_fish_tap'], tobackup: ['sfx_bad'], totank: ['sfx_fish_to_tank_or_vice_versa'], spawn: ['sfx_fish_spawn', { vol: .7 }], bbreak: ['sfx_backup_break'], playon: ['sfx_play_on'], popopen: ['sfx_popup_open'], popclose: ['sfx_popup_close'], coinspend: ['sfx_coin_spend_earn'], bearn: ['sfx_booster_earn'], bfly: ['sfx_booster_fly'], cfly: ['sfx_last_coin_fly'], lastcfly: ['sfx_coin_fly'] };   /* (swapped for a test: the first coins play the "last coin" recording and the last coin plays the plain coin sound) */
   const NO_SOUND = new Set(['scatter', 'land', 'good', 'complete', 'junk', 'plip', 'start']);
   const arp = (notes, step, o = {}) => notes.forEach((f, i) => tone(f, .22, { type: 'triangle', vol: .16, at: i * step, ...o }));
   function play(n, o) {
@@ -2215,6 +2215,7 @@ function updateThing(o, dt, t) {
   if (o.winK !== undefined) { o.group.scale.multiplyScalar(Math.max(.0001, o.winK)); o.pos.y -= (1 - o.winK) * dt * .8; if (o.winK <= .01) o.group.visible = false; }   // the win swirl: the other fish of the tank sink and shrink away so the orbiting fish are seen
   if (o.kind === 'clam') { clamUpdate(o, dt, t); o.group.position.copy(o.pos); o.parts.group.scale.set(1, 1, 1); return; }
   if (o.kind === 'obstacle') {
+    if (o.evOn) { evObsMove(o, dt, t); return; }
     if (o.id === 'squid') { squidUpdate(o, dt, t, age); const S = o.oc; if (S.wk < .5) colBodies(o, t); o.group.position.copy(o.pos); if (S.fk < .3 && S.wk < .3) o.group.position.y += Math.sin(t * .9 + o.phase) * .06; return; }
     if (o.pos.distanceTo(o.wp) < .4 || o.wpT <= 0) { o.wp = randomPoint(o); o.wpT = rand(6, 12); } o.wpT -= dt;
     dTmp.subVectors(o.wp, o.pos).normalize(); o.dir.lerp(dTmp, 1 - Math.exp(-dt * (o.id === 'squid' ? 1.6 : .8))).normalize(); separate(o, dt);
@@ -2484,6 +2485,14 @@ function startleUpdate(dt) {
 const EVT = { cur: null };
 function evBubble(P, txt) { const q = projectToClient(P), d = document.createElement('div'); d.className = 'evb'; d.textContent = txt; d.style.left = q.x + 'px'; d.style.top = q.y + 'px'; document.body.appendChild(d); setTimeout(() => d.remove(), 1150); }
 const evOk = o => o.alive && o.kind === 'fish' && !o.big && !o.locked && !o.hinted && !o.clamGo && !o.launch && o.scale > .9;
+const evObs = o => o.alive && !o.gone && o.group && o.kind === 'obstacle' && (o.id === 'jelly' || o.id === 'squid') && !o.vtx && o.scale >= .9, evOkM = o => evOk(o) || (evObs(o) && o.evOn !== undefined);   /* the jellyfish and the octopus may take part in two events only (the swirl and the thing thrown in); evOkM is "still a member" */
+function evObsPick(m) { const r = []; for (const o of G.things) if (evObs(o) && !o.evOn && !m.includes(o) && Math.random() < .55) { o.boost = o.boost || 0; o.evOn = false; r.push(o); } return r.slice(0, 2); }   /* each one of them is in it by chance, like any fish */
+function evObsMove(o, dt, t) {   /* an event member that is a jellyfish or an octopus: it glides to its place on its own (faster than it normally swims), upright, turning the way it goes */
+  const tgt = o.evPin ? o.evPin.pos : o.wp; o.evLast = o.evLast || o.pos.clone(); if (tgt) { dTmp.subVectors(tgt, o.pos); const dl = dTmp.length(); if (dl > .01) o.pos.addScaledVector(dTmp.multiplyScalar(1 / dl), Math.min(dl, (o.evPin ? 3.2 : 1.7) * (o.id === 'squid' ? .8 : 1) * dt)); }
+  clampXZ(o.pos, RF * .9); o.pos.y = clamp(o.pos.y, FLOOR_Y + .8, WATER_Y - .7);
+  const vx = o.pos.x - o.evLast.x, vz = o.pos.z - o.evLast.z; o.evLast.copy(o.pos); if (Math.hypot(vx, vz) > 1e-4) { Y.set(0, Math.atan2(-vz, vx) + (o.id === 'squid' ? Math.PI / 2 : 0), 0, 'YZX'); qT.setFromEuler(Y); o.group.quaternion.slerp(qT, 1 - Math.exp(-dt * 5)); }
+  winObstacleAnim(o, dt, t); o.group.position.copy(o.pos);
+}
 function evFish(n, near) {   // n free little fish (the ones closest to `near` when given, otherwise random)
   let c = G.things.filter(evOk); if (near) c.sort((a, b) => a.pos.distanceTo(near) - b.pos.distanceTo(near)); else c = shuffle(c); return c.slice(0, n);
 }
@@ -2509,10 +2518,10 @@ function evStart(kind) {
     const pool = evFish(40).slice(0, Math.max(n, 6)), slot = new THREE.Vector3(); m = [];
     for (let i = 0; i < n && pool.length; i++) { st.P(-i * st.dly, slot); let bi = 0; pool.forEach((o, k) => { if (o.pos.distanceTo(slot) < pool[bi].pos.distanceTo(slot)) bi = k; }); m.push(pool.splice(bi, 1)[0]); }   /* the fish nearest to each slot takes it, so they hardly have to cross the tank to join the line */
   }
-  else if (kind === 'swirl') { m = evFish(Math.min(44, 12 + L * 3)); st.ang = rand(0, 6.28); st.dir = Math.random() < .5 ? 1 : -1; d = rand(9, 11); st.my = (FLOOR_Y + WATER_Y) / 2 + .1; d = rand(13, 15); }   /* the wheel sits in the middle of the room it has: as high as it can go without touching the surface or the sand */
+  else if (kind === 'swirl') { m = evFish(Math.min(44, 12 + L * 3)); m = m.concat(evObsPick(m)); st.ang = rand(0, 6.28); st.dir = Math.random() < .5 ? 1 : -1; d = rand(9, 11); st.my = (FLOOR_Y + WATER_Y) / 2 + .1; d = rand(13, 15); }   /* the wheel sits in the middle of the room it has: as high as it can go without touching the surface or the sand */
   else if (kind === 'waltz') { st.pr = pairsOf(Math.min(4, 2 + (N / 25 | 0))); st.c = []; for (let i = 0; i < m.length; i += 2) { const c = m[i].pos.clone().add(m[i + 1].pos).multiplyScalar(.5).clampLength(0, RF * .6); c.y = clamp(c.y, FLOOR_Y + 1, WATER_Y - 1); st.c.push(c); } st.th = 0; st.ph = rand(0, 6.28); d = rand(13, 15); }
   else if (kind === 'hide') { if (!HOUSES.length) return false; m = evFish(Math.min(HOUSES.length * 5, 12, 8 + L)); d = 4; }
-  else if (kind === 'drop') { if (rock) return false; m = evFish(46); st.ph = 0; st.vy = 0; st.t1 = 0;
+  else if (kind === 'drop') { if (rock) return false; m = evFish(46); m = m.concat(evObsPick(m)); st.ph = 0; st.vy = 0; st.t1 = 0;
     evItemClear(); evItem = new THREE.Mesh(new THREE.SphereGeometry(.3, 20, 14), new THREE.MeshPhongMaterial({ color: 0xfff1c8, emissive: 0xd9a040, shininess: 90, specular: 0xffffff, fog: false }));
     const a = rand(0, 6.28), r = rand(0, RF * .45); evItem.position.set(Math.cos(a) * r, TANK_H + 2.6, Math.sin(a) * r); fishRoot.add(evItem); d = 99; }
   if (m.length < 2) { evItemClear(); return false; }
@@ -2521,7 +2530,7 @@ function evStart(kind) {
 }
 function evEnd() { const e = EVT.cur; if (!e) return; for (const o of e.m) { o.evOn = false; o.evTight = false; o.evPin = null; o.wpT = 0; } evItemClear(); EVT.cur = null; G.nextEv = U.uTime.value - G.t0 + rand(...G.cfg.evGap); evCool(); }
 function dropUpdate(e, dt) {   // something is thrown in: the school bolts away, drifts back to look at it, the pearl floats up and a few fish head-butt it back and forth, then it pops and they scatter
-  const st = e.st, me = evItem; e.m = e.m.filter(evOk); if (!me) { evEnd(); return; }
+  const st = e.st, me = evItem; e.m = e.m.filter(evOkM); if (!me) { evEnd(); return; }
   if (st.ph === 0) { st.vy -= 13 * dt; me.position.y += st.vy * dt; me.rotation.y += dt * 4;
     if (me.position.y <= WATER_Y) { st.ph = 1; st.t1 = e.t; surfaceSplash(me.position.x, me.position.z, 1.2); scatter(new THREE.Vector3(me.position.x, WATER_Y - 1.2, me.position.z), 2.4, true); Snd.play('splash'); kick(1.5); } return; }
   const g = e.t - st.t1, J = st.j, SURF = WATER_Y - .02;
@@ -2530,7 +2539,7 @@ function dropUpdate(e, dt) {   // something is thrown in: the school bolts away,
   if (g < 1.8) return;   // still fleeing
   const ctr = J ? J.c : me.position;
   if (!J && g > 3.4 && me.position.y >= SURF - .02) {   // the pearl is up: pick the players and start the game
-    const near = e.m.slice().sort((a, b) => a.pos.distanceTo(me.position) - b.pos.distanceTo(me.position)).slice(0, Math.min(4, e.m.length)); if (near.length < 2) { evEnd(); return; }
+    const near = e.m.filter(o => o.kind === 'fish').sort((a, b) => a.pos.distanceTo(me.position) - b.pos.distanceTo(me.position)).slice(0, Math.min(4, e.m.length)); if (near.length < 2) { evEnd(); return; }
     const c = me.position.clone(); c.y = SURF; st.j = { c, part: near, ring: near.map((o, i) => { const a = i / near.length * 6.283 + .4; return new THREE.Vector3(c.x + Math.cos(a) * 1.25, SURF, c.z + Math.sin(a) * 1.25); }), h: -1, n: 0, tt: 0, dur: .95, cnt: 0, from: me.position.clone() };
     near.forEach(o => { o.hit = 0; }); st.j.ring.forEach(v => { const r = Math.hypot(v.x, v.z), lim = Math.min(RF * .85, wallAt(v.x, v.z, WATER_Y) - .8); if (r > lim) { v.x *= lim / r; v.z *= lim / r; } });   /* the pearl bounces only where there is water: the wall of a bowl or a square tank is nearer than the round one */
   }
@@ -2557,7 +2566,7 @@ function evUpdate(dt) {
   if (!e) {
     if (G.cfg.evKinds.length && now > G.nextEv && evFreeNow() && tube.state !== 'rumble' && tube.state !== 'emit' && tube.state !== 'out' && !swarm.on && !feed.on && !rock && !introOn && !guide.on) { const pool = G.cfg.evKinds.filter(k => k !== G.lastEv && (k !== 'drop' || now - (G.lastDrop === undefined ? -1e9 : G.lastDrop) > 80)), k = pick(pool.length ? pool : G.cfg.evKinds); if (evStart(k)) { G.lastEv = k; if (k === 'drop') G.lastDrop = now; } else G.nextEv = now + 2; } return; }   // the pearl game is long, so at most once every ~80 s, and never the same event twice in a row
   e.t += dt; if (e.kind === 'drop') { dropUpdate(e, dt); return; }
-  e.m = e.m.filter(o => { if (!o.evOn || !evOk(o) || o.boost > 2.6) { o.evOn = false; o.evTight = false; o.evPin = null; o.wpT = 0; return false; } return true; });
+  e.m = e.m.filter(o => { if (!o.evOn || !evOkM(o) || o.boost > 2.6) { o.evOn = false; o.evTight = false; o.evPin = null; o.wpT = 0; return false; } return true; });
   if (e.t > e.d || e.m.length < 2) { evEnd(); return; }
   const kind = e.kind, m = e.m, st = e.st, P = new THREE.Vector3();
   e.bt -= dt; const bub = e.bt <= 0; if (bub) e.bt = .6;
@@ -3692,7 +3701,7 @@ function vortexUpdate(V, T, s, dt) {
 function celebrate() {
   window.__hudFadeT0 = performance.now(); window.__hudInT0 = undefined;   // the top UI fades away as the win sequence starts
   Snd.bgmStop(2.4); kick(2.5); const gw = gid, cr = canvas.getBoundingClientRect(); saveWin();
-  const all = shuffle(G.things.filter(o => o.alive && o.kind === 'fish' && !o.big && !o.locked && !o.launch && !o.dive && !o.tubeP)), fish = all.slice(0, 10), watchers = all.slice(10).concat(G.things.filter(o => o.alive && o.kind === 'fish' && !all.includes(o) && !o.big && !o.launch && !o.dive && !o.tubeP));   // up to 10 fish take part; the others stay in the water and watch from the glass
+  const all = shuffle(G.things.filter(o => o.alive && !o.gone && !o.vtx && ((o.kind === 'fish' && !o.big && !o.locked && !o.launch && !o.dive && !o.tubeP) || (o.kind === 'obstacle' && o.group && (o.id === 'jelly' || o.id === 'squid'))))), fish = all.slice(0, 10), watchers = all.slice(10).filter(o => o.kind === 'fish').concat(G.things.filter(o => o.alive && o.kind === 'fish' && !all.includes(o) && !o.big && !o.launch && !o.dive && !o.tubeP));   // up to 10 fish take part; the others stay in the water and watch from the glass
   const W = G.win = { gid: gw, t: 0, cam0: { az: orbit.az, el: orbit.el, dist: orbit.dist, ty: orbit.target.y }, fish, arrived: 0, burst: false, cover: false, gp: new THREE.Vector3(0, TANK_H + 2, 0), sx: cr.left + cr.width / 2, sy: cr.top + cr.height * .4, n: fish.length, trails: [], rings: [], bub: makeBubble(), vort: makeVortex(), rOrb: 1.6 };
   beadFx.add(); const COLS = [0xaee9ff, 0x9fdcff, 0xc9f4ff, 0xb6efe8, 0xd4ecff], byY = fish.slice().sort((p, q) => p.pos.y - q.pos.y);
   const calm = o => { o.hv = 0; o.hvT = 0; o.hinted = false; if (o.parts.setGlow) o.parts.setGlow(0); if (o.parts.glows) for (const m of o.parts.glows) m.visible = false; if (o.mark) { fishRoot.remove(o.mark); o.mark = null; } };   // no gold highlight on any fish during the sequence
@@ -3734,6 +3743,10 @@ function bez(a, c, b2, e, out) { const k = 1 - e; return out.set(k * k * a.x + 2
 function winDepthBack(o) {   /* a fish thrown out of the burst is an ordinary fish of the 3D scene again: the glass and the rims (drawn after the water) are depth-tested against it, so it falls IN FRONT of the far wall and its rim, not behind them (while it circled the bubble it was drawn over everything) */
   if (!o.winFront || !o.group) return; o.winFront = false; o.winBacked = true; o.group.traverse(m => { if (m.isMesh) { if (m._ro0 !== undefined) m.renderOrder = m._ro0; for (const mt of [].concat(m.material)) if (mt._dt0 !== undefined) mt.depthTest = mt._dt0; } });
 }
+function winObstacleAnim(o, dt, t) {   /* the body animation of a jellyfish or an octopus that is carried by the win sequence (their position is set by the sequence, not by their own swimming) */
+  if (o.id === 'jelly') { const p = (Math.sin(t * 3.4 + o.phase) + 1) * .5; o.parts.bell.scale.set(1 + p * .16, 1 - p * .28, 1 + p * .16); o.parts.tents.forEach((m, i) => { m.rotation.x = Math.sin(t * 3.4 + i + o.phase) * .3; m.rotation.z = Math.cos(t * 2.8 + i * 1.3) * .3; }); }
+  else if (o.id === 'squid' && o.oc) { const p = o.pos.clone(), q = o.group.quaternion.clone(); try { squidUpdate(o, dt, t, 9); } catch (e) { /* the pose is only decoration */ } o.pos.copy(p); o.group.position.copy(p); o.group.quaternion.copy(q); }
+}
 function vortexStep(o, dt, t) {   // a chosen fish in the win sequence: helix up, an arc out over the rim, circling the bubble, then an arc back into the water
   const W = G.win, V = o.vtx, T = W ? W.t : 99; if (!W) { o.vtx = null; return; }
   let flying = false;
@@ -3756,9 +3769,12 @@ function vortexStep(o, dt, t) {   // a chosen fish in the win sequence: helix up
   }
   o.group.position.copy(o.pos);
   const vx = o.pos.x - V.last.x, vy = o.pos.y - V.last.y, vz = o.pos.z - V.last.z, vl = Math.hypot(vx, vy, vz); V.last.copy(o.pos);
+  if (o.kind !== 'fish') { if (vl > 1e-4) { const yaw = Math.atan2(-vz, vx); Y.set(0, yaw + (o.id === 'squid' ? Math.PI / 2 : 0), 0, 'YZX'); qT.setFromEuler(Y); o.group.quaternion.slerp(qT, 1 - Math.exp(-dt * 6)); } winObstacleAnim(o, dt, t); }   /* the jellyfish and the octopus join the swirl: they stay upright and turn the way they travel, and keep pulsing / waving their own way */
+  else {
   if (vl > 1e-4) { const yaw = Math.atan2(-vz, vx), pitch = clamp(Math.asin(clamp(vy / vl, -1, 1)), -1.2, 1.2), roll = V.mode === 'home' ? (T - V.ht0) * V.hspin : flying ? Math.sin(T * 12 + V.th0) * .3 : -.4; Y.set(roll, yaw, pitch, 'YZX'); qT.setFromEuler(Y); o.group.quaternion.slerp(qT, 1 - Math.exp(-dt * 14)); }
   o.boost = flying ? 2.2 : 1.7; o.turnV = flying ? 0 : 1.8; o.wph = (o.wph === undefined ? o.phase : o.wph) + dt * o.wag * (.7 + o.speed) * 3.4; if (o.parts.update) o.parts.update(dt * 2.2, o);   // a lively swim all the way: the body wave is at full strength and the body bends into the turn
   o.parts.tail.rotation.y = Math.sin(o.wph) * (SWAY.tail + .28); o.parts.body.rotation.y = Math.sin(o.wph + 1.2) * (SWAY.body + .06);
+  }
   trailUpdate(V.trail, o.pos, .085 * ez(clamp(T / .3, 0, 1)), 1);   // the water streak behind it
   if ((window.__winScale || 1) > .01) { const n = V.trail.pts.length; if (Math.random() < dt * 6 && n > 5) beadFx.emit(V.trail.pts[Math.min(n - 1, 4 + (Math.random() * 6 | 0))], 0, .045 + Math.random() * .05, .1); if (Math.random() < dt * 8 && n > 2) beadFx.emit(V.trail.pts[Math.min(n - 1, 1 + (Math.random() * 4 | 0))], 1, .14 + Math.random() * .14, .14); }
 }
@@ -3790,6 +3806,11 @@ function celUpdate(dt) {
       const h = o.hop, uu = (T2 - h.t0) / .85;
       if (uu >= 0 && uu <= 1) { o.pos.x = lerp(h.p0.x, h.p1.x, uu); o.pos.z = lerp(h.p0.z, h.p1.z, uu); o.pos.y = lerp(h.p0.y, h.p1.y, uu) + Math.sin(Math.PI * uu) * .7; const dx = h.p1.x - h.p0.x, dz = h.p1.z - h.p0.z; yaw = Math.atan2(-dz, dx); pit = Math.atan2(Math.cos(Math.PI * uu) * .7 * Math.PI + (h.p1.y - h.p0.y), Math.hypot(dx, dz) || 1); if (!h.done && o.pos.y > WATER_Y) { h.done = true; surfaceSplash(o.pos.x, o.pos.z, .6, true); } }
       else if (uu > 1) { surfaceSplash(o.pos.x, o.pos.z, .5, true); o.hop = null; o.winWall = 0; o.wp.set(o.pos.x, o.pos.y, o.pos.z); o.speed = o.speed0 ?? o.speed; }
+    } else if (W.firstHome !== undefined && T2 > W.firstHome + .35) {   /* the first swirling fish is in the water: the ones that watched from the glass (and had been looking up at the swirl) swim round the tank together, nose forward, as a cheer for the others coming down */
+      const cc = o.cc = o.cc || { ang: Math.atan2(o.pos.z, o.pos.x), rf: rand(.5, .86), yf: rand(.18, .82), ph: rand(0, 6.283), t0: T2 }, w = ez(clamp((T2 - cc.t0) / 1.3, 0, 1)), om = 1.25 * w; cc.ang += om * dt;
+      const yc = lerp(FLOOR_Y + 1.1, WATER_Y - 1.1, cc.yf) + Math.sin(T2 * .9 + cc.ph) * .35, ca = Math.cos(cc.ang), sa = Math.sin(cc.ang), R2 = Math.max(.9, wallAt(ca, sa, yc) - .95 - .3 * (o.sz || 1)) * cc.rf, k3 = Math.min(1, dt * 3);
+      const nx = ca * R2, nz = sa * R2, ny = yc; o.pos.x += (nx - o.pos.x) * k3; o.pos.z += (nz - o.pos.z) * k3; o.pos.y += (ny - o.pos.y) * k3;
+      const vx = -sa * R2 * om, vz = ca * R2 * om, vy = (ny - o.pos.y) * 2; yaw = Math.atan2(-vz, vx); pit = clamp(Math.atan2(vy, Math.max(.3, Math.hypot(vx, vz))), -.5, .5); o.speed = 1.6 + 1.2 * w; if (o.wp) o.wp.set(o.pos.x, o.pos.y, o.pos.z);
     } else if (o.winWall) {
       const ca = Math.cos(o.winAng), sa = Math.sin(o.winAng), wr2 = Math.max(1.2, wallAt(ca, sa, o.pos.y) - .38 - .3 * (o.sz || 1)), ex = ca * wr2 - o.pos.x, ez2 = sa * wr2 - o.pos.z, k2 = Math.min(1, dt * 5);   // .38 from the glass: against it, never through it
       o.pos.x += ex * k2; o.pos.z += ez2 * k2; const tgy = T2 < 1.6 ? FLOOR_Y + .45 + (o.winAng % 1) * .25 : ty, dy = tgy - o.pos.y; o.pos.y += Math.sign(dy) * Math.min(Math.abs(dy), (T2 < 1.6 ? 4 : 1.3) * dt); o.speed = Math.abs(dy) > .08 ? (T2 < 1.6 ? 2.2 : 1.1) : .05;   /* while it moves up or down it swims: the tail beats in proportion to how fast */
@@ -4123,7 +4144,7 @@ function devLose() {   // developer tool (Settings): lose the level the way a fu
 function loseNow() { G.status = 'lost'; tankFx.breakBackup(); setTimeout(showLose, 3700); }
 let popupOn = false;   // a pop-up is open: the music ducks, the open / close sounds play
 function hideOverlays() { document.querySelectorAll('.spotlit').forEach(e => e.classList.remove('spotlit')); const was = OVS.some(id => $(id).classList.contains('show')) || $('spotOv').classList.contains('show'); for (const id of OVS) $(id).classList.remove('show'); $('spotOv').classList.remove('show'); if (was && popupOn) { popupOn = false; Snd.bgmDuckTo(1); if (!introOn || true) Snd.play('popclose'); } }
-function showOnly(id) { hideOverlays(); $(id).classList.add('show'); if (id !== 'ovWin' && id !== 'ovLose' && id !== 'ovWell') { popupOn = true; Snd.bgmDuckTo(.5); Snd.play(id === 'ovPlayOn' ? 'playon' : 'popopen'); } }
+function showOnly(id) { hideOverlays(); $(id).classList.add('show'); if (id !== 'ovWin' && id !== 'ovLose' && id !== 'ovWell') { popupOn = true; Snd.bgmDuckTo(.5); Snd.play(id === 'ovPlayOn' ? 'playon' : id === 'ovIntro' ? 'winpop' : 'popopen'); } }   /* (the New Feature / FTUE pop-up opens with the bubble pop) */
 function saveWin() {   // stars and the next level are saved when the level is won (the win pop-up with the stars is gone: the win sequence flows straight into the next level)
   for (const k of Object.keys(BOOST_LV)) if (G && G.free && G.free[k]) giftBoost(k);   /* the free one was not used: the 3 are given when the level is won */
   const m = G.mistakes, st = m <= 3 ? 3 : m <= 6 ? 2 : 1;
@@ -4263,7 +4284,7 @@ function makeSchool(done) {   // a school of fish all swimming the same way, dra
 }
 function showIntro(k) {
   const d = INTRO[k]; FV.kind = d.fv || ''; FV.cur = '';
-  if (d.spot) { introOn = true; paused = true; hideOverlays(); showSpot(d); popupOn = true; Snd.bgmDuckTo(.5); Snd.play('popopen'); return; } $('introRib').textContent = d.rib; $('introTag').textContent = d.tag; $('introTag').classList.toggle('ev', !!d.ev); $('introTitle').textContent = d.title; $('introTxt').textContent = d.text(G.cfg.clamTaps); $('introImg').src = d.pic ? new URL(d.pic, document.baseURI).href : d.icon ? d.icon() : (THUMB[d.img + '_big'] || THUMB[d.img] || ''); if (d.school) { $('introImg').src = ''; makeSchool(u => { $('introImg').src = u; }); } $('ovIntro').dataset.kind = d.booster ? 'booster' : 'feature'; $('introLv').textContent = G ? 'Level ' + G.level : '';
+  if (d.spot) { introOn = true; paused = true; hideOverlays(); showSpot(d); popupOn = true; Snd.bgmDuckTo(.5); Snd.play('winpop'); return; } $('introRib').textContent = d.rib; $('introTag').textContent = d.tag; $('introTag').classList.toggle('ev', !!d.ev); $('introTitle').textContent = d.title; $('introTxt').textContent = d.text(G.cfg.clamTaps); $('introImg').src = d.pic ? new URL(d.pic, document.baseURI).href : d.icon ? d.icon() : (THUMB[d.img + '_big'] || THUMB[d.img] || ''); if (d.school) { $('introImg').src = ''; makeSchool(u => { $('introImg').src = u; }); } $('ovIntro').dataset.kind = d.booster ? 'booster' : 'feature'; $('introLv').textContent = G ? 'Level ' + G.level : '';
   introOn = true; paused = true; showOnly('ovIntro');
 }
 $('bIntro').onclick = () => { introOn = false; paused = false; hideOverlays(); startLvIntro(); };
@@ -4325,7 +4346,7 @@ function wellOpen() {
 }
 function wellClaim(mult) {   /* the coins go into the header (it counts up), then the pop-up leaves and the water curtain closes as before */
   const W = window.__well; if (!W || W.claimed) return; W.claimed = performance.now(); W.mult = mult; Snd.play('good'); addCoins(W.base * mult, W.claimed);
-  setTimeout(() => { const w = G && G.win; if (window.__winText) window.__winText.out = performance.now(); window.__well = null; hideOverlays(); if (w) w.wellDone = true; }, 1000 * (COIN_FLY.d0 + (COIN_FLY.n - 1) * COIN_FLY.gap + COIN_FLY.dur) + 550);
+  setTimeout(() => { const w = G && G.win; if (window.__winText) window.__winText.out = performance.now(); window.__well = null; hideOverlays(); if (w) w.wellDone = true; }, 1000 * (COIN_FLY.d0 + (COIN_FLY.n - 1) * COIN_FLY.gap + COIN_FLY.dur + COIN_FLY.xl) + 550);
 }
 let WCV = null, WSM = null, WWR = null;
 /* the water of the tank on the WELL DONE screen is drawn by a small shader (a canvas the pop-up shows): colour that deepens with depth, a net of light that moves on it, slanting shafts from the surface, drifting specks, a rippling surface line, darker sides */
@@ -4392,15 +4413,15 @@ function wellComposite() {   /* the obstacle's live picture, with everything abo
   g.globalCompositeOperation = 'source-over';
   W.pr = pr; if (W.full && pr >= 0.999 && !W.fullAt) W.fullAt = performance.now(); window.__fvWell = { on: true, cv: WCV };
 }
-const COIN_FLY = { n: 5, d0: 0.06, gap: 0.1, dur: 0.6 };   /* the coins of a reward: how many fly, when the first leaves, the gap between them, how long a flight takes (the pop-up draws the flights with the same numbers) */
+const COIN_FLY = { n: 5, d0: 0.06, gap: 0.09, dur: 0.45, xl: 1.2 };   /* xl: the last coin takes this much longer (it loops once before it goes in) */   /* the coins of a reward: how many fly, when the first leaves, the gap between them, how long a flight takes (the pop-up draws the flights with the same numbers) */
 window.__coinFly = COIN_FLY;
 function addCoins(n, claimedAt) {
   const from = save.coins, now = performance.now(); save.coins += n; persist();
   if (n > 0 && claimedAt) {   /* a reward: the counter goes up one step as each coin lands */
     const steps = [], part = Math.floor(n / COIN_FLY.n); let v = from;
-    for (let i = 0; i < COIN_FLY.n; i++) { v += i === COIN_FLY.n - 1 ? save.coins - v : part; steps.push({ t: claimedAt + 1000 * (COIN_FLY.d0 + i * COIN_FLY.gap + COIN_FLY.dur), v }); }
+    for (let i = 0; i < COIN_FLY.n; i++) { v += i === COIN_FLY.n - 1 ? save.coins - v : part; steps.push({ t: claimedAt + 1000 * (COIN_FLY.d0 + i * COIN_FLY.gap + COIN_FLY.dur + (i === COIN_FLY.n - 1 ? COIN_FLY.xl : 0)), v }); }
     window.__coinAnim = { kind: 'gain', from, to: save.coins, t0: now, steps };
-    steps.forEach(st => setTimeout(() => Snd.play('cfly'), Math.max(0, st.t - performance.now())));   /* one sound as each coin lands in the coin counter */
+    steps.forEach((st, i) => setTimeout(() => Snd.play(i === steps.length - 1 ? 'lastcfly' : 'cfly'), Math.max(0, st.t - performance.now())));   /* the last coin has its own recording */   /* one sound as each coin lands in the coin counter */
   } else window.__coinAnim = { kind: n > 0 ? 'gain' : 'spend', from, to: save.coins, t0: now };
 }
 function boostLeft(k) { return (G && G.free && G.free[k]) ? 'free' : save.bst[k] > 0 ? 'n' : 'plus'; }
@@ -4912,6 +4933,7 @@ window.__qa = {   /* automatic checks (see docs/qa.md): each returns a report wi
   }
 };
 window.__rvLeft = rvLeft; window.__poFree = () => !save.poFreeUsed;
+window.__sfx = k => Snd.play(k);   /* the Phaser UI plays a game sound by its short name */
 window.__ff = { get G() { return G; }, newLevel, orbit, coin: { COIN, wellOpen, wellClaim, wellProgress, addCoins, boostRefresh, giftBoost, boostUse, openBuy, closeBuy, watchAd, boostLeft }, uiReady, guide, lvTitle: () => CHEER.lv && { gy: +CHEER.lv.g.position.y.toFixed(1), meshY: +CHEER.lv.mesh.position.y.toFixed(1), h: +CHEER.lv.mesh.geometry.parameters.height.toFixed(1), tier: window.__lvTier | 0, screenY: +(ov.H / 2 - CHEER.lv.g.position.y).toFixed(1) }, why: () => ({ paused, introOn, tutI, camIntro: !!camIntro, lvShown: window.__lvShown, lid: (window.__lid || []).map(v => +v.toFixed(2)), hud: performance.now() - (window.__hudInT0 || 0), status: G.status, tgtAlive: !!(guide.tgt && guide.tgt.alive), locked: !!(guide.tgt && guide.tgt.locked) }), clam: { loadClam, buildClam, CLAM }, ovScene: () => { const out = []; ov.scene.traverse(m => { if (m.isMesh && m.visible) { let go = 0, q = m.parent; const chain = []; while (q && q !== ov.scene) { chain.push(q.renderOrder); q = q.parent; } out.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' chain=[' + chain.join(',') + '] tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' z=' + +m.getWorldPosition(new THREE.Vector3()).z.toFixed(0) + ' ' + (m.material && m.material.type)); } }); return out; }, ovInfo: () => [...ov.sprites].map(sp => { const r = []; sp.holder.traverse(m => { if (m.isMesh) r.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' op=' + (m.material && +m.material.opacity.toFixed(2))); }); return { id: sp.id, zTop: sp.zTop, z: sp.holder.position.z, px: Math.round(sp.holder.position.x + ov.W / 2), py: Math.round(ov.H / 2 - sp.holder.position.y), meshes: r }; }), U, buildJelly, loadJelly, tapThing: id => { const o = G.things.find(x => x.id === id && x.alive); if (o) pickThing(o); return !!o; }, evInfo: () => { const e = EVT.cur; if (!e) return null; return { kind: e.kind, t: +e.t.toFixed(1), d: +e.d.toFixed(1), n: e.m.length, pinned: e.m.filter(o => o.evPin).length, fish: G.things.filter(o => o.kind === 'fish' && o.alive && !o.big).length, p: e.m.slice(0, 4).map(o => [+o.pos.x.toFixed(1), +o.pos.y.toFixed(1), +o.pos.z.toFixed(1), !!o.evPin]) }; }, devEvents: ['conga', 'waltz', 'swirl', 'squabble', 'drop', 'feed', 'startle', 'swarm', 'octo ink', 'octo floor', 'octo swim', 'pump'], devEvent: (n) => {   /* developer tool (Settings): start one event now, to test it */
   if (!G || G.status !== 'play') return; hideOverlays(); paused = false;
   if (EVT.cur) { for (const o of EVT.cur.m) { o.evOn = false; o.evTight = false; o.evPin = null; } EVT.cur = null; }

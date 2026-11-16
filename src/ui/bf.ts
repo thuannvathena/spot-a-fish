@@ -120,7 +120,7 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
     };
     const coinHeader = (dy = 0) => {
         const an = cAnim(), now = performance.now(); let bump = 0;
-        if (an && an.steps) for (const st of an.steps) { const u = (now - st.t) / 260; if (u >= 0 && u < 1) bump = Math.max(bump, Math.sin(Math.PI * u)); }   // every coin that lands makes the header bounce
+        if (an && an.steps) for (const st of an.steps) { const u = (now - st.t) / 100; if (u >= 0 && u < 1) bump = Math.max(bump, Math.sin(Math.PI * u)); }   // every coin that lands makes the header bounce once (short enough that the bounces of coins 0.17 s apart stay separate: five coins, five bounces)
         const spendU = an && an.kind === 'spend' ? (now - an.t0) / 800 : 2, spending = spendU >= 0 && spendU < 1, kb = 1 + 0.13 * bump + (spending ? 0.04 * Math.sin(spendU * Math.PI * 6) : 0);
         const cx = 908, cy = 105 + dy, H = (x: number, y: number, w: number, h: number): R => D(cx + (x - cx) * kb, cy + (y - cy) * kb, w * kb, h * kb);
         P.pic('chH', 'bf_coin_holder', H(790, 66 + dy, 236, 77));
@@ -405,6 +405,7 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
             }
             if (!c.scene.textures.exists('bf_halo')) { const cv = document.createElement('canvas'); cv.width = cv.height = 128; const q = cv.getContext('2d')!; const g2 = q.createRadialGradient(64, 64, 4, 64, 64, 64); g2.addColorStop(0, 'rgba(255,240,140,0.95)'); g2.addColorStop(1, 'rgba(255,200,60,0)'); q.fillStyle = g2; q.fillRect(0, 0, 128, 128); c.scene.textures.addCanvas('bf_halo', cv); }
             if (filled) {   // UNLOCKED !: it pops in once and then stands still (no idle swell, no flicker)
+                { const wu = Wn as unknown as { unlSnd?: number }; if (!wu.unlSnd) { wu.unlSnd = 1; (window as unknown as { __sfx?: (k: string) => void }).__sfx?.('bearn'); } }   // the bar turns into the word: the booster-earn sound, once
                 const k2 = backOut(cl(fa / 0.5)), UW = 560, UH = (UW * (69 + 42)) / (478 + 32);
                 P.pic('wU', 'bf_unl2', sd(540 - UW / 2, 1366 - UH / 2, UW, UH, k2));
             } else {   // the bar: the cyan fill grows (a spark rides its tip), the percent in the middle bumps while it is moving
@@ -429,14 +430,17 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         }
         if (u1 > 0) coinBtn('wG', 'green', D(GX + offL, GY, GW, 165), '+' + Wn.base, open && u1 >= 1 ? click('bWellCoin') : () => {}, 0, v1);
         if (Wn.claimed) {   // five coins fly from the button you pressed into the coin ICON of the counter; each spins, leaves sparkles and pops a star where it lands; the header bounces as each one lands (see coinHeader)
-            const fly = (window as unknown as { __coinFly?: { n: number; d0: number; gap: number; dur: number } }).__coinFly ?? { n: 5, d0: 0.06, gap: 0.1, dur: 0.6 }, ca = (performance.now() - Wn.claimed) / 1000;
+            const fly = (window as unknown as { __coinFly?: { n: number; d0: number; gap: number; dur: number; xl?: number } }).__coinFly ?? { n: 5, d0: 0.06, gap: 0.09, dur: 0.45, xl: 1.2 }, ca = (performance.now() - Wn.claimed) / 1000;
             const ox = Wn.mult > 1 ? XX + XW0 * 0.3 : GX + GW * 0.3, oy = Wn.mult > 1 ? GY + 40 : GY + 70, ex = 806, ey = 104.5;   // (the centre of the coin icon in the counter)
-            const at = (i: number, u: number) => { const e = u * u * (3 - 2 * u), sw = (i % 2 ? 1 : -1) * (70 + i * 14); return { x: ox + (ex - ox) * e + Math.sin(u * Math.PI) * sw, y: oy + (ey - oy) * e - Math.sin(u * Math.PI) * 150 }; };
+            const sdc = ((Wn.claimed ?? 0) % 100000) / 100000, rr = (k: number) => { const v = Math.sin(sdc * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); }, LRr = 78 + rr(1) * 52, LDir = rr(2) < 0.5 ? 1 : -1, LUp = rr(3) < 0.5 ? 1 : -1, LT0 = 0.28 + rr(5) * 0.08;   /* every win has its own loop: its size, the way it turns, above or below the path, where on the path it happens, and a different sway for each coin */
+            const zsm = (x: number) => { const c2 = Math.min(1, Math.max(0, x)); return c2 * c2 * (3 - 2 * c2); };   // (the zoom of the last coin: it swells early, stays big for most of the flight, and shrinks only at the end)
+            const bumpW = (u: number) => { const x = (u - LT0) / 0.45; return x <= 0 || x >= 1 ? 0 : Math.pow(Math.sin(Math.PI * x), 2); }, prog = (u: number) => { let a = 0, tot = 0; const N = 48; for (let k = 0; k < N; k++) { const uu = (k + 0.5) / N, sp = 1 - 0.86 * bumpW(uu); tot += sp; a += sp * Math.min(1, Math.max(0, (u - k / N) * N)); } return a / tot; };   /* the last coin never stops: its speed along the path only drops (to 14%) while it loops and builds up again smoothly, so there is no sudden halt and no sudden push */
+            const at = (i: number, u: number) => { const lastC = i === fly.n - 1, sm = (x: number) => x * x * (3 - 2 * x), pu = lastC ? prog(u) : u, e = pu * pu * (3 - 2 * pu), sw = (rr(10 + i) < 0.5 ? 1 : -1) * (50 + rr(20 + i) * 70), lv = lastC ? sm(Math.min(1, Math.max(0, (u - LT0) / 0.45))) : 0, ph = lv * Math.PI * 2; return { x: ox + (ex - ox) * e + Math.sin(pu * Math.PI) * sw + (lastC ? LRr * LDir * Math.sin(ph) : 0), y: oy + (ey - oy) * e - Math.sin(pu * Math.PI) * 150 + (lastC ? LRr * LUp * (1 - Math.cos(ph)) * -1 : 0) }; };   // the last coin: one round loop in the air, then on into the counter
             const bu = cl(ca / 0.45);
             if (bu > 0 && bu < 1) for (let k = 0; k < 9; k++) { const an = (k / 9) * Math.PI * 2 + 0.3, e3 = 1 - Math.pow(1 - bu, 3), d = (60 + (k % 3) * 34) * e3, sz = (46 - (k % 3) * 8) * (1 - 0.5 * bu); TP('wBu' + k, 'bf_star3d', D(ox + Math.cos(an) * d - sz / 2, oy + Math.sin(an) * d * 0.8 - sz / 2, sz, sz), { alpha: 1 - bu, rot: an + bu * 2 }); }   // the burst of stars where the coins leave the button
             for (let i = 0; i < fly.n; i++) {
-                const t0 = fly.d0 + i * fly.gap, u = cl((ca - t0) / fly.dur);
-                const lu = (ca - t0 - fly.dur) / 0.4;   // after the landing: a star pops on the coin icon
+                const t0 = fly.d0 + i * fly.gap, dI = fly.dur + (i === fly.n - 1 ? fly.xl ?? 0 : 0), u = cl((ca - t0) / dI);
+                const lu = (ca - t0 - dI) / 0.4;   // after the landing: a star pops on the coin icon
                 if (lu > 0 && lu < 1) { const sz = 78 * (0.5 + 0.9 * lu); TP('wLs' + i, 'bf_star3d', D(ex - sz / 2, ey - sz / 2, sz, sz), { alpha: 1 - lu, rot: i + lu * 1.6 }); for (let k = 0; k < 4; k++) { const an = (k / 4) * Math.PI * 2 + i, d = 56 * lu, s2 = 24 * (1 - lu); TP(`wLk${i}_${k}`, 'bf_star3d', D(ex + Math.cos(an) * d - s2 / 2, ey + Math.sin(an) * d - s2 / 2, s2, s2), { alpha: 1 - lu }); } }
                 if (u <= 0 || u >= 1) continue;
                 if (!c.scene.textures.exists('bf_goldglow')) {   // a soft golden glow, painted once: the light trail and the little particles are made of it
@@ -448,7 +452,7 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
                     const ph = u - 0.03 - k * 0.055; if (ph <= 0) continue; const q = at(i, ph), age2 = u - ph, dir = (k * 2.399 + i * 1.3) % (Math.PI * 2), dr = 34 * age2 * 4, sz = (11 + (k % 3) * 4) * (1 - age2 * 1.6);
                     if (sz <= 1) continue; TP(`wCp${i}_${k}`, k % 3 === 0 ? 'bf_star3d' : 'bf_goldglow', D(q.x + Math.cos(dir) * dr - sz / 2, q.y + Math.sin(dir) * dr * 0.7 + age2 * 60 - sz / 2, sz, sz), { alpha: Math.max(0, 1 - age2 * 2.2), fill: k % 3 === 0 ? GOLD : undefined, rot: dir + t * 3 });
                 }
-                const q = at(i, u), pp = 0.75 + 0.4 * Math.sin(Math.min(1, u * 2.5) * Math.PI / 2) - 0.15 * u, th = u * Math.PI * 3.5 + i, cs = Math.cos(th), sn = Math.sin(th), fw = 66 * pp * (0.14 + 0.86 * Math.abs(cs)), fh = 70 * pp;   // a coin turning about its upright axis
+                const q = at(i, u), zoomK = i === fly.n - 1 ? 1 + 1.7 * zsm((u - 0.06) / 0.26) * (1 - zsm((u - 0.74) / 0.24)) : 1, pp = (0.75 + 0.4 * Math.sin(Math.min(1, u * 2.5) * Math.PI / 2) - 0.15 * u) * zoomK,   /* the last coin swells towards the camera in the middle of its flight and shrinks again as it goes into the counter */ th = u * Math.PI * 3.5 + i, cs = Math.cos(th), sn = Math.sin(th), fw = 66 * pp * (0.14 + 0.86 * Math.abs(cs)), fh = 70 * pp;   // a coin turning about its upright axis
                 for (let m = 5; m >= 1; m--) TP(`wCe${i}_${m}`, 'bf_ic_coin', D(q.x - fw / 2 + Math.sign(cs || 1) * sn * 15 * pp * (m / 5), q.y - fh / 2, fw, fh), { alpha: 1, fill: DARK });   // its thickness: darker copies of the face stacked behind it, showing more of an edge the more the coin is turned
                 TP('wCf' + i, 'bf_ic_coin', D(q.x - fw / 2, q.y - fh / 2, fw, fh), { alpha: 1, flipX: cs < 0 });
                 if (Math.abs(cs) > 0.55) { const gs = 26 * pp * (Math.abs(cs) - 0.5); TP('wCg' + i, 'bf_star3d', D(q.x - fw * 0.22 - gs / 2, q.y - fh * 0.24 - gs / 2, gs, gs), { alpha: (Math.abs(cs) - 0.55) * 2.2 }); }   // a glint that flashes when the face turns to the light
