@@ -40,7 +40,7 @@ export class Hud extends Phaser.Scene {
         for (const n of ['ui_plate', 'ui_tube']) this.load.image(n, new URL(`ui/${n}.png`, document.baseURI).href);
         for (const n of BF_FILES) this.load.image('bf_' + n, new URL(`ui/bf/${n}.png`, document.baseURI).href);
         for (const n of NEW_FILES) this.load.image('nw_' + n, new URL(`ui/new/${n}.png`, document.baseURI).href);   // the pop-up pieces
-        for (const [k, f] of [['tk_back', 'backup_back'], ['tk_front', 'backup_front']]) this.load.image(k, new URL(`ui/tanks/${f}.png`, document.baseURI).href);
+        for (const [k, f] of [['tk_back', 'backup_back'], ['tk_front', 'backup_front'], ['tk_bubble', 'bubble']]) this.load.image(k, new URL(`ui/tanks/${f}.png`, document.baseURI).href);
     }
 
     create() {

@@ -160,6 +160,17 @@ export function paintTools(L: Layer, c: Ctx) {
         }
         const glow = el.classList.contains('glow');
         if (glow) { const k = 0.5 + 0.5 * Math.sin(t * 6); L.gu.lineStyle(4, T.amber, 0.6 + 0.4 * k).strokeCircle(cx, cy + dy, rad + 3 + 3 * k); }
+        { const bs = (el as HTMLElement).dataset.bst;   // what the booster holds: the green Free tag, a count, or a plus (tap it to buy more)
+            if (bs === 'free') { const w = rad * 1.9, h = w * 0.5; L.pic('bfree' + id, 'bf_tag_free', { x: cx - w / 2, y: cy + dy + rad - h * 0.62, w, h }, { alpha: fade }); }
+            else if (bs === 'plus') { const w = rad * 0.78, h = w * 1.12; L.pic('bplus' + id, 'bf_ic_plus', { x: cx + rad * 0.52 - w / 2, y: cy + dy + rad * 0.62 - h / 2, w, h }, { alpha: fade }); }
+            else if (bs === 'n') {   // the count: a red badge picture (a picture, so it lies ON TOP of the round button, not under its rim)
+                if (!c.scene.textures.exists('bf_badge_red')) { const cv = document.createElement('canvas'); cv.width = cv.height = 96; const q = cv.getContext('2d')!; q.translate(48, 48);
+                    q.fillStyle = '#c4222d'; q.beginPath(); q.arc(0, 3, 44, 0, Math.PI * 2); q.fill(); q.fillStyle = '#ffffff'; q.beginPath(); q.arc(0, 0, 44, 0, Math.PI * 2); q.fill();
+                    const gr = q.createRadialGradient(-8, -12, 4, 0, 0, 36); gr.addColorStop(0, '#ff9aa0'); gr.addColorStop(0.5, '#ff4a52'); gr.addColorStop(1, '#f01f2d'); q.fillStyle = gr; q.beginPath(); q.arc(0, 0, 36, 0, Math.PI * 2); q.fill();
+                    q.fillStyle = 'rgba(255,255,255,0.35)'; q.beginPath(); q.ellipse(-9, -17, 17, 8, -0.4, 0, Math.PI * 2); q.fill(); c.scene.textures.addCanvas('bf_badge_red', cv); }
+                const rr = rad * 0.42, bx = cx + rad * 0.66, by = cy + dy + rad * 0.68;
+                L.pic('bbd' + id, 'bf_badge_red', { x: bx - rr, y: by - rr, w: rr * 2, h: rr * 2 }, { alpha: fade });
+                L.text('bcnt' + id, bx, by + 0.5, (el as HTMLElement).dataset.cnt ?? '', { size: rr * 1.18, color: '#ffffff', stroke: '#c4222d', sw: 3, alpha: fade }); } }
         const cnt = el.querySelector('.cnt'), cr = rectOf(cnt, c.o);
         if (cnt && cr && id === 'bClear') {
             plate(g, cr, 9, T.coral, { border: T.foam, bw: 2, gloss: T.coralL });

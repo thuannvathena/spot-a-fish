@@ -2,6 +2,19 @@
 
 Every published version stays playable at its own URL. The [landing page](https://thuannvathena.github.io/spot-a-fish/) lists them all.
 
+## Unreleased (next: v0.6.0)
+
+Changes since v0.5.1. Not published as a demo yet; ads are not connected (the ad buttons grant the reward at once).
+
+- **Coins:** the player starts with 900; a win pays by difficulty (30 / 60 / 90); prices Hint 300, Clear Backup 900, Clear Tank 1500 (3 per pack); Play on costs 900. The coin pill shows only in Play on, the win screen and the purchase pop-up, with a count-up on gain and falling coins on spend.
+- **Boosters:** one free use at their introduction, then 3 per pack; a count badge (red) or a Free tag on each button; a purchase pop-up (coins for 3, or an ad for 1) built like the artist's NET picture.
+- **Play on with coins** or by ad in the Out of space pop-up (taller now, so the ad icon no longer touches the panel).
+- **Well Done win screen:** LEVEL COMPLETE docks to the top, the screen dims, a standing tank with the next feature floating inside fills with colour, a progress bar and UNLOCKED, x2 reward and coin buttons, coins fly. With no feature left the fish swims and the bar shows "Coming Soon".
+- **Water:** the target tanks and the Backup use the lighter cartoon water palette from the artist feedback.
+- **Praise words** (nice / great / super / wow) regenerated as text only, same style; the bubbles and sparkles that came with them are off.
+- **Purchase pop-up:** the game's own booster icons, the x3 badge and the pieces from the artist's popup file, a new rendered-3D background, the shell / starfish / seaweed / bubbles above it move gently.
+- **Decor export for the artist** (`Decor Export for Artist/`) is kept out of the repository for now.
+
 ## v0.5.1 <Badge type="tip" text="Live" />
 
 Changes since v0.5.0.

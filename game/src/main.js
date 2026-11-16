@@ -143,6 +143,12 @@ try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); }
 if (PLAYTEST) Object.assign(save, { tut: true, unlocked: 99, g1: 1, gRot: 1, gZoom: 1, gTilt: 1, iBackup: 1, iHint: 1, iTank: 1, iClear: 1, iSquid: 1, iClam: 1, iSwarm: 1, iPump: 1 });
 const persist = () => { if (resetting || PLAYTEST) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { } };
 const MAX_LV = LV.length;
+/* ---- coins and boosters (the numbers are in the "Coin System" tab of the design sheet) ---- */
+const COIN = { start: 900, win: { Easy: 30, Medium: 30, Hard: 60, 'Very Hard': 90 }, price: { hint: 300, clear: 900, tank: 1500 }, pack: 3, playOn: 900, adCap: 5 };
+const BOOST_LV = { hint: 4, tank: 7, clear: 9 };   /* the level that introduces each booster: there it can be used once for free, then the player is given 3 */
+if (typeof save.coins !== 'number') save.coins = COIN.start;
+save.bst = Object.assign({ hint: 0, tank: 0, clear: 0 }, save.bst); save.gift = save.gift || {};
+for (const k of Object.keys(BOOST_LV)) if (!save.gift[k] && save.unlocked > BOOST_LV[k]) { save.gift[k] = 1; save.bst[k] += 3; }   /* a player who is already past the introducing level gets the gift at once */
 /* ---- level loop: after the last level the game plays sets of levels 11..X (X = the highest level when the set was made), the 3 obstacle tutorials left out, shuffled. A set is fixed once made, so new levels only appear in the next set ---- */
 const LOOP_SKIP = [11, 21, 31];
 function srcLvl(L) {
@@ -1901,6 +1907,7 @@ function hudIntroAnim() {   // the UI comes in at the start of a level: the top 
   ['bHint', 'bTank', 'bClear'].forEach((id) => run($(id), 'inRight', .3));
 }
 function newLevel(L) {
+  window.__well = null;
   setShape(shapeForLevel(srcLvl(L)));
   window.__hudFadeT0 = undefined; const hd = L >= 2 ? HUD_DELAY_MS : 0; window.__hudInT0 = performance.now() + hd; { const gi0 = gid + 1; if (hd) setTimeout(() => { if (gid === gi0) hudIntroAnim(); }, hd); else hudIntroAnim(); } window.__lvTier = levelTier(L);   // level 2+: the LEVEL words come first, the UI slides in while the bubble flies and has landed when the bubble reaches the badge
   
@@ -1962,6 +1969,7 @@ function newLevel(L) {
   for (let i = 0; i < cfg.squid; i++) spawn.push({ kind: 'squid' });
 
   G = { waves, level: L, cfg, id: gid, status: 'play', mistakes: 0, hintUntil: 0, completed: 0, goalShown: 0, bounty: bTypes.length ? bTypes.map((t, i) => ({ type: t, kind: bKinds[i] })) : null, perMap, remaining: remArr, targets: Array(NT).fill(null), backup: [], things: [], t0: U.uTime.value };
+  G.free = {}; for (const k of Object.keys(BOOST_LV)) if (BOOST_LV[k] === L && !save.gift[k]) G.free[k] = true;   /* the introducing level: that booster can be used once for free */
   // spawn with spacing
   const placed = [];
   for (const s of shuffle(spawn)) {
@@ -2731,10 +2739,10 @@ function pullFromBackup(i) {
 }
 /* ---------- the combo cheers (NICE! GREAT! SUPER! WOW!): the painted word is a flexible sheet in the overlay scene: it pops in with a yaw swing, ripples like a water surface (a wave runs along the letters), glints, then floats up and fades; the higher the word, the bigger the wave, the more bubbles ---------- */
 const CHEER = { list: [], tex: {}, win: null, lv: null, P: {
-  nice:  { w: 165, amp: 4.5,  hold: .95, bub: 5,  spk: 0, col: 0xbff4ff },
-  great: { w: 180, amp: 6,  hold: 1.05, bub: 9,  spk: 2, col: 0xc8ff9a },
-  super: { w: 200, amp: 7.5, hold: 1.2,  bub: 13, spk: 5, col: 0xffe08a },
-  wow:   { w: 225, amp: 10, hold: 1.35, bub: 18, spk: 9, col: 0xffb0f0 } } };
+  nice:  { w: 165, amp: 4.5,  hold: .95, bub: 0,  spk: 0, col: 0xbff4ff },
+  great: { w: 180, amp: 6,  hold: 1.05, bub: 0,  spk: 0, col: 0xc8ff9a },
+  super: { w: 200, amp: 7.5, hold: 1.2,  bub: 0, spk: 0, col: 0xffe08a },
+  wow:   { w: 225, amp: 10, hold: 1.35, bub: 0, spk: 0, col: 0xffb0f0 } } };
 const CHEER_VS = `uniform float uT, uAmp, uTilt, uHW; varying vec2 vUv; varying float vSl;
 void main(){ vUv = uv; vec3 p = position; float u = p.x / uHW;
   float ph = u * 3.4 - uT * 7.5, env = uAmp * (1. - .65 * smoothstep(0., 1.4, uT));
@@ -2773,10 +2781,13 @@ function winTitleUpdate(dt) {   // LEVEL COMPLETE!: the painted title bent along
     const mat = new THREE.ShaderMaterial({ uniforms: { uMap: { value: tex }, uT: { value: 0 }, uArc: { value: 1 }, uHW: { value: w / 2 }, uA: { value: 0 } }, transparent: true, depthWrite: false, vertexShader: WIN_VS, fragmentShader: CHEER_FS });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h, 56, 12), mat); mesh.renderOrder = 32; ov.scene.add(mesh); CHEER.win = { mesh, mat, w, h };
   }
-  const E = CHEER.win, t = (performance.now() - I.t0) / 1000, k = clamp(t / .6, 0, 1), s = k <= 0 ? .01 : 1 + 2.2 * Math.pow(k - 1, 3) + 1.3 * Math.pow(k - 1, 2), fade = 1 - clamp((t - 1.72) / .28, 0, 1);
+  const E = CHEER.win, t = (performance.now() - I.t0) / 1000, k = clamp(t / .6, 0, 1), s = k <= 0 ? .01 : 1 + 2.2 * Math.pow(k - 1, 3) + 1.3 * Math.pow(k - 1, 2), dock = !PLAYTEST;
+  const dg = dock ? (() => { const u = clamp((t - 1.0) / .65, 0, 1); return u * u * (3 - 2 * u); })() : 0;   /* after a short float the words glide up to the title place of the WELL DONE screen (a size that fits it) and stay there */
+  const fade = dock ? (I.out ? 1 - clamp((performance.now() - I.out) / 450, 0, 1) : 1) : 1 - clamp((t - 1.72) / .28, 0, 1);
   E.mat.uniforms.uT.value = t; E.mat.uniforms.uArc.value = .22 + .5 * Math.pow(1 - clamp(t / .7, 0, 1), 2) + .03 * Math.sin(t * 2.4); E.mat.uniforms.uA.value = Math.min(1, t * 8) * fade;
-  const cy = ov.H * .36 + Math.sin(t * 1.8) * 4 - clamp((t - 1.72) / .28, 0, 1) * 18;
-  E.mesh.position.set(0, ov.H / 2 - cy, 90); E.mesh.scale.set(s * (1 - (1 - k) * .1), s * (1 + (1 - k) * .14), 1); E.mesh.rotation.z = Math.sin(t * 9) * .05 * (1 - clamp(t / .7, 0, 1));
+  const ap = $('app').getBoundingClientRect(), homeK = .74, homeY = ap.top + Math.max(140, 338 - (E.h * homeK * 1080 / ap.width) / 2) * (ap.width / 1080), bob = Math.sin(t * 1.8) * 4 * (1 - dg * .7);
+  const cy = dock ? lerp(ov.H * .36 + bob, homeY + bob * .5, dg) : ov.H * .36 + Math.sin(t * 1.8) * 4 - clamp((t - 1.72) / .28, 0, 1) * 18, mk = dock ? lerp(1, homeK, dg) : 1;
+  E.mesh.position.set(0, ov.H / 2 - cy, 90); E.mesh.scale.set(s * mk * (1 - (1 - k) * .1), s * mk * (1 + (1 - k) * .14), 1); E.mesh.rotation.z = Math.sin(t * 9) * .05 * (1 - clamp(t / .7, 0, 1));
 }
 const TIERTXT = [null, { fill: '#b98aff', stroke: '#3b1a78' }, { fill: '#ff7a94', stroke: '#6e0f2a' }], LVBONE = [null, new Image(), new Image()];
 LVBONE[1].src = new URL('ui/new/lv_bone1.png', document.baseURI).href; LVBONE[2].src = new URL('ui/new/lv_bone2.png', document.baseURI).href;
@@ -2826,7 +2837,7 @@ function cheerUpdate(dt) {
     const rise = out * out * 70 + Math.sin(t * 3.6) * 3, scl = 1 - out * .12;
     e.mesh.position.y = e.y !== undefined ? ov.H / 2 - e.y + rise : 0; e.mesh.scale.set(sx * scl, sy * scl, 1);
     if (e.lab) { const lk = clamp((t - .18) / .3, 0, 1), ls = lk <= 0 ? .01 : 1 + 2.2 * Math.pow(lk - 1, 3) + 1.2 * Math.pow(lk - 1, 2); e.lab.scale.setScalar(ls); e.lab.material.opacity = Math.min(1, lk * 3) * (1 - out); e.lab.position.y = ov.H / 2 - e.y - e.h * .5 - 6 + rise; }
-    if (t < P.hold && Math.random() < dt * (3 + P.bub * .5)) ovFx.emit(e.x + rand(-e.w * .45, e.w * .45), e.y + e.h * .3, 1, rand(25, 70), Math.random() < .5 ? P.col : 0xffffff, 1);   // bubbles keep rising out of the word
+    if (P.bub && t < P.hold && Math.random() < dt * (3 + P.bub * .5)) ovFx.emit(e.x + rand(-e.w * .45, e.w * .45), e.y + e.h * .3, 1, rand(25, 70), Math.random() < .5 ? P.col : 0xffffff, 1);   // bubbles keep rising out of the word
     if (t > P.hold + .55) { ov.scene.remove(e.mesh); e.mesh.geometry.dispose(); e.mat.dispose(); if (e.lab) { ov.scene.remove(e.lab); e.lab.geometry.dispose(); e.lab.material.map.dispose(); e.lab.material.dispose(); } L.splice(i, 1); }
   }
 }
@@ -3079,18 +3090,18 @@ const tankFx = (() => {
             vec3 S = P0; bool viaSurf = false;
             if (P0.y > Ys) { float ts = (Ys - P0.y) / D.y; S = P0 + D * ts; viaSurf = true; if (S.z > DP || S.x < 0. || S.x > W) discard; }
             float tz = (DP - S.z) / D.z, tx = D.x < 0. ? -S.x / D.x : (W - S.x) / D.x, tf = -S.y / D.y, t = min(tz, min(tx, tf)); vec3 H = S + D * t; float zf = clamp(H.z / DP, 0., 1.), depthY = clamp((Ys - H.y) / max(Ys, .1), 0., 1.);
-            vec3 shallow = vec3(.42, .88, .9), mid = vec3(.08, .56, .76), deep = vec3(.03, .28, .5);
+            vec3 shallow = vec3(.5, .93, .99), mid = vec3(.1, .66, .92), deep = vec3(.04, .4, .74);   /* (clearer, more saturated water: it read as murky) */
             if (t == tf) {   // sand floor: warm, rippled, with a net of light from the surface, darker towards the back
               vec3 sc = mix(vec3(.93, .76, .46), vec3(.62, .5, .32), zf); float rip = sin(H.x * 30. + sin(H.z * 9.) * 2.) * .03; col = sc * (1. + rip);
               col = mix(col, mid, .1 + .45 * zf); col += vec3(.75, 1., .95) * caus(H.xz * vec2(1. / W * 2.2, 1.) * 3., uT) * .12 * (1. - zf * .6);
             } else if (t == tz) {   // back wall: bright near the surface, deeper below, with slanted shafts of light and a net of light on the lower part
               col = mix(shallow, mix(mid, deep, smoothstep(.3, 1., depthY)), smoothstep(.0, .55, depthY));
               float shaft = pow(max(0., sin((H.x / W * 2.2 + H.y * .3) * 5. + sin(H.y * 1.5 + uT * .3) * .9 - uT * .2)), 2.) * (1. - depthY * .8); col += vec3(.7, .98, .92) * shaft * .1;
-              col += vec3(.6, .95, .95) * caus(H.xy * vec2(1. / W * 2.2, 1.) * 3., uT * .9 + 3.) * .06 * smoothstep(.2, .9, depthY); col *= mix(.72, 1., smoothstep(.0, .3, H.y));
+              col += vec3(.6, .95, .95) * caus(H.xy * vec2(1. / W * 2.2, 1.) * 3., uT * .9 + 3.) * .06 * smoothstep(.2, .9, depthY); col *= mix(.9, 1., smoothstep(.0, .3, H.y));
             } else {   // side walls: glass seen edge-on, tinted, lighter near the front, darker as it recedes
-              col = mix(mix(vec3(.45, .88, .98), mid, smoothstep(.0, 1., zf)), deep, smoothstep(.4, 1., zf) * .4 + depthY * .2); col += vec3(.7, 1., 1.) * smoothstep(.3, .0, zf) * .14;
+              col = mix(mix(vec3(.5, .93, 1.), mid, smoothstep(.0, 1., zf)), deep, smoothstep(.4, 1., zf) * .25 + depthY * .12); col += vec3(.7, 1., 1.) * smoothstep(.3, .0, zf) * .14;
             }
-            col = mix(col, deep, smoothstep(.0, 1., zf) * .28);   // the far water is hazier
+            col = mix(col, deep, smoothstep(.0, 1., zf) * .12);   // the far water is a little deeper in colour
             float mote = pow(max(0., sin(H.x * 21. + H.y * 13. + uT * .6) * sin(H.z * 17. - H.y * 9. - uT * .5)), 14.); col += vec3(.9, 1., 1.) * mote * .22 * (1. - depthY * .5);   // a few specks of light floating in the water
             if (viaSurf) { float rp = sin(S.x * 13. + uT * 2. + sin(S.z * 6. + uT) * 1.6) * sin(S.z * 18. - uT * 1.3); col = mix(col, vec3(.88, 1., 1.), .3 + .25 * smoothstep(.0, .12, S.z)); col += vec3(.7) * smoothstep(.55, 1., rp) * .35; }
             col = mix(col, vec3(1.), smoothstep(.035, .0, abs(P0.y - Ys)) * .6); col = mix(col, vec3(.1, .5, .75), smoothstep(.0, .06, Ys - P0.y) * smoothstep(.12, .05, Ys - P0.y) * .12);   // a bright foam line along the waterline, and a slightly deeper band just under it
@@ -3112,7 +3123,7 @@ const tankFx = (() => {
   function cageCanvas(W, H, layer) {   /* a picture of the Backup cell: 'back' = the murky water with its floor, 'front' = frame and bars, 'all' = both */
     if (CAGE.ready < 4) return null; const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const q = cv.getContext('2d'), pw = .014 * W, capH = (1 - .905) * H, baseH = .16 * H, ix = pw, iy = capH, iw = W - 2 * pw, ih = H - capH - baseH;
     if (layer !== 'front') {
-      let gr = q.createLinearGradient(0, iy, 0, iy + ih); gr.addColorStop(0, '#7fb9c2'); gr.addColorStop(.35, '#4d8fa4'); gr.addColorStop(1, '#244f69'); q.fillStyle = gr; q.fillRect(ix, iy, iw, ih);
+      let gr = q.createLinearGradient(0, iy, 0, iy + ih); gr.addColorStop(0, '#5cc8f2'); gr.addColorStop(.35, '#2a9ae0'); gr.addColorStop(1, '#125ca8'); q.fillStyle = gr; q.fillRect(ix, iy, iw, ih);
       gr = q.createLinearGradient(0, iy + ih * .8, 0, iy + ih); gr.addColorStop(0, 'rgba(176,160,128,0)'); gr.addColorStop(1, 'rgba(150,136,110,.95)'); q.fillStyle = gr; q.fillRect(ix, iy + ih * .8, iw, ih * .2);
       q.strokeStyle = 'rgba(235,252,255,.75)'; q.lineWidth = Math.max(2, H * .012); q.beginPath(); for (let x = 0; x <= iw; x += 6) { const y = iy + ih * .1 + Math.sin(x / iw * 12) * ih * .018; x ? q.lineTo(ix + x, y) : q.moveTo(ix, y); } q.stroke();
       q.fillStyle = 'rgba(215,240,246,.2)'; q.fillRect(ix, iy, iw, ih * .1);
@@ -3150,9 +3161,9 @@ const tankFx = (() => {
             vec3 S = P0; bool viaSurf = false; if (P0.y > Ys) { float ts = (Ys - P0.y) / D.y; S = P0 + D * ts; viaSurf = true; if (S.z > DP || S.x < 0. || S.x > W) discard; }
             float tz = (DP - S.z) / D.z, tx = D.x < 0. ? -S.x / D.x : (W - S.x) / D.x, tf = -S.y / D.y, t = min(tz, min(tx, tf)); vec3 H = S + D * t; float zf = clamp(H.z / DP, 0., 1.), dY = clamp((Ys - H.y) / Ys, 0., 1.);
             if (t == tf) { float gr = fract(sin(dot(floor(H.xz * vec2(60. / W * 2.2, 60.)), vec2(12.9, 78.2))) * 43758.5); col = mix(vec3(.68, .64, .55), vec3(.38, .38, .4), zf) * (.92 + gr * .16); col += vec3(.6, .9, .9) * caus(H.xz * 3., uT * .6) * .06; }
-            else if (t == tz) { col = mix(vec3(.46, .72, .76), vec3(.14, .36, .5), smoothstep(.0, .85, dY)); for (int i = 1; i < 7; i++) { float Xk = (uBx[i] - .014) / .972 * W; col = mix(col, vec3(.6, .67, .76), smoothstep(.022, .008, abs(H.x - Xk)) * .8); } }
-            else { col = mix(vec3(.42, .68, .74), vec3(.14, .34, .48), smoothstep(.0, 1., zf) * .8 + dY * .2); }
-            col = mix(col, vec3(.16, .34, .42), .14 + .22 * zf); col *= .97;
+            else if (t == tz) { col = mix(vec3(.34, .78, .96), vec3(.05, .42, .78), smoothstep(.0, .85, dY)); for (int i = 1; i < 7; i++) { float Xk = (uBx[i] - .014) / .972 * W; col = mix(col, vec3(.6, .67, .76), smoothstep(.022, .008, abs(H.x - Xk)) * .8); } }
+            else { col = mix(vec3(.3, .74, .94), vec3(.05, .4, .74), smoothstep(.0, 1., zf) * .8 + dY * .2); }
+            col = mix(col, vec3(.08, .44, .74), .04 + .1 * zf);
             if (viaSurf) { float rp = sin(S.x * 13. + uT * 2. + sin(S.z * 6. + uT) * 1.6) * sin(S.z * 18. - uT * 1.3); col = mix(col, vec3(.72, .9, .92), .4); col += vec3(.6) * smoothstep(.55, 1., rp) * .3; }
             col = mix(col, vec3(1.), smoothstep(.035, .0, abs(P0.y - Ys)) * .5);
             col = mix(col, vec3(.95, .15, .1), uHot * (.16 + .16 * pulse));
@@ -3160,7 +3171,7 @@ const tankFx = (() => {
           if (!frame && uHas > .5) { vec4 bt = texture2D(uFrame, vU); if (bt.a > .02) { col = mix(col, bt.rgb, bt.a); alpha = m * uA; isBar = true; } }
           else if (!frame) { for (int i = 1; i < 7; i++) { float w = uBw; float d = abs(vU.x - uBx[i]); if (d < w) { float t2 = d / w; float sh = vU.x > uBx[i] ? 1. : 0.; col = mix(vec3(.98, .99, 1.), vec3(.42, .52, .66), mix(t2 * t2, .35 + .65 * t2, sh)); col = mix(col, vec3(.35, .45, .6), smoothstep(.88, .91, vy) * .5 + smoothstep(.2, .165, vy) * .5); alpha = m * uA; isBar = true; } } }
           #if PASS == 1
-          if (!(frame || isBar)) { float by2 = (vU.y - .16) / .745; if (by2 > .86 || by2 < 0.) discard; col = mix(vec3(.5, .8, .9), vec3(.1, .32, .46), clamp((.86 - by2) / .86, 0., 1.) * .8 + .1); alpha = m * uA * (.2 + .14 * clamp((.86 - by2) / .86, 0., 1.)); col += vec3(.5, .8, .9) * caus(vU * vec2(uAsp, 1.) * .8, uT * .6) * .05; }   /* a veil of water IN FRONT of the animals in the cell, so they sit inside the water and not on top of it */
+          if (!(frame || isBar)) { float by2 = (vU.y - .16) / .745; if (by2 > .86 || by2 < 0.) discard; col = mix(vec3(.55, .9, 1.), vec3(.1, .5, .82), clamp((.86 - by2) / .86, 0., 1.) * .8 + .1); alpha = m * uA * (.1 + .08 * clamp((.86 - by2) / .86, 0., 1.)); col += vec3(.5, .8, .9) * caus(vU * vec2(uAsp, 1.) * .8, uT * .6) * .05; }   /* a veil of water IN FRONT of the animals in the cell, so they sit inside the water and not on top of it */
           #else
           if (frame || isBar) discard;
           #endif
@@ -3771,9 +3782,9 @@ function celUpdate(dt) {
     { const mine = new Set(W.fish); for (const o of G.things) if (o.kind === 'fish' && o.alive && !mine.has(o) && o.group) o.winK = undefined; for (const o of W.fish) if (o.group && W.burst && !o.winFront) { o.winFront = true; o.group.traverse(m => { if (m.isMesh) { m.renderOrder = 40; for (const mt of [].concat(m.material)) mt.depthTest = false; } }); } }   // everyone else fades out of the picture, the orbiting fish are drawn in front
     for (const o of W.fish) if (o.vtx && o.vtx.mode !== 'orbit' && o.vtx.mode !== 'home' && T >= (o.vtx.homeAt || 1e9)) o.vtx.mode = 'orbit';
     if (W.bub) { if (q < 1) bubbleSet(W.bub, W.gp, (W.rw || 1) * (1 + .5 * ezo(q)), 1 - q, 1.3, T); else if (W.bub.visible) { bubbleMagic(W.bub, W.gp, 1, 0, T); W.bub.visible = false; } }
-    if (!W.textOn && q >= 1) { W.textOn = true; window.__winText = { t0: performance.now() }; Snd.play('win', { at: .35 }); }   // the words come only once the bubble has gone
+    if (!W.textOn && q >= 1) { W.textOn = true; window.__winText = { t0: performance.now() }; if (!PLAYTEST) setTimeout(() => { if (G && G.win === W && !window.__well) wellOpen(); }, 1650); Snd.play('win', { at: .35 }); }   /* the words burst out as before; the dim and the screen follow once they have docked */   // the words come only once the bubble has gone
   }
-  if (!W.cover && (!W.watchers || !W.watchers.some(o => o.hop)) && (T >= WIN.cover + 2 || (W.textOn && performance.now() - window.__winText.t0 > 2000))) { W.cover = true; startRinse(cam1); }
+  if (!W.cover && (!W.watchers || !W.watchers.some(o => o.hop)) && (PLAYTEST ? (T >= WIN.cover + 2 || (W.textOn && performance.now() - window.__winText.t0 > 2000)) : (W.wellDone || T >= WIN.cover + 60))) { W.cover = true; startRinse(cam1); }   /* the curtain closes once the coins are taken (the editor's play test keeps the old words) */
 }
 let winOut = null;
 /* the aquarium curtains: two panels of cloth in their own 3D canvas. Each panel is a finely divided sheet bent into pleats by a vertex shader (pleats are deep when the cloth is gathered, shallow when it is pulled flat),
@@ -3831,7 +3842,7 @@ function nextLevel(c) {   // under the water: the pop-up words go and the next l
   newLevel(PLAYTEST ? L : L + 1);
 }
 // a tap during the sequence skips straight to the water
-document.addEventListener('pointerdown', () => { const W = G && G.win; if (W && W.gid === gid && !W.rinse && W.t > .4) { W.cover = true; startRinse({ az: orbit.az, el: orbit.el, dist: cam.position.distanceTo(orbit.target), ty: orbit.target.y }); } }, true);
+document.addEventListener('pointerdown', () => { const W = G && G.win; if (W && W.gid === gid && !W.rinse && W.t > .4 && !window.__well && PLAYTEST) {   /* (with the WELL DONE screen a tap must not skip it) */ W.cover = true; startRinse({ az: orbit.az, el: orbit.el, dist: cam.position.distanceTo(orbit.target), ty: orbit.target.y }); } }, true);
 function ovRemove(sp) { if (!sp) return; ov.scene.remove(sp.holder); ov.sprites.delete(sp); }
 function ovClear() { for (const sp of ov.sprites) ov.scene.remove(sp.holder); ov.sprites.clear(); ov.flights.length = 0; ov.cel.length = 0; tankFx.reset(); paused = false; }
 /* a fish (same 3D model as in the big tank) leaps along an arc to a DOM element */
@@ -4064,7 +4075,7 @@ function pickThing(o, booster = false) {   // booster: the Clear Tank booster ca
 }
 
 /* ============================== overlays ============================== */
-const OVS = ['ovPause', 'ovWin', 'ovLose', 'ovLevels', 'ovIntro', 'ovPlayOn'];
+const OVS = ['ovPause', 'ovWin', 'ovLose', 'ovLevels', 'ovIntro', 'ovPlayOn', 'ovBuy', 'ovWell'];
 function devWin() {   // developer tool (Settings): finish the level now
   if (!G || G.status !== 'play') return; closePause(); const i = G.targets.findIndex(t => t && !t.done); if (i < 0) return; G.completed = G.cfg.goal - 1; const t = G.targets[i]; t.count = t.shown = perOf(t.type); t.done = true; completeTarget(i);
 }
@@ -4074,8 +4085,9 @@ function devLose() {   // developer tool (Settings): lose the level the way a fu
 function loseNow() { G.status = 'lost'; tankFx.breakBackup(); setTimeout(showLose, 3700); }
 let popupOn = false;   // a pop-up is open: the music ducks, the open / close sounds play
 function hideOverlays() { document.querySelectorAll('.spotlit').forEach(e => e.classList.remove('spotlit')); const was = OVS.some(id => $(id).classList.contains('show')) || $('spotOv').classList.contains('show'); for (const id of OVS) $(id).classList.remove('show'); $('spotOv').classList.remove('show'); if (was && popupOn) { popupOn = false; Snd.bgmDuckTo(1); if (!introOn || true) Snd.play('popclose'); } }
-function showOnly(id) { hideOverlays(); $(id).classList.add('show'); if (id !== 'ovWin' && id !== 'ovLose') { popupOn = true; Snd.bgmDuckTo(.5); Snd.play(id === 'ovPlayOn' ? 'playon' : 'popopen'); } }
+function showOnly(id) { hideOverlays(); $(id).classList.add('show'); if (id !== 'ovWin' && id !== 'ovLose' && id !== 'ovWell') { popupOn = true; Snd.bgmDuckTo(.5); Snd.play(id === 'ovPlayOn' ? 'playon' : 'popopen'); } }
 function saveWin() {   // stars and the next level are saved when the level is won (the win pop-up with the stars is gone: the win sequence flows straight into the next level)
+  for (const k of Object.keys(BOOST_LV)) if (G && G.free && G.free[k]) giftBoost(k);   /* the free one was not used: the 3 are given when the level is won */
   const m = G.mistakes, st = m <= 3 ? 3 : m <= 6 ? 2 : 1;
   save.stars[G.level] = Math.max(save.stars[G.level] || 0, st); save.unlocked = Math.max(save.unlocked, G.level + 1); persist();
 }
@@ -4114,21 +4126,21 @@ function fvSquid() {   // floats (the arms pull together on each push), then spr
   for (let i = 0; i < 18; i++) { const m = new THREE.SpriteMaterial({ map: fvSoft(), color: [0x2a1055, 0x1c0c40, 0x3a1a6a][i % 3], transparent: true, depthWrite: false, opacity: 0 }), sp = new THREE.Sprite(m); sp.userData = { to: new THREE.Vector3(rand(-1.2, 1.2), rand(-1, 1), rand(-1.3, -.3)), sc: rand(1.1, 1.7), d: rand(0, .25), ph: rand(0, 6.28) }; ink.add(sp); puffs.push(sp); }
   const CYC = 6;
   return { sc, cam: [0, .2, 6.4, 0, .1, 0], step(t, dt = .016) {
-    const c = t % CYC, push = Math.pow(Math.max(0, Math.sin(t * 2.3)), 2), spr = c > 2.4 && c < 3.8 ? Math.sin((c - 2.4) / 1.4 * Math.PI) : 0, jet = c > 2.2 && c < 4.2 ? push * .3 : push;
+    const c = window.__well ? 0 : t % CYC, push = Math.pow(Math.max(0, Math.sin(t * 2.3)), 2), spr = !window.__well && c > 2.4 && c < 3.8 ? Math.sin((c - 2.4) / 1.4 * Math.PI) : 0, jet =   /* (no ink cloud on the WELL DONE screen: the zoomed picture would cut it square) */ c > 2.2 && c < 4.2 ? push * .3 : push;
     const cy = octoCycle((t / 1.5) % 1), wind = c > 2 && c < 2.4 ? smooth01((c - 2) / .4) : 0, ct = c > 2 && c < 3.9 ? Math.max(wind, 0) : cy.contract, th = c > 2 && c < 3.9 ? 0 : cy.thrust;
     octoAnim(b, dt, { wt: t * 2.2, contract: ct, thrust: th, glide: c > 2 && c < 3.9 ? 0 : cy.glide, ink: spr, wind, hp: -.3 * ct + .35 * th }); octoBlink(b, dt);
     b.inner.scale.set(1 - (th * .1 + ct * .04 + spr * .05) * .8, 1 + th * .14 + ct * .05 + spr * .07, 1 - (th * .1 + ct * .04 + spr * .05) * .8); b.inner.rotation.z = Math.sin(t * 1.1) * .06; b.inner.rotation.x = Math.sin(t * .8) * .05;
     grp.position.y = Math.sin(t * 1.3) * .1 + push * .12 + (c > 2.5 ? Math.sin(Math.min(1, (c - 2.5) / 1.4) * Math.PI) * .22 : 0); grp.rotation.y = .5 + Math.sin(t * .6) * .35;
     ink.position.copy(grp.position); ink.position.y -= .5; const k = c - 2.85;   /* the cloud starts under the octopus, where its arms begin */
     for (const p of puffs) { const u = clamp((k - p.userData.d) / .7, 0, 1), out = clamp((4.7 - c) / 1.5, 0, 1), e = 1 - Math.pow(1 - clamp(k / 1.5, 0, 1), 3);
-      p.position.copy(p.userData.to).multiplyScalar(.15 + .85 * e); p.material.opacity = c > 2.85 && c < 4.7 ? .92 * Math.min(u, out) : 0; const sz = p.userData.sc * (.35 + .65 * (1 - Math.pow(1 - u, 3))) * (1 + .05 * Math.sin(t * 1.6 + p.userData.ph)); p.scale.set(sz, sz, 1); }
+      p.position.copy(p.userData.to).multiplyScalar(.15 + .85 * e); p.material.opacity = !window.__well && c > 2.85 && c < 4.7 ? .92 * Math.min(u, out) : 0; const sz = p.userData.sc * (.35 + .65 * (1 - Math.pow(1 - u, 3))) * (1 + .05 * Math.sin(t * 1.6 + p.userData.ph)); p.scale.set(sz, sz, 1); }
   } };
 }
 function fvClam() {   // opens, opens wide, snaps shut with a shake and hops, then opens again (the game's clam: open .5, alert .95, closed .02)
   const sc = fvScene(), b = buildClam(), grp = new THREE.Group(); b.group.scale.setScalar(1.5); grp.position.y = -.32; grp.add(b.group); sc.add(grp); b.lock.visible = false; b.held.visible = false; b.pips.visible = false;
   const CYC = 5.8; let open = .5;
   return { sc, cam: [0, 1.15, 4.9, 0, .3, 0], step(t, dt) {
-    const c = t % CYC, closed = c >= 2.7 && c < 4.3, alert = c > 1.4 && c < 2.7, target = closed ? .02 : alert ? .95 : .5 + .05 * Math.sin(t * 3);
+    const c = window.__well ? 0.6 : t % CYC, closed = c >= 2.7 && c < 4.3, alert = c > 1.4 && c < 2.7, target = closed ? .02 : alert ? .95 : .5 + .05 * Math.sin(t * 3);
     open += (target - open) * (1 - Math.exp(-dt * (closed ? 26 : 9))); b.lid.rotation.x = -open;
     const shake = closed ? Math.max(.55, 1 - (c - 2.7) * 1.4) : 0; b.group.rotation.z = (Math.sin(t * 15) * .46 + Math.sin(t * 6.1) * .16) * shake; b.group.rotation.x = 0; b.group.position.x = Math.sin(t * 15 + 1.2) * .16 * shake;
     grp.position.y = -.32; b.group.scale.setScalar(1.5); b.pearl.visible = !closed;
@@ -4176,12 +4188,14 @@ function fvSwarm() {   // the game's own grey school (same model, same grey, sam
   } };
 }
 function fvTick(dt) {
-  const ov = $('ovIntro'); if (!FV.kind || !ov || !ov.classList.contains('show')) { FV.on = false; return; }
+  if (window.__well) wellWaterTick(); else window.__wellWater = null;
+  const ov = $('ovIntro'), wellOn = !!window.__well; if (!window.__well) window.__fvWell = null; if (!FV.kind || !(wellOn || (ov && ov.classList.contains('show')))) { FV.on = false; return; }
   if ((FV.kind === 'swarm' && !SWARM.geo) || (FV.kind === 'squid' && !OCT.ready)) { FV.on = false; return; }
   fvInit(); let e = FV.cache[FV.kind]; if (!e) { const mk = { squid: fvSquid, clam: fvClam, pipe: fvPipe, swarm: fvSwarm }[FV.kind]; if (!mk) { FV.on = false; return; } e = FV.cache[FV.kind] = mk(); }
   if (FV.cur !== FV.kind) { FV.cur = FV.kind; FV.t = 0; }
-  FV.t += dt; e.step(FV.t, dt); FV.cam.position.set(e.cam[0], e.cam[1], e.cam[2]); FV.cam.lookAt(e.cam[3], e.cam[4], e.cam[5]);
-  FV.r.render(e.sc, FV.cam); FV.g.clearRect(0, 0, 640, 640); FV.g.drawImage(FV.r.domElement, 0, 0); FV.on = true; window.__fv = FV;
+  if (wellOn && FV.kind === 'pipe') { FV.t = .5; e.step(FV.t, .016); } else { FV.t += dt; e.step(FV.t, dt); }   /* on the WELL DONE screen every obstacle keeps its ordinary motion (the octopus swims, the clam breathes, the swarm moves) but none of the special New Feature scenes: no ink, no clam snapping shut, no fish pumped out of the pipe (the pipe just stands) */
+  FV.cam.position.set(e.cam[0], e.cam[1], e.cam[2]); FV.cam.lookAt(e.cam[3], e.cam[4], e.cam[5]);
+  FV.r.render(e.sc, FV.cam); FV.g.clearRect(0, 0, 640, 640); FV.g.drawImage(FV.r.domElement, 0, 0); FV.on = true; if (wellOn) wellComposite(); else window.__fv = FV;
 }
 const INTRO = {
   backup: { spot: '#backup', title: 'Backup Slots', text: () => 'Wrong fish land here. When all 7 slots are full, you lose!' },
@@ -4192,7 +4206,7 @@ const INTRO = {
   feed: { rib: 'NEW EVENT', tag: 'EVENT', ev: true, img: 'hand', title: 'Feeding Time', text: () => 'Food drops in and the fish crowd the surface. Wait for them to spread out.' },
   swarm: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', school: true, fv: 'swarm', title: 'Fish Swarm', text: () => 'A huge school covers the fish.\nWait for it to pass!' },
   squid: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', img: 'squid', fv: 'squid', title: 'Octopus', text: () => 'It sprays ink over the fish.\nTapping it fills 3 Backup slots!' },
-  pump: { rib: 'NEW MECHANIC', tag: 'PIPE', fv: 'pipe', icon: () => THUMB[SPECIES[0].id], title: 'Fish Pipe', text: () => 'More fish are pumped in through the pipe as you clear tanks.' },
+  pump: { rib: 'NEW FEATURE', tag: 'PIPE', fv: 'pipe', icon: () => THUMB[SPECIES[0].id], title: 'Fish Pipe', text: () => 'More fish are pumped in through the pipe as you clear tanks.' },
   clam: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', img: 'clam', fv: 'clam', title: 'Hungry Clam', text: n => 'It grabs a fish you need. Tap it to free the fish.' } };
 function showSpot(d) {   // no separate pop-up: dim the screen and light up the real UI element, with a short tip beside it
   document.querySelectorAll('.spotlit').forEach(e => e.classList.remove('spotlit')); document.querySelectorAll(d.spot).forEach(e => e.classList.add('spotlit'));   /* while the tip is up the booster shows at full strength, even when it is greyed out (Backup empty) */
@@ -4228,7 +4242,12 @@ $('bRestart1').onclick = () => { if (G) newLevel(G.level); };   // one tap resta
 $('bNext').onclick = () => newLevel(G.level + 1);
 $('bReplay').onclick = () => newLevel(G.level);
 $('bRetry').onclick = () => newLevel(G.level);
-$('bPlayOn').onclick = () => { if (!G || G.status !== 'playon') return; G.playOnUsed = true; hideOverlays(); G.status = 'play'; paused = false; clearBackup(); };   // the Backup fish jump back into the tank and the game goes on
+function doPlayOn() { G.playOnUsed = true; hideOverlays(); G.status = 'play'; paused = false; clearBackup(); }
+let poBusy = false;
+$('bPlayOn').onclick = () => { if (!G || G.status !== 'playon' || poBusy) return; if (save.coins < COIN.playOn) { window.__poShake = performance.now(); return; } poBusy = true; addCoins(-COIN.playOn); setTimeout(() => { poBusy = false; if (G && G.status === 'playon') doPlayOn(); }, 950); };   /* Play on costs coins ... */
+$('bPlayOnAd').onclick = () => { if (!G || G.status !== 'playon') return; watchAd(() => { if (G && G.status === 'playon') doPlayOn(); }); };   /* ... or an advertisement */   // the Backup fish jump back into the tank and the game goes on
+$('bWellCoin').onclick = () => wellClaim(1); $('bWellAd').onclick = () => watchAd(() => wellClaim(2));
+$('bBuyCoin').onclick = () => buyBoost(false); $('bBuyAd').onclick = () => buyBoost(true); $('bBuyX').onclick = closeBuy;
 $('bNoPlayOn').onclick = () => { if (!G || G.status !== 'playon') return; hideOverlays(); paused = false; loseNow(); };
 let lvReturn = 'ovPause';
 function openLevels(from) {
@@ -4253,6 +4272,119 @@ const camTween = { on: false, t: 0, az0: 0, azT: 0, el0: 0, d0: 0 };
 function resetCam() { let a = orbit.az - .65; a = ((a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; Object.assign(camTween, { on: true, t: 0, az0: orbit.az, azT: orbit.az - a, el0: orbit.el, d0: orbit.dist }); orbit.azV = 0; }
 $('bCam').onclick = resetCam;
 const HINT_CD = 0, HINT_DUR = 3.6; let hintReady = 0; // time (U.uTime) when hint is ready again
+/* ---- the WELL DONE screen: the bubble of the win turns into a round window with the next obstacle in it, black at first, and every level won fills a little more colour in; the level before the one that introduces it, it is full and says UNLOCKED! ---- */
+const WELL_MS = [{ k: 'squid', at: 11, from: 1, title: 'New Feature' }, { k: 'pipe', at: 16, from: 11, title: 'New Feature' }, { k: 'clam', at: 21, from: 16, title: 'New Feature' }, { k: 'swarm', at: 31, from: 21, title: 'New Feature' }];
+const levelDiff = L => { const r = LV[srcLvl(L) - 1]; return (r && r.difficulty) || 'Easy'; };
+function wellProgress(L) { const m = WELL_MS.find(x => L < x.at); if (!m) return null; const f = l => clamp((l - m.from + 1) / (m.at - m.from), 0, 1); return { m, p0: f(L - 1), p1: f(L) }; }
+function wellOpen() {
+  const L = G.level, wp = wellProgress(L);
+  const fish = [], idx = wp ? [] : Object.keys(G.perMap || {}).map(Number).filter(t => SPECIES[t]).slice(0, 5);   /* no feature left to unlock: the tank holds the fish the player has just caught instead */
+  window.__well = { t0: performance.now(), level: L, base: COIN.win[levelDiff(L)] || 30, kind: wp ? wp.m.k : '', soon: !wp, fish, idx, title: wp ? wp.m.title : 'New Feature', p0: wp ? wp.p0 : 1, p1: wp ? wp.p1 : 1, full: !!wp && wp.p1 >= 0.9999, claimed: 0, mult: 1 };
+  FV.kind = wp ? wp.m.k : ''; FV.cur = ''; showOnly('ovWell');
+}
+function wellClaim(mult) {   /* the coins go into the header (it counts up), then the pop-up leaves and the water curtain closes as before */
+  const W = window.__well; if (!W || W.claimed) return; W.claimed = performance.now(); W.mult = mult; Snd.play('good'); addCoins(W.base * mult, W.claimed);
+  setTimeout(() => { const w = G && G.win; if (window.__winText) window.__winText.out = performance.now(); window.__well = null; hideOverlays(); if (w) w.wellDone = true; }, 1000 * (COIN_FLY.d0 + (COIN_FLY.n - 1) * COIN_FLY.gap + COIN_FLY.dur) + 550);
+}
+let WCV = null, WSM = null, WWR = null;
+/* the water of the tank on the WELL DONE screen is drawn by a small shader (a canvas the pop-up shows): colour that deepens with depth, a net of light that moves on it, slanting shafts from the surface, drifting specks, a rippling surface line, darker sides */
+function wellWaterTick() {
+  if (!WWR) {
+    const r = new THREE.WebGLRenderer({ antialias: true, alpha: true }); r.setPixelRatio(1); r.setSize(384, 590, false);
+    const mat = new THREE.ShaderMaterial({ depthTest: false, depthWrite: false, uniforms: { uT: { value: 0 } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }', fragmentShader: `
+      varying vec2 vUv; uniform float uT;
+      float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float nz(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(h21(i), h21(i + vec2(1., 0.)), f.x), mix(h21(i + vec2(0., 1.)), h21(i + vec2(1., 1.)), f.x), f.y); }
+      void main(){
+        vec2 uv = vUv; float d = 1. - uv.y, t = uT;
+        vec3 top = vec3(.42, .82, .97), mid = vec3(.09, .5, .82), deep = vec3(.03, .16, .46);
+        vec3 col = mix(top, mid, smoothstep(0., .45, d)); col = mix(col, deep, smoothstep(.3, 1., d));
+        vec2 w = vec2(uv.x * 3.2 + sin(uv.y * 5. + t * .6) * .08, uv.y * 5.2);
+        float c = 1. - abs(nz(w + vec2(t * .16, t * .24)) - nz(w * 1.17 - vec2(t * .2, t * .15))) * 4.2; c = pow(clamp(c, 0., 1.), 5.);
+        float c2 = 1. - abs(nz(w * 1.9 + vec2(-t * .12, t * .2)) - nz(w * 2.1 + vec2(t * .18, -t * .1))) * 4.6; c2 = pow(clamp(c2, 0., 1.), 6.);
+        float lit = pow(1. - d, 1.15); col += vec3(.65, .95, 1.) * (c * .34 + c2 * .2) * lit;
+        float rays = 0.; for (int k = 0; k < 3; k++) { float fk = float(k); rays += pow(max(0., sin((uv.x * 5.5 + uv.y * (1.3 + fk * .2) + t * (.07 + fk * .03) + fk * 2.1) * 3.1416)), 7.); }
+        col += vec3(.8, .96, 1.) * rays * .09 * smoothstep(.05, 1., uv.y) * (.4 + .6 * lit);
+        vec2 sp = uv * vec2(13., 21.) + vec2(sin(t * .3 + uv.y * 6.) * .3, -t * .35); vec2 cell = floor(sp), fr = fract(sp); float hh = h21(cell);
+        float dot1 = smoothstep(.09, .0, length(fr - vec2(.2 + .6 * hh, .2 + .6 * h21(cell + 7.)))) * step(.55, hh) * (.5 + .5 * sin(t * 1.7 + hh * 9.)); col += vec3(.85, .97, 1.) * dot1 * .55;
+        float sline = smoothstep(.945 + .006 * sin(uv.x * 22. + t * 1.4), 1., uv.y); col = mix(col, vec3(.86, .97, 1.), sline * .55);
+        float side = smoothstep(0., .2, min(uv.x, 1. - uv.x)); col *= .62 + .38 * side; col += vec3(.04, .12, .2) * (1. - side) * .25;
+        gl_FragColor = vec4(col, 1.);
+      }` });
+    const sc = new THREE.Scene(), cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat); q.frustumCulled = false; sc.add(q);
+    const cv = document.createElement('canvas'); cv.width = 384; cv.height = 590; WWR = { r, sc, cam, mat, cv, g: cv.getContext('2d') };
+  }
+  WWR.r.setClearColor(0x000000, 1); WWR.mat.uniforms.uT.value = performance.now() / 1000; WWR.r.render(WWR.sc, WWR.cam); WWR.g.drawImage(WWR.r.domElement, 0, 0); window.__wellWater = { cv: WWR.cv };
+  const W = window.__well; if (W && W.soon && W.idx && W.idx.length) wellFishTick(W); else window.__wellFish = null;
+}
+let WFS = null;
+function wellFishTick(W) {   /* no feature left to unlock: the fish the player just caught swim round in the tank (the game's own 3D fish, with their own tail beat), each on its own oval and depth, turning smoothly with the way they go */
+  if (!WFS || WFS.key !== W.t0) {
+    const sc = fvScene(), items = W.idx.map((i, k) => { const b = fvFish(i, false); sc.add(b.group); return { b, k }; }), cam = new THREE.PerspectiveCamera(25, 384 / 590, .1, 60); cam.position.set(0, 0, 11); cam.lookAt(0, 0, 0);
+    const cv = document.createElement('canvas'); cv.width = 384; cv.height = 590; WFS = { key: W.t0, sc, items, cam, cv, g: cv.getContext('2d'), q: new THREE.Quaternion(), d: new THREE.Vector3(), X: new THREE.Vector3(1, 0, 0), last: performance.now() };
+  }
+  const now = performance.now(), t = (now - W.t0) / 1000, dt = clamp((now - WFS.last) / 1000, .001, .05); WFS.last = now; const n = WFS.items.length;
+  for (const { b, k } of WFS.items) {
+    const w = .42 + .05 * k, th = t * w + k * 1.9, A = .62 - .06 * (k % 2), B = .5, y = (n > 1 ? -1.45 + 2.9 * (k / (n - 1)) : 0) + .16 * Math.sin(t * .9 + k * 2.3);
+    b.group.position.set(Math.sin(th) * A, y, Math.cos(th) * B); WFS.d.set(Math.cos(th) * A, 0, -Math.sin(th) * B).normalize(); WFS.q.setFromUnitVectors(WFS.X, WFS.d); b.group.quaternion.slerp(WFS.q, 1 - Math.exp(-dt * 6)); b.group.scale.setScalar(1.45);
+    if (b.update) b.update(dt * 1.2, { wph: t * 9 + k * 2, boost: .7 });
+  }
+  WWR.r.setClearColor(0x000000, 0); WWR.r.render(WFS.sc, WFS.cam); WFS.g.clearRect(0, 0, 384, 590); WFS.g.drawImage(WWR.r.domElement, 0, 0); window.__wellFish = { cv: WFS.cv };
+}
+function wellComposite() {   /* the obstacle's live picture, with everything above the rising line still black (a soft edge), drawn into a second canvas the pop-up shows */
+  const W = window.__well; if (!W || !FV.cv) return; if (!WCV) { WCV = document.createElement('canvas'); WCV.width = WCV.height = 640; }
+  const g = WCV.getContext('2d'), t = (performance.now() - W.t0) / 1000, u = clamp((t - 1.85) / 1.3, 0, 1), e = u * u * (3 - 2 * u), pr = W.p0 + (W.p1 - W.p0) * e, cut = 640 * (1 - pr * 1.1);
+  if (!WSM) { WSM = document.createElement('canvas'); WSM.width = WSM.height = 64; }
+  { const sg = WSM.getContext('2d', { willReadFrequently: true }); sg.clearRect(0, 0, 64, 64); sg.drawImage(FV.cv, 0, 0, 64, 64); const d = sg.getImageData(0, 0, 64, 64).data; let ra = 64, rb = -1, ca = 64, cb = -1;   /* where the object really is in the live picture (and how big): the crop is centred on it and zoomed to fit the tank, whatever the obstacle */
+    for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (d[(y * 64 + x) * 4 + 3] > 110) { if (y < ra) ra = y; if (y > rb) rb = y; if (x < ca) ca = x; if (x > cb) cb = x; }
+    if (rb >= 0 && cb >= 0) { const ccx = (ca + cb + 1) * 5, ccy = (ra + rb + 1) * 5, sz = Math.max(cb - ca + 1, rb - ra + 1) * 10, k = W.cx === undefined ? 1 : .05; W.cx = W.cx === undefined ? ccx : W.cx + (ccx - W.cx) * k; W.cy = W.cy === undefined ? ccy : W.cy + (ccy - W.cy) * k; W.sz = W.sz === undefined ? sz : W.sz + (sz - W.sz) * k; } }
+  const zoom = clamp(340 / Math.max(W.sz ?? 240, 80), 1, 2.4), zc = 640 / zoom, sx = (W.cx ?? 320) - zc / 2, sy = (W.cy ?? 322) - zc / 2;   /* (no clamping: an obstacle near the border of the live picture must still land in the MIDDLE of the tank; the part of the window outside the picture is simply empty) */
+  g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, 640, 640); g.drawImage(FV.cv, sx, sy, zc, zc, 0, 0, 640, 640);
+  { const sg = WSM.getContext('2d', { willReadFrequently: true }); sg.clearRect(0, 0, 64, 64); sg.drawImage(WCV, 0, 0, 64, 64); const d = sg.getImageData(0, 0, 64, 64).data; let a = 64, b = -1;
+    for (let y = 0; y < 64; y++) { let n = 0; for (let x = 0; x < 64; x++) if (d[(y * 64 + x) * 4 + 3] > 110) n++; if (n >= 3) { if (y < a) a = y; if (y > b) b = y; } }   /* (a row counts only when a few solid pixels are in it: a stray speck must not widen the range for good) */
+    if (b >= 0) { W.top = Math.min(W.top ?? a, a); W.bot = Math.max(W.bot ?? b, b); } }   /* the rows the object really covers (union over the frames): the colour rises through THEM, so 60% looks like 60% of the object */
+  const top = (W.top ?? 13) * 10, bot = ((W.bot ?? 52) + 1) * 10, span = Math.max(80, bot - top), cutY = bot + 8 - (span + 52) * pr;
+  g.globalCompositeOperation = 'source-atop';
+  g.fillStyle = 'rgba(5,12,36,0.95)'; if (cutY > 0) g.fillRect(0, 0, 640, cutY);
+  const gr = g.createLinearGradient(0, cutY, 0, cutY + 36); gr.addColorStop(0, 'rgba(5,12,36,0.95)'); gr.addColorStop(1, 'rgba(5,12,36,0)'); g.fillStyle = gr; g.fillRect(0, cutY, 640, 36); g.globalCompositeOperation = 'source-over';
+  g.globalCompositeOperation = 'destination-in'; { const rg = g.createRadialGradient(320, 322, 200, 320, 322, 318); rg.addColorStop(0, 'rgba(0,0,0,1)'); rg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(0, 0, 640, 640); }   /* a round soft fade at the border: whatever reaches the edge of the picture (an ink cloud, the pipe, the swarm) fades out instead of being cut off square */
+  g.globalCompositeOperation = 'source-over';
+  W.pr = pr; if (W.full && pr >= 0.999 && !W.fullAt) W.fullAt = performance.now(); window.__fvWell = { on: true, cv: WCV };
+}
+const COIN_FLY = { n: 5, d0: 0.06, gap: 0.1, dur: 0.6 };   /* the coins of a reward: how many fly, when the first leaves, the gap between them, how long a flight takes (the pop-up draws the flights with the same numbers) */
+window.__coinFly = COIN_FLY;
+function addCoins(n, claimedAt) {
+  const from = save.coins, now = performance.now(); save.coins += n; persist();
+  if (n > 0 && claimedAt) {   /* a reward: the counter goes up one step as each coin lands */
+    const steps = [], part = Math.floor(n / COIN_FLY.n); let v = from;
+    for (let i = 0; i < COIN_FLY.n; i++) { v += i === COIN_FLY.n - 1 ? save.coins - v : part; steps.push({ t: claimedAt + 1000 * (COIN_FLY.d0 + i * COIN_FLY.gap + COIN_FLY.dur), v }); }
+    window.__coinAnim = { kind: 'gain', from, to: save.coins, t0: now, steps };
+  } else window.__coinAnim = { kind: n > 0 ? 'gain' : 'spend', from, to: save.coins, t0: now };
+}
+function boostLeft(k) { return (G && G.free && G.free[k]) ? 'free' : save.bst[k] > 0 ? 'n' : 'plus'; }
+function boostRefresh() {   /* what each booster button shows: the green Free tag, its count, or the plus (tap it to buy) */
+  for (const [id, k] of [['bHint', 'hint'], ['bTank', 'tank'], ['bClear', 'clear']]) { const el = $(id); if (!el) continue; el.dataset.bst = boostLeft(k); el.dataset.cnt = String(save.bst[k]); }
+}
+function giftBoost(k) { if (save.gift[k]) return; save.gift[k] = 1; save.bst[k] += 3; if (G && G.free) G.free[k] = false; persist(); boostRefresh(); }
+function boostUse(k, can, run) {   /* every booster goes through here: the free one first, then the count, then (count 0) the purchase pop-up */
+  if (!G || G.status !== 'play' || paused) return;
+  const st = boostLeft(k);
+  if (st === 'plus') { openBuy(k); return; }
+  if (!can()) return;
+  if (st === 'free') { G.free[k] = false; giftBoost(k); } else { save.bst[k]--; persist(); }
+  boostRefresh(); run();
+}
+let buyKind = null, buyBusy = false;
+function openBuy(k) { buyKind = k; window.__buy = { kind: k, price: COIN.price[k], pack: COIN.pack, t0: performance.now() }; introOn = false; paused = true; showOnly('ovBuy'); }
+function closeBuy() { buyKind = null; window.__buy = null; hideOverlays(); paused = false; }
+function watchAd(done) { done(); }   /* no advertisement is attached yet: the ad buttons only show on the screens, and pressing one gives the reward at once (the real one goes here later) */
+function buyBoost(viaAd) {
+  if (!buyKind) return; const k = buyKind;
+  if (viaAd) { watchAd(() => { save.bst[k] += 1; persist(); boostRefresh(); closeBuy(); }); return; }
+  if (save.coins < COIN.price[k]) { window.__buyShake = performance.now(); return; }
+  if (buyBusy) return; buyBusy = true; addCoins(-COIN.price[k]); save.bst[k] += COIN.pack; persist(); boostRefresh(); setTimeout(() => { buyBusy = false; closeBuy(); }, 950);   /* the coins drain out of the counter first */
+}
+function hintUseful() { if (!G) return false; const need = new Set(G.targets.filter(t => t && !t.done && t.count < perOf(t.type)).map(t => t.type)); return G.things.some(o => o.alive && o.kind === 'fish' && !o.locked && need.has(o.type)) || G.things.some(c => c.kind === 'clam' && c.state === 'closed' && c.fish && need.has(c.fish.type)); }
 function hint() {
   if (!G || G.status !== 'play' || paused || U.uTime.value < hintReady) return;
   const need = new Set(G.targets.filter(t => t && !t.done && t.count < perOf(t.type)).map(t => t.type));
@@ -4315,7 +4447,7 @@ function clearBackup(win) {   // booster: everything sitting in the backup strip
     }, k * 110);
   });
 }
-$('bClear').onclick = () => { if ($('bClear').dataset.locked === '1' || $('bClear').dataset.lockLv) return; clearBackup(); };
+$('bClear').onclick = () => { if ($('bClear').dataset.locked === '1' || $('bClear').dataset.lockLv) return; boostUse('clear', () => G.backup.length > 0, clearBackup); };
 function clearTank() {   // booster: one target tank is filled at once: the fish it still needs fly in from the booster button
   if (!G || G.status !== 'play' || paused) return; const i = tankPick(); if (i < 0) return;
   const t = G.targets[i]; pullFromBackup(i);   // fish of that kind waiting in the Backup go first
@@ -4326,9 +4458,9 @@ function clearTank() {   // booster: one target tank is filled at once: the fish
     const c = projectToClient(CENTER); for (let k = 0; k < rest; k++) giveToTarget(i, { x: c.x + rand(-40, 40), y: c.y + 40 }, (live.length + k) * 230, 54); }   // fewer in the water than needed (some wait in the tube or a clam): the rest rise out of the middle of the tank
   refreshClearBtn();
 }
-$('bTank').onclick = () => { if ($('bTank').dataset.locked === '1' || $('bTank').dataset.lockLv) return; clearTank(); };
-function refreshHintBtn() { hintReady = 0; $('bHint').style.setProperty('--p', '0%'); refreshClearBtn(); }
-$('bHint').onclick = () => { if ($('bHint').dataset.locked === '1' || $('bHint').dataset.lockLv) return; hint(); };
+$('bTank').onclick = () => { if ($('bTank').dataset.locked === '1' || $('bTank').dataset.lockLv) return; boostUse('tank', () => tankPick() >= 0, clearTank); };
+function refreshHintBtn() { hintReady = 0; $('bHint').style.setProperty('--p', '0%'); refreshClearBtn(); boostRefresh(); }
+$('bHint').onclick = () => { if ($('bHint').dataset.locked === '1' || $('bHint').dataset.lockLv) return; boostUse('hint', () => U.uTime.value >= hintReady && hintUseful(), hint); };
 function updateHint() {
   const rem = Math.max(0, hintReady - U.uTime.value); $('bHint').style.setProperty('--p', HINT_CD ? (rem / HINT_CD * 100).toFixed(1) + '%' : '0%');
   if (!G) return; const need = new Set(G.targets.filter(t => t && !t.done && t.count < perOf(t.type)).map(t => t.type));
@@ -4722,7 +4854,7 @@ window.__qa = {   /* automatic checks (see docs/qa.md): each returns a report wi
     const wait = ms => new Promise(r => setTimeout(r, ms)), rep = { name: 'fishClip', samples: 0, inSolid: 0, fails: [] }, t0 = performance.now(); while (performance.now() - t0 < sec * 1000) { await wait(250); const r = window.__ff.clipTest(); rep.samples += r.n; rep.inSolid += r.solid; } if (rep.inSolid) rep.fails.push(rep.inSolid + ' fish samples inside solid decor'); rep.pass = !rep.fails.length; return rep;
   }
 };
-window.__ff = { G, newLevel, orbit, uiReady, guide, lvTitle: () => CHEER.lv && { gy: +CHEER.lv.g.position.y.toFixed(1), meshY: +CHEER.lv.mesh.position.y.toFixed(1), h: +CHEER.lv.mesh.geometry.parameters.height.toFixed(1), tier: window.__lvTier | 0, screenY: +(ov.H / 2 - CHEER.lv.g.position.y).toFixed(1) }, why: () => ({ paused, introOn, tutI, camIntro: !!camIntro, lvShown: window.__lvShown, lid: (window.__lid || []).map(v => +v.toFixed(2)), hud: performance.now() - (window.__hudInT0 || 0), status: G.status, tgtAlive: !!(guide.tgt && guide.tgt.alive), locked: !!(guide.tgt && guide.tgt.locked) }), clam: { loadClam, buildClam, CLAM }, ovScene: () => { const out = []; ov.scene.traverse(m => { if (m.isMesh && m.visible) { let go = 0, q = m.parent; const chain = []; while (q && q !== ov.scene) { chain.push(q.renderOrder); q = q.parent; } out.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' chain=[' + chain.join(',') + '] tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' z=' + +m.getWorldPosition(new THREE.Vector3()).z.toFixed(0) + ' ' + (m.material && m.material.type)); } }); return out; }, ovInfo: () => [...ov.sprites].map(sp => { const r = []; sp.holder.traverse(m => { if (m.isMesh) r.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' op=' + (m.material && +m.material.opacity.toFixed(2))); }); return { id: sp.id, zTop: sp.zTop, z: sp.holder.position.z, px: Math.round(sp.holder.position.x + ov.W / 2), py: Math.round(ov.H / 2 - sp.holder.position.y), meshes: r }; }), U, buildJelly, loadJelly, tapThing: id => { const o = G.things.find(x => x.id === id && x.alive); if (o) pickThing(o); return !!o; }, evInfo: () => { const e = EVT.cur; if (!e) return null; return { kind: e.kind, t: +e.t.toFixed(1), d: +e.d.toFixed(1), n: e.m.length, pinned: e.m.filter(o => o.evPin).length, fish: G.things.filter(o => o.kind === 'fish' && o.alive && !o.big).length, p: e.m.slice(0, 4).map(o => [+o.pos.x.toFixed(1), +o.pos.y.toFixed(1), +o.pos.z.toFixed(1), !!o.evPin]) }; }, devEvents: ['conga', 'waltz', 'swirl', 'squabble', 'drop', 'feed', 'startle', 'swarm', 'octo ink', 'octo floor', 'octo swim', 'pump'], devEvent: (n) => {   /* developer tool (Settings): start one event now, to test it */
+window.__ff = { get G() { return G; }, newLevel, orbit, coin: { COIN, wellOpen, wellClaim, wellProgress, addCoins, boostRefresh, giftBoost, boostUse, openBuy, closeBuy, watchAd, boostLeft }, uiReady, guide, lvTitle: () => CHEER.lv && { gy: +CHEER.lv.g.position.y.toFixed(1), meshY: +CHEER.lv.mesh.position.y.toFixed(1), h: +CHEER.lv.mesh.geometry.parameters.height.toFixed(1), tier: window.__lvTier | 0, screenY: +(ov.H / 2 - CHEER.lv.g.position.y).toFixed(1) }, why: () => ({ paused, introOn, tutI, camIntro: !!camIntro, lvShown: window.__lvShown, lid: (window.__lid || []).map(v => +v.toFixed(2)), hud: performance.now() - (window.__hudInT0 || 0), status: G.status, tgtAlive: !!(guide.tgt && guide.tgt.alive), locked: !!(guide.tgt && guide.tgt.locked) }), clam: { loadClam, buildClam, CLAM }, ovScene: () => { const out = []; ov.scene.traverse(m => { if (m.isMesh && m.visible) { let go = 0, q = m.parent; const chain = []; while (q && q !== ov.scene) { chain.push(q.renderOrder); q = q.parent; } out.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' chain=[' + chain.join(',') + '] tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' z=' + +m.getWorldPosition(new THREE.Vector3()).z.toFixed(0) + ' ' + (m.material && m.material.type)); } }); return out; }, ovInfo: () => [...ov.sprites].map(sp => { const r = []; sp.holder.traverse(m => { if (m.isMesh) r.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' op=' + (m.material && +m.material.opacity.toFixed(2))); }); return { id: sp.id, zTop: sp.zTop, z: sp.holder.position.z, px: Math.round(sp.holder.position.x + ov.W / 2), py: Math.round(ov.H / 2 - sp.holder.position.y), meshes: r }; }), U, buildJelly, loadJelly, tapThing: id => { const o = G.things.find(x => x.id === id && x.alive); if (o) pickThing(o); return !!o; }, evInfo: () => { const e = EVT.cur; if (!e) return null; return { kind: e.kind, t: +e.t.toFixed(1), d: +e.d.toFixed(1), n: e.m.length, pinned: e.m.filter(o => o.evPin).length, fish: G.things.filter(o => o.kind === 'fish' && o.alive && !o.big).length, p: e.m.slice(0, 4).map(o => [+o.pos.x.toFixed(1), +o.pos.y.toFixed(1), +o.pos.z.toFixed(1), !!o.evPin]) }; }, devEvents: ['conga', 'waltz', 'swirl', 'squabble', 'drop', 'feed', 'startle', 'swarm', 'octo ink', 'octo floor', 'octo swim', 'pump'], devEvent: (n) => {   /* developer tool (Settings): start one event now, to test it */
   if (!G || G.status !== 'play') return; hideOverlays(); paused = false;
   if (EVT.cur) { for (const o of EVT.cur.m) { o.evOn = false; o.evTight = false; o.evPin = null; } EVT.cur = null; }
   if (n === 'conga' || n === 'waltz' || n === 'swirl' || n === 'squabble' || n === 'drop') evStart(n);
