@@ -1,0 +1,1 @@
+import{_ as t,o as a,c as d,a2 as s}from"./chunks/framework.D0xy3_1I.js";const f=JSON.parse('{"title":"QA checks (self-QA)","description":"","frontmatter":{},"headers":[],"relativePath":"qa.md","filePath":"qa.md"}'),o={name:"qa.md"};function i(r,e,c,n,l,h){return a(),d("div",null,[...e[0]||(e[0]=[s("",4)])])}const m=t(o,[["render",i]]);export{f as __pageData,m as default};
