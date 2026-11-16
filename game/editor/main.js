@@ -164,7 +164,7 @@ function renderCenter() {
 function renderRight() {
   const el = $('cR'), lv = level(); if (!S.store || !lv) { el.innerHTML = ''; return; }
   const t = lv.tube || {}, waves = t.waves || [];
-  el.innerHTML = `<div class="sec"><h3 class="t">Obstacles</h3><div class="grid">${num('Urchin', 'urchin', lv, { min: 0, max: 20 })}${num('Jelly', 'jelly', lv, { min: 0, max: 20 })}${num('Squid', 'squid', lv, { min: 0, max: 5 })}${num('Clam', 'clam', lv, { min: 0, max: 5 })}${tog('Swarm', 'swarm', lv)}</div></div>
+  el.innerHTML = `<div class="sec"><h3 class="t">Obstacles</h3><div class="grid">${num('Jelly', 'jelly', lv, { min: 0, max: 20 })}${num('Squid', 'squid', lv, { min: 0, max: 5 })}${num('Clam', 'clam', lv, { min: 0, max: 5 })}${tog('Swarm', 'swarm', lv)}</div></div>
    <div class="sec"><h3 class="t">Pump tube</h3><div class="grid">${tog('Tube on', 'tube.enabled', lv)}${num('Extra fish (empty = auto)', 'tube.extraFish', lv, { t: 'optnum', min: 0, max: 200, ph: 'auto' })}${tog('Auto-pump when stuck', 'tube.autoPumpWhenStuck', lv)}${num('Stuck delay (s)', 'tube.stuckDelaySec', lv, { min: 0.5, max: 20, step: 0.5 })}</div>
     <h3 style="margin-top:8px">Waves ${waves.length ? '' : '(empty = random, like the built-in levels)'}</h3>
     ${waves.map((w, i) => `<div class="grid" style="margin-bottom:4px">${num('Wave ' + (i + 1) + ' after tanks', `tube.waves.${i}.afterTanks`, lv, { min: 1, max: 30 })}<div class="f"><small>Hold last fish</small><input type="checkbox" data-k="tube.waves.${i}.holdLast" data-t="bool" ${w.holdLast !== false ? 'checked' : ''}> <a href="#" data-rmw="${i}" class="mu">remove</a></div></div>`).join('')}
@@ -246,7 +246,7 @@ async function addBuiltins(quiet) {   // the levels of the game (levels.json): t
 function autoFill() {
   edit(lv => {
     const ref = REF_BY_DIFF[lv.difficulty] || 8, C = defaultsFor(ref), goal = Math.max(1, lv.goal | 0);
-    Object.assign(lv, { refLevel: ref, species: goal * 2, decoyFish: Math.max(6, Math.round(4 + goal * goal * 0.75)), look: C.look, sizeK: C.sizeK, speedK: C.speedK, urchin: C.urchin, jelly: C.jelly, squid: C.squid, clam: C.clams, swarm: !!C.swarm,
+    Object.assign(lv, { refLevel: ref, species: goal * 2, decoyFish: Math.max(6, Math.round(4 + goal * goal * 0.75)), look: C.look, sizeK: C.sizeK, speedK: C.speedK, jelly: C.jelly, squid: C.squid, clam: C.clams, swarm: !!C.swarm,
       backup: C.backup, hint: C.hint, tank: C.tank, clear: C.clear, feed: !!C.feed, startle: !!C.startle, eventGap: C.evGap, feedGap: C.feedGap, swarmGap: C.swarmGap, startleGap: C.startleGap });
     lv.tube = { enabled: !!C.tube, autoPumpWhenStuck: true, stuckDelaySec: 2.5 };
   }, true);

@@ -35,6 +35,7 @@ function erodeWall(m) {   // the safe zone: how far from the middle a point can 
   for (let i = 0; i <= NTAB + 1; i++) { const th = i / NTAB * Math.PI * 2, cx = Math.cos(th), sz = Math.sin(th); let t = 0; while (t < 5 && dist(cx * (t + .04), sz * (t + .04)) >= m) t += .04; WALL_TAB[i] = t / RF; }
 }
 function shK(x, z, y) { if (BOWL) return bowlP(y === undefined ? WATER_Y - 1 : y); if (!PLAN) return 1; let a = Math.atan2(z, x); if (a < 0) a += Math.PI * 2; const f = a / (Math.PI * 2) * NTAB, i = f | 0; return WALL_TAB[i] + (WALL_TAB[i + 1] - WALL_TAB[i]) * (f - i); }
+window.__wallAt = (x, z, y) => wallAt(x, z, y);
 function clampXZ(v, lim) { const L = lim * shK(v.x, v.z, v.y), rr = Math.hypot(v.x, v.z); if (rr > L) { v.x *= L / rr; v.z *= L / rr; } }
 function wallAt(x, z, y) { return PLAN ? wallR(Math.atan2(z, x)) : BOWL ? R * bowlP(y) : R; }
 function ringK(y) { return PLAN ? WALL_MIN : BOWL ? bowlP(y) : 1; }
@@ -56,6 +57,7 @@ const GEO = {
   plinth: () => PLAN ? slabGeo(.47, .26) : new THREE.CylinderGeometry(R * RB + .42, R * RB + .52, .26, 72),
   plTop: () => PLAN ? slabGeo(.36, .1) : new THREE.CylinderGeometry(R * RB + .3, R * RB + .42, .1, 72),
   glow: () => PLAN ? loopGeo(.5, .04) : new THREE.TorusGeometry(R * RB + .5, .04, 8, 96).rotateX(Math.PI / 2),
+  veil: () => GEO.glass(),
   glass: () => PLAN ? wallGeo(TANK_H - FLOOR_Y) : BOWL ? bowlGlassGeo() : new THREE.CylinderGeometry(R, R, TANK_H - FLOOR_Y, 72, 1, true)
 };
 const SHELL = {};
@@ -66,9 +68,9 @@ function setShape(id) {   // switch the tank to another shape: the tables, the g
   SHAPE = id; BOWL = id === 'bowl'; PLAN = !(id === 'cyl' || BOWL); RB = BOWL ? bowlP(FLOOR_Y) : 1;
   if (PLAN) { rawWall(id); erodeWall(R - RF + (id === 'heart' ? .3 : id === 'flower' ? .15 : 0)); let mx = 0, mi = 9; for (let i = 0; i < NTAB; i++) { mx = Math.max(mx, WALL_RAW[i]); mi = Math.min(mi, WALL_TAB[i]); } WALL_MAX = mx; WALL_MIN = mi; for (let i = 0; i < 180; i++) WR[i] = WALL_RAW[i * 4]; } else { WALL_MAX = R; WALL_MIN = 1; }
   if (SHELL.done) {
-    const sw = (m, g) => { if (m) { m.geometry.dispose(); m.geometry = g; } }; for (const k of ['floor', 'stand', 'rimTop', 'rimBot', 'plinth', 'plTop', 'glow', 'glass']) sw(SHELL[k], GEO[k]());
+    const sw = (m, g) => { if (m) { m.geometry.dispose(); m.geometry = g; } }; for (const k of ['floor', 'stand', 'rimTop', 'rimBot', 'plinth', 'plTop', 'glow', 'glass', 'veil']) sw(SHELL[k], GEO[k]());
     SHELL.surfU.uMode.value = PLAN ? 2 : BOWL ? 1 : 0; SHELL.surfU.uSurfR.value = R * (BOWL ? bowlP(WATER_Y) : 1);
-    LENS.on = id === 'cyl' && (QP('lens') ? QP('lens') === '1' : !COARSE);
+    LENS.on = id === 'cyl' && QP('lens') === '1';   /* the glass bend is off by default (it bent the sand and the decor away from the rim); ?lens=1 turns it on to look at it */
     replaceDecor(); resize();
   }
   return true;
@@ -76,7 +78,7 @@ function setShape(id) {   // switch the tank to another shape: the tables, the g
 function decorOverflow(fix) {   /* how far each decor piece sticks out through the glass (box corners against the wall at their height); with fix the piece is walked toward the middle until it fits */
   const bx = new THREE.Box3(), c = new THREE.Vector3(), s0 = tank.scale.clone(), p0 = tank.position.clone(); tank.scale.set(1, 1, 1); tank.position.set(0, 0, 0); tank.updateMatrixWorld(true);
   const out = [];
-  for (let gi = 0; gi < themeG.length; gi++) for (const m of themeG[gi].children) { const pl = m.userData.pl; if (!pl) continue;
+  for (let gi = 0; gi < themeG.length; gi++) for (const m of themeG[gi].children) { const pl = m.userData.pl; if (!pl || (!fix && !m.visible)) continue;   /* (a piece that is left out does not count) */
     if (fix) m.scale.copy(m.userData.s0 || (m.userData.s0 = m.scale.clone()));
     let r = pl[0] * shK(Math.cos(pl[1]), Math.sin(pl[1]), pl[2]), worst = -9, first = null;
     for (let it = 0; it < 16; it++) {
@@ -90,7 +92,7 @@ function decorOverflow(fix) {   /* how far each decor piece sticks out through t
   }
   tank.scale.copy(s0); tank.position.copy(p0); tank.updateMatrixWorld(true); return out;
 }
-window.__decor = decorOverflow;
+window.__decor = (fix) => { const r = decorOverflow(fix); return r; };
 function separateDecor() {   /* solid decor pieces never overlap each other: biggest first, each later piece slides round the tank / in or out until its footprint is free (and still inside the glass); when no place is free it is left out */
   const bx = new THREE.Box3(), c = new THREE.Vector3(), def = THREE.Material.prototype.onBeforeCompile, s0 = tank.scale.clone(), p0 = tank.position.clone(); tank.scale.set(1, 1, 1); tank.position.set(0, 0, 0); tank.updateMatrixWorld(true);
   const solid = m => { let ok = false; m.traverse(n => { if (n.isMesh && n.material && n.material.onBeforeCompile === def && n.geometry.type !== 'PlaneGeometry' && n.geometry.type !== 'CircleGeometry') ok = true; }); return ok; };
@@ -117,11 +119,33 @@ function separateDecor() {   /* solid decor pieces never overlap each other: big
   tank.scale.copy(s0); tank.position.copy(p0); tank.updateMatrixWorld(true); return stats;
 }
 window.__sep = separateDecor;
+function clearPotZone() {   /* soft pieces (kelp, anemones, ...) are not kept apart from the solid ones by the layout: any soft piece that stands in a solid piece (the castle, the pillars, the pot, a rock) is moved out to its nearest free side, or left out when there is no room; the kelp leans, so it keeps a margin */
+  const bx = new THREE.Box3(), c = new THREE.Vector3(), s0 = tank.scale.clone(), p0 = tank.position.clone(); tank.scale.set(1, 1, 1); tank.position.set(0, 0, 0); tank.updateMatrixWorld(true);
+  const def = THREE.Material.prototype.onBeforeCompile, solid = m => { if (m.userData.pl2) return true; let ok = false; m.traverse(n => { if (n.isMesh && n.material && n.material.onBeforeCompile === def && n.geometry.type !== 'PlaneGeometry' && n.geometry.type !== 'CircleGeometry') ok = true; }); return ok; };
+  const inGlass = (x, z, y) => { const th = Math.atan2(z, x), wl = PLAN ? wallR(th) : BOWL ? R * bowlP(y) : R; return Math.hypot(x, z) < wl - .3; };
+  for (const g of themeG) {
+    g.updateMatrixWorld(true); const items = g.children.filter(m => m.userData.pl && m.visible), sol = items.filter(solid).map(m => { m.updateMatrixWorld(true); bx.setFromObject(m); return { m, b: bx.clone() }; }), MG = .3;
+    const free = (x, z) => inGlass(x, z, FLOOR_Y) && !sol.some(({ b }) => x > b.min.x - MG && x < b.max.x + MG && z > b.min.z - MG && z < b.max.z + MG && b.min.y < FLOOR_Y + 1.2);
+    for (const m of items) { if (solid(m) || free(m.position.x, m.position.z)) continue;
+      const x0 = m.position.x, z0 = m.position.z; let done = false;
+      for (let r = .12; r <= 1.8 && !done; r += .12) for (let k = 0; k < 24 && !done; k++) { const a = k / 24 * Math.PI * 2, x = x0 + Math.cos(a) * r, z = z0 + Math.sin(a) * r; if (free(x, z)) { m.position.x = x; m.position.z = z; done = true; } }   /* the nearest free spot on rings round the old one */
+      if (!done) m.visible = false; }
+  }
+  tank.scale.copy(s0); tank.position.copy(p0); tank.updateMatrixWorld(true);
+}
+window.__clearSoft = () => clearPotZone();   /* (a test hook) */
+function hideOverflowDecor() {   /* last step of the layout: a decor piece that still sticks out through the glass (at any height of its body, for the bowl and the other shapes too) is left out */
+  const bx = new THREE.Box3(), c = new THREE.Vector3(), s0 = tank.scale.clone(), p0 = tank.position.clone(); tank.scale.set(1, 1, 1); tank.position.set(0, 0, 0); tank.updateMatrixWorld(true);
+  for (const g of themeG) for (const m of g.children) { if (!m.userData.pl || !m.visible) continue; m.updateMatrixWorld(true); bx.setFromObject(m); let worst = -9;
+    for (let i = 0; i < 8; i++) { c.set(i & 1 ? bx.max.x : bx.min.x, i & 2 ? bx.max.y : bx.min.y, i & 4 ? bx.max.z : bx.min.z); const th = Math.atan2(c.z, c.x), wl = PLAN ? wallR(th) : BOWL ? R * bowlP(c.y) : R; worst = Math.max(worst, Math.hypot(c.x, c.z) - (wl - .05)); }
+    if (worst > 0) m.visible = false; }
+  tank.scale.copy(s0); tank.position.copy(p0); tank.updateMatrixWorld(true);
+}
 function replaceDecor() {   // every decor piece keeps its polar place (radius, angle) and is set down again inside the new shape
   const Y = new THREE.Vector3(0, 1, 0);
   for (const g of themeG) { g.userData.cols = null; for (const m of g.children) { const pl = m.userData.pl; if (pl) { const r = pl[0] * shK(Math.cos(pl[1]), Math.sin(pl[1]), pl[2]); m.position.x = Math.cos(pl[1]) * r; m.position.z = Math.sin(pl[1]) * r; } }
     }
-  decorOverflow(true); separateDecor();
+  decorOverflow(true); separateDecor(); clearPotZone(); hideOverflowDecor();
   for (const g of themeG) for (const h of g.userData.houses || []) if (h.src) h.c.copy(h.src.lc).multiplyScalar(h.src.g.scale.x).applyAxisAngle(Y, h.src.g.rotation.y).add(h.src.g.position);
 }
 const BACKUP_MAX = 7, LEAP = .3, NT = 2;   // NT = how many target tanks are shown at once
@@ -176,7 +200,7 @@ const Snd = (() => {
     loadSamples();
   }
   /* recorded sounds (public/sfx/*.m4a): decoded once, played through the same master gain; the old synthesised sounds remain for events that have no recording */
-  const VOICE = {}, SFX = {}, SAMPLES = ['bgm_ap', 'sfx_backup_break', 'sfx_bad', 'sfx_bubble_hit_gauge', 'sfx_clam_snap', 'sfx_clam_tap_open', 'sfx_combo_word_1', 'sfx_combo_word_2', 'sfx_combo_word_3', 'sfx_combo_word_4', 'sfx_curtain_close', 'sfx_curtain_open', 'sfx_gauge_fill', 'sfx_pearl_bounce', 'sfx_pipe_close', 'sfx_pipe_open', 'sfx_splash', 'sfx_tap_water', 'sfx_win_swirl', 'sfx_win_bubble_pop', 'sfx_fish_spawn', 'sfx_fish_tap', 'sfx_fish_to_backup', 'sfx_fish_to_tank_or_vice_versa', 'sfx_hint', 'sfx_level_start', 'sfx_lose', 'sfx_play_on', 'sfx_popup_close', 'sfx_popup_open', 'sfx_squid', 'sfx_tank_complete', 'sfx_win', 'ui_button_click'];
+  const VOICE = {}, SFX = {}, SAMPLES = ['bgm_ap', 'sfx_backup_break', 'sfx_bad', 'sfx_bubble_hit_gauge', 'sfx_clam_snap', 'sfx_clam_tap_open', 'sfx_combo_word_1', 'sfx_combo_word_2', 'sfx_combo_word_3', 'sfx_combo_word_4', 'sfx_curtain_close', 'sfx_curtain_open', 'sfx_gauge_fill', 'sfx_pearl_bounce', 'sfx_pipe_close', 'sfx_pipe_open', 'sfx_splash', 'sfx_tap_water', 'sfx_win_swirl', 'sfx_win_bubble_pop', 'sfx_fish_spawn', 'sfx_fish_tap', 'sfx_fish_to_backup', 'sfx_fish_to_tank_or_vice_versa', 'sfx_hint', 'sfx_level_start', 'sfx_lose', 'sfx_play_on', 'sfx_popup_close', 'sfx_popup_open', 'sfx_squid', 'sfx_tank_complete', 'sfx_win', 'ui_button_click', 'sfx_coin_spend_earn', 'sfx_booster_earn', 'sfx_booster_fly', 'sfx_coin_fly'];
   let sampling = false, bgm = null, bgmWant = false, bgmDuck = 1;
   function loadSamples() {
     if (sampling) return; sampling = true;
@@ -193,6 +217,7 @@ const Snd = (() => {
     const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = SFX.bgm_ap; src.loop = true; g.gain.value = .0001; src.connect(g); g.connect(musicG || master); src.start();
     g.gain.setTargetAtTime(.4 * bgmDuck, ctx.currentTime, .4); bgm = { src, g };
   }
+  function stopSfx(n, fade = .25) { const pv = VOICE[n]; if (!ctx || !pv) return; VOICE[n] = null; try { pv.g.gain.cancelScheduledValues(ctx.currentTime); pv.g.gain.setTargetAtTime(0, ctx.currentTime, fade / 3); pv.src.stop(ctx.currentTime + fade + .05); } catch (e) { } }   /* cuts a recording short with a short fade (the win swirl when the player taps to fast-forward) */
   function bgmKill(fade) { if (!bgm) return; const b = bgm; bgm = null; if (fade > 0 && ctx) { b.g.gain.cancelScheduledValues(ctx.currentTime); b.g.gain.setTargetAtTime(.0001, ctx.currentTime, fade / 3); setTimeout(() => { try { b.src.stop(); } catch (e) { } }, fade * 1000 + 100); } else { try { b.src.stop(); } catch (e) { } } }
   function bgmDuckTo(k) { bgmDuck = k; if (bgm && ctx) { bgm.g.gain.cancelScheduledValues(ctx.currentTime); bgm.g.gain.setTargetAtTime(.4 * k, ctx.currentTime, k < 1 ? 1.1 : 1.4); } }   // slowly down to 50%, gradually back up
   function bgmStop(fade = 1.8) { bgmWant = false; bgmKill(fade); }
@@ -214,7 +239,7 @@ const Snd = (() => {
     const nz = ctx.createBufferSource(); nz.buffer = noiseBuf; nz.loop = true; const nf = ctx.createBiquadFilter(); nf.type = 'lowpass'; nf.frequency.value = 260; const ng = ctx.createGain(); ng.gain.value = .05; nz.connect(nf); nf.connect(ng); ng.connect(master); nz.start();
     (function blip() { if (!save.muted) tone(rand(500, 1300), .09, { vol: .03, to: rand(900, 2000) }); setTimeout(blip, rand(900, 3600)); })();
   }
-  const SFX_MAP = { ui: ['ui_button_click', { vol: .8 }], miss: ['sfx_tap_water'], tapwater: ['sfx_tap_water'], bad: ['sfx_bad'], splash: ['sfx_splash'], pipeopen: ['sfx_pipe_open'], pipeclose: ['sfx_pipe_close'], clamtap: ['sfx_clam_tap_open'], clamsnap: ['sfx_clam_snap'], pearl: ['sfx_pearl_bounce'], gaugehit: ['sfx_bubble_hit_gauge'], gaugefill: ['sfx_gauge_fill'], swirl: ['sfx_win_swirl'], winpop: ['sfx_win_bubble_pop', { vol: .75 }], curtainclose: ['sfx_curtain_close'], curtainopen: ['sfx_curtain_open'], win: ['sfx_win'], lose: ['sfx_lose'], hint: ['sfx_hint'], tankdone: ['sfx_tank_complete'], levelstart: ['sfx_level_start'], squid: ['sfx_squid'], ftap: ['sfx_fish_tap'], tobackup: ['sfx_bad'], totank: ['sfx_fish_to_tank_or_vice_versa'], spawn: ['sfx_fish_spawn', { vol: .7 }], bbreak: ['sfx_backup_break'], playon: ['sfx_play_on'], popopen: ['sfx_popup_open'], popclose: ['sfx_popup_close'] };
+  const SFX_MAP = { ui: ['ui_button_click', { vol: .8 }], miss: ['sfx_tap_water'], tapwater: ['sfx_tap_water'], bad: ['sfx_bad'], splash: ['sfx_splash'], pipeopen: ['sfx_pipe_open'], pipeclose: ['sfx_pipe_close'], clamtap: ['sfx_clam_tap_open'], clamsnap: ['sfx_clam_snap'], pearl: ['sfx_pearl_bounce'], gaugehit: ['sfx_bubble_hit_gauge'], gaugefill: ['sfx_gauge_fill'], swirl: ['sfx_win_swirl', { mono: true }], winpop: ['sfx_win_bubble_pop', { vol: .75 }], curtainclose: ['sfx_curtain_close'], curtainopen: ['sfx_curtain_open'], win: ['sfx_win'], lose: ['sfx_lose'], hint: ['sfx_hint'], tankdone: ['sfx_tank_complete'], levelstart: ['sfx_level_start'], squid: ['sfx_squid'], ftap: ['sfx_fish_tap'], tobackup: ['sfx_bad'], totank: ['sfx_fish_to_tank_or_vice_versa'], spawn: ['sfx_fish_spawn', { vol: .7 }], bbreak: ['sfx_backup_break'], playon: ['sfx_play_on'], popopen: ['sfx_popup_open'], popclose: ['sfx_popup_close'], coinspend: ['sfx_coin_spend_earn'], bearn: ['sfx_booster_earn'], bfly: ['sfx_booster_fly'], cfly: ['sfx_coin_fly'] };
   const NO_SOUND = new Set(['scatter', 'land', 'good', 'complete', 'junk', 'plip', 'start']);
   const arp = (notes, step, o = {}) => notes.forEach((f, i) => tone(f, .22, { type: 'triangle', vol: .16, at: i * step, ...o }));
   function play(n, o) {
@@ -222,7 +247,7 @@ const Snd = (() => {
     if (!ctx || save.muted) return;
     if (n === 'combo') { sfx('sfx_combo_word_' + o.n, { vol: 3.6 }); return; }   /* the recordings are quiet (peak 0.07 against 0.36 for a fish tap): lifted to match */
        /* a chain of correct fish steps up through four recordings, then starts again */
-    if (n === 'splash') { const nw = performance.now(); if (nw - (play.sp || 0) < 160) return; play.sp = nw; }   /* a crowd of fish leaving or entering the water at once is one splash, not ten stacked on top of each other */
+    if (n === 'splash') { const nw = performance.now(); const gw = typeof G !== 'undefined' && G && G.win; if (nw - (play.sp || 0) < (gw && gw.ff && !gw.textOn ? 420 : 160)) return; play.sp = nw; }   /* a crowd of fish leaving or entering the water at once is one splash, not ten stacked on top of each other */
     if (NO_SOUND.has(n)) return;   /* no recording for these: the old synthesised bleeps are gone */
     if (SFX_MAP[n] && sfx(SFX_MAP[n][0], { ...SFX_MAP[n][1], ...o })) return;   // the recorded sound if it is loaded, otherwise the synthesised one below
     switch (n) {
@@ -244,7 +269,7 @@ const Snd = (() => {
   }
   function setMuted(m) { save.muted = m; persist(); if (master) master.gain.value = m ? 0 : .66; }
   function setMusic(on) { save.noMusic = !on; persist(); if (musicG) musicG.gain.value = on ? 1 : 0; }
-  return { init, play, setMuted, setMusic, sfx, bgmStart, bgmStop, bgmDuckTo };
+  return { init, play, setMuted, setMusic, sfx, stopSfx, bgmStart, bgmStop, bgmDuckTo };
 })();
 ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, () => Snd.init(), { passive: true }));
 
@@ -625,8 +650,8 @@ async function loadOneFish(n) {
     if (up) g.rotateY(Math.PI);   // the sea horse's snout is on the -x side in the file (measured on the thumbnail: it swam backwards), so it is turned round once
     const k = up ? L / size.y : L / size.x, ky = up ? 1 : n === 'whale' || n === 'shark' ? 1 : .94, kz = up || n === 'whale' || n === 'shark' ? 1 : .82; g.scale(k, k * ky, k * kz);   // slimmer: the models are a little plump, so the body is narrowed by 18% and lowered by 6%
     const img = tex.image, vt = {};
-    MODEL3D['fish_' + n] = { static: true, upright: up, lid, geo: g, tex, img, vt, len: L, hx: L / 2, hy: size.y * k * ky / 2, hz: size.z * k * kz / 2,
-      hueTex(hue) { if (!hue) return this.tex; if (!vt[hue]) { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').drawImage(img, 0, 0); hueRotate(c, hue); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.flipY = tex.flipY; t.anisotropy = 4; vt[hue] = t; } return vt[hue]; } };
+    MODEL3D['fish_' + n] = { static: true, upright: up, lid, eyes0: lid && lid.eyes ? lid.eyes.map(e => ({ u: e.u, v: e.v, R: e.R })) : null, geo: g, tex, img, vt, len: L, hx: L / 2, hy: size.y * k * ky / 2, hz: size.z * k * kz / 2,
+      hueTex(hue) { if (!hue) return this.tex; if (!vt[hue]) { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').drawImage(img, 0, 0); hueRotate(c, hue); if (this.eyes0) { const g3 = c.getContext('2d'); for (const e of this.eyes0) { const ex = e.u * c.width, ey = e.v * c.height, er = Math.max(3, e.R * c.width * 0.5); g3.save(); g3.beginPath(); g3.arc(ex, ey, er, 0, 6.2832); g3.clip(); g3.clearRect(ex - er - 1, ey - er - 1, er * 2 + 2, er * 2 + 2); g3.drawImage(img, 0, 0); g3.restore(); } }   /* the eyes keep their own colours: only the body is turned */ const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.flipY = tex.flipY; t.anisotropy = 4; vt[hue] = t; } return vt[hue]; } };
     const sp = { id: 'm_fish_' + n, model3d: 'fish_' + n, len: L }; SPECIES.push(sp); MODEL_IDX['fish_' + n] = SPECIES.length - 1; try { await (LID_Q = LID_Q.then(() => refineLid(n, MODEL3D['fish_' + n], sp))); } catch (e) { console.warn('lid', n, e); LID_Q = Promise.resolve(); } makeModelThumb(sp); return SPECIES.length - 1;
   } catch (e) { console.warn('fish ' + n + ' not loaded', e); return undefined; }
 }
@@ -715,7 +740,13 @@ function makeModelThumb(sp, yaw = -.25, store = true) {   // a small side-view p
   const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xdff4ff, 0x335577, 1.6)); const dl = new THREE.DirectionalLight(0xffffff, 2.4); dl.position.set(2, 3, 4); sc.add(dl);
   const b = buildAnyModel(sp); sc.add(b.group); b.seek(0); b.update(0); b.openEyes(); b.group.rotation.y = yaw;
   const cam = new THREE.PerspectiveCamera(28, 200 / 160, .05, 20); cam.position.set(0, 0, M.len * 2.1); cam.lookAt(0, 0, 0); r.render(sc, cam);
-  const url = r.domElement.toDataURL('image/png'); if (store) THUMB[sp.id] = url; return url;
+  const url = fitThumb(r.domElement); if (store) THUMB[sp.id] = url; return url;
+}
+function fitThumb(src) {   /* every fish picture is cut to its real outline and set in the same box (the same share of the height or width), so a tall or fat fish is not drawn bigger than a slim one */
+  const W = src.width, H = src.height, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(src, 0, 0);
+  const d = g.getImageData(0, 0, W, H).data; let x0 = W, y0 = H, x1 = -1, y1 = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return src.toDataURL('image/png'); const bw = x1 - x0 + 1, bh = y1 - y0 + 1, k = Math.min(W * .86 / bw, H * .7 / bh), o = document.createElement('canvas'); o.width = W; o.height = H; const q = o.getContext('2d'); q.imageSmoothingQuality = 'high';
+  q.drawImage(c, x0, y0, bw, bh, (W - bw * k) / 2, (H - bh * k) / 2, bw * k, bh * k); return o.toDataURL('image/png');
 }
 function buildFish(sp) {
   if (sp.model3d) return buildAnyModel(sp);
@@ -742,22 +773,6 @@ function buildFish(sp) {
   return { group: g, body, tail, glows, hx: art.hx, hy: art.hy, hz: art.hz, blink: lids ? (k => { for (const l of lids) l.scale.y = Math.max(.001, k); }) : null };
 }
 
-function buildUrchin() {
-  const g = new THREE.Group();
-  const core = new THREE.Mesh(new THREE.SphereGeometry(.26, 16, 12), new THREE.MeshPhongMaterial({ color: 0x2a1850, shininess: 60, emissive: 0x150a30 }));
-  g.add(core);
-  const spikeGeo = new THREE.ConeGeometry(.028, .4, 6); spikeGeo.translate(0, .26 + .2, 0);
-  const sm = new THREE.MeshPhongMaterial({ color: 0x7a46c8, shininess: 50, emissive: 0x2a1060 });
-  const tipM = new THREE.MeshBasicMaterial({ color: 0xff6ab0 });
-  const n = 46;
-  for (let i = 0; i < n; i++) {
-    const y = 1 - (i / (n - 1)) * 2, r = Math.sqrt(1 - y * y), th = i * 2.399963;
-    const d = new THREE.Vector3(Math.cos(th) * r, y, Math.sin(th) * r);
-    const s = new THREE.Mesh(spikeGeo, sm); s.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d); g.add(s);
-    const tip = new THREE.Mesh(new THREE.SphereGeometry(.022, 6, 5), tipM); tip.position.copy(d).multiplyScalar(.26 + .4); g.add(tip);
-  }
-  return { group: g, kind: 'urchin' };
-}
 
 /* ============================== the jellyfish: one static FBX (bell, skirt, tentacles), moved by a vertex shader: the bell squeezes with each pulse, the tentacles trail and sway ============================== */
 const JEL = { p: null, tpl: null, tex: null, ready: false, failed: false }, JEL_S = .0031;
@@ -1038,7 +1053,7 @@ function makeThumbs() {
   const hand = buildHand(); hand.rotation.set(0, 0, 0); hand.userData.body.rotation.z = .75;
   { const pm = new THREE.MeshPhongMaterial({ color: 0xffb347, emissive: 0x803000 }); for (let i = 0; i < 9; i++) { const p = new THREE.Mesh(new THREE.SphereGeometry(.05, 10, 8), pm); p.position.set(-.55 - (i % 3) * .1, -.1 - (i % 4) * .12, rand(-.08, .08)); hand.add(p); } }
   const clam = buildClam().group; clam.children.filter(c => c.isSprite).forEach(c => clam.remove(c)); clam.children.find(c => c.isGroup).rotation.x = -.65;
-  const items = [{ id: 'urchin', obj: buildUrchin().group, rot: [.3, .5] }, ...(JEL.ready ? [{ id: 'jelly', obj: buildJelly().group, rot: [.1, .4] }] : []), ...(OCT.ready ? [(() => { const sq = buildSquid(); octoPose(sq, 1, 0, 0, 0); return { id: 'squid', obj: sq.group, rot: [.1, .3] }; })()] : []), { id: 'clam', obj: clam, rot: [.9, .5] }, { id: 'hand', obj: hand, rot: [0, .35] }];
+  const items = [...(JEL.ready ? [{ id: 'jelly', obj: buildJelly().group, rot: [.1, .4] }] : []), ...(OCT.ready ? [(() => { const sq = buildSquid(); octoPose(sq, 1, 0, 0, 0); return { id: 'squid', obj: sq.group, rot: [.1, .3] }; })()] : []), { id: 'clam', obj: clam, rot: [.9, .5] }, { id: 'hand', obj: hand, rot: [0, .35] }];
   for (const it of items) {
     it.obj.rotation.set(it.rot[0] * .5, it.rot[1], it.rot[0] * .3, 'YXZ');  // fish: flat side view
     sc.add(it.obj);
@@ -1158,8 +1173,16 @@ const THEME_N = 5, themeG = [], themeEmit = [];
     const mid = new THREE.Mesh(new THREE.CylinderGeometry(.18, .2, .45, 10), stone); mid.position.set(0, .83, 0); g.add(mid); const rf2 = new THREE.Mesh(new THREE.ConeGeometry(.24, .36, 10), roof); rf2.position.set(0, 1.28, 0); g.add(rf2);
     const dm = new THREE.MeshBasicMaterial({ color: 0x0b2c5c }); const door = new THREE.Mesh(new THREE.CircleGeometry(.2, 16, 0, Math.PI), dm); door.position.set(0, .2, .355); g.add(door); const door2 = new THREE.Mesh(new THREE.PlaneGeometry(.4, .2), dm); door2.position.set(0, .1, .355); g.add(door2);
     const a = .35; place(g, 1.75, a); faceCenter(g, a); g.scale.setScalar(1.05); reg(g, V(0, .35, .25), V(0, 0, 1), true); }
-  { const pts = [[0, 0], [.16, .02], [.27, .16], [.24, .36], [.13, .52], [.15, .6], [.1, .62]].map(p => new THREE.Vector2(p[0], p[1]));
-    const am = new THREE.Mesh(new THREE.LatheGeometry(pts, 14), mat(0xff9a5c, .25, { side: THREE.DoubleSide })); am.rotation.z = Math.PI / 2 - .2; am.rotation.y = 1; place(am, 1.2, 4.9, FLOOR_Y + .26); }
+  { const pot = new THREE.Group(); place(pot, 0.95, 3.5, FLOOR_Y); pot.rotation.y = 1; pot.rotation.z = .1; pot.userData.pl2 = true;   /* the clay pot of the artist (public/models/clay_pot): it fills this spot once the model has loaded */
+    (async () => { try { const base = document.baseURI, [obj, tex] = await Promise.all([new FBXLoader().loadAsync(new URL('models/clay_pot/model.fbx', base).href), new THREE.TextureLoader().loadAsync(new URL('models/clay_pot/tex.png', base).href)]);
+      tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4; const mt = new THREE.MeshLambertMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: .5, fog: false, side: THREE.DoubleSide });   /* both sides: the mouth of the pot is open, and its inside has to be drawn */   /* lit by its own texture too, so the water does not wash the terracotta out to grey */ obj.traverse(m => { if (m.isMesh) { m.material = mt; smoothNormals(m.geometry); } });
+      const bb = new THREE.Box3().setFromObject(obj), sz = bb.getSize(new THREE.Vector3()), k = 1.05 / Math.max(sz.y, 1e-3);   /* (about as big as the body of a fish) */ obj.scale.setScalar(k); const b2 = new THREE.Box3().setFromObject(obj); obj.position.set(-(b2.min.x + b2.max.x) / 2, -b2.min.y, -(b2.min.z + b2.max.z) / 2); pot.add(obj);
+      { const top = b2.max.y - b2.min.y, rim = []; pot.updateMatrixWorld(true); obj.traverse(m => { if (!m.isMesh) return; const P = m.geometry.attributes.position, v = new THREE.Vector3(); for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld); pot.worldToLocal(v); if (v.y > top * .94) rim.push(v.clone()); } });
+        if (rim.length > 6) { const cx = rim.reduce((a, v) => a + v.x, 0) / rim.length, cz = rim.reduce((a, v) => a + v.z, 0) / rim.length, rr = rim.reduce((a, v) => a + Math.hypot(v.x - cx, v.z - cz), 0) / rim.length;
+          const disc = new THREE.Mesh(new THREE.CircleGeometry(rr * .93, 24), new THREE.MeshBasicMaterial({ color: 0x3a1a0c, fog: false, side: THREE.DoubleSide })); disc.rotation.x = -Math.PI / 2; disc.position.set(cx, top * .9, cz); pot.add(disc); } }   /* the inside of the pot: a dark disc under the mouth, so the sand cannot be seen through the opening */
+      replaceDecor();   /* the pot only has its size now: lay all the decor out again, so it stands clear of the glass and of the other pieces */
+      clearPotZone();
+    } catch (e) { console.warn('clay pot not loaded', e); } })(); }
   { const bc = new THREE.Mesh(new THREE.IcosahedronGeometry(.42, 2), mat(0xff7aa8, .3)); bc.scale.set(1.1, .7, 1); place(bc, 1.9, 5.5, FLOOR_Y + .1);
     }
 
@@ -1216,7 +1239,7 @@ const THEME_N = 5, themeG = [], themeEmit = [];
 
 /* --- glass wall, water surface, light rays --- */
 const sloshV = new THREE.Vector2(0, 0), sloshS = new THREE.Vector2(0, 0);
-const ripples = [new THREE.Vector4(0, 0, -99, 0), new THREE.Vector4(0, 0, -99, 0), new THREE.Vector4(0, 0, -99, 0), new THREE.Vector4(0, 0, -99, 0)];
+const ripples = Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, -99, 0));   /* 8 at a time (ten fish landing together used up the old 4 at once) */
 let ripIdx = 0;
 const VORT = { v: new THREE.Vector4(0, 0, 0, 0) };   // x = strength of the whirl while the fish wind up through the tank, y = its turn
 const surfU = { uTime: U.uTime, uWater: U.uWater, uRip: { value: ripples }, uSlosh: { value: sloshS }, uVort: { value: VORT.v }, uWr: { value: WR }, uSurfR: { value: R }, uMode: { value: 0 } }; SHELL.surfU = surfU;
@@ -1237,24 +1260,31 @@ const surfU = { uTime: U.uTime, uWater: U.uWater, uRip: { value: ripples }, uSlo
         gl_FragColor=vec4(col,clamp(a,0.,.9));
       }`
   });
+  /* the veil: the far half of the glass is lined with a soft water-coloured wall, so the hall behind the tank (white columns, dark bands) does not show through the water as grey shapes round the fish */
+  const veil = new THREE.Mesh(GEO.veil(), new THREE.ShaderMaterial({ uniforms: U, transparent: true, depthWrite: false, side: THREE.BackSide, fog: false,
+    vertexShader: 'varying float vY; void main(){ vY = position.y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: `uniform vec3 uWater; varying float vY; void main(){ float k = clamp((vY + ${((TANK_H - FLOOR_Y) / 2).toFixed(2)}) / ${(TANK_H - FLOOR_Y).toFixed(2)}, 0., 1.); vec3 top = mix(uWater, vec3(.55, .85, 1.), .35), bot = uWater * .72; gl_FragColor = vec4(mix(bot, top, k), .62); }` }));
+  veil.scale.set(.985, 1, .985); veil.position.y = (TANK_H + FLOOR_Y) / 2; veil.renderOrder = -5; tank.add(veil); SHELL.veil = veil;   /* (in the same layer as the fish, drawn before them: the glass layer is drawn after the lens, and a veil there would lie over the lens-bent fish and show a ghost of them) */
   const glass = new THREE.Mesh(GEO.glass(), glassMat); SHELL.glass = glass;
   glass.position.y = (TANK_H + FLOOR_Y) / 2; glass.renderOrder = 10; tank.add(glass); glass.layers.set(SHELL_LAYER);
 
   const surfMat = new THREE.ShaderMaterial({
     uniforms: surfU, transparent: true, depthWrite: false, side: THREE.DoubleSide,
-    vertexShader: `uniform float uTime; uniform vec4 uRip[4]; uniform vec2 uSlosh; uniform vec4 uVort; varying vec3 vW; varying vec2 vL; varying vec3 vNm;
+    vertexShader: `uniform float uTime; uniform vec4 uRip[8]; uniform vec2 uSlosh; uniform vec4 uVort; varying vec3 vW; varying vec2 vL; varying vec3 vNm;
       ${WALL_GLSL}
       float vort(vec2 q){ float r=length(q); float a=atan(q.y,q.x); return uVort.x*(-.3*exp(-r*r*.9)+.085*sin(a*3.-r*5.+uVort.y)*smoothstep(0.,.7,r)*exp(-r*.45)); }   // a soft funnel in the middle with three spiral arms that turn with the fish
-      float rip(vec2 q){ float h=0.; for(int i=0;i<4;i++){ float age=uTime-uRip[i].z; if(age>0. && age<3.2){ float d=length(q-uRip[i].xy); float front=age*2.6; float m=smoothstep(front+.15,front-.35,d); h+=uRip[i].w*sin(d*10.-age*9.)*exp(-age*1.5)*exp(-d*.35)*m; } } return h; }
+      float rip(vec2 q){ float h=0.; for(int i=0;i<8;i++){ float age=uTime-uRip[i].z; if(age>0. && age<4.5){ float d=length(q-uRip[i].xy); float w=uRip[i].w; float front=age*2.2; float m=smoothstep(front+.2,front-.5,d); h+=w*sin(d*7.-age*7.5)*exp(-age*.95)*exp(-d*.22)*m; h-=w*1.1*exp(-d*d*2.8)*exp(-age*3.2)*smoothstep(0.,.04,age); } } return h; }   // a ring that runs out and slowly dies, and a crater at the impact that fills in (it springs back)
       void main(){
         vec3 p=position; vL=p.xz; vec2 q=p.xz; float e=.05;
         float wr0 = uMode>1.5 ? wallRad(q) : (uMode>.5 ? uSurfR : ${R.toFixed(3)}); float tilt = min(1., ${R.toFixed(3)} / max(wr0, .5));   // the water tilts less where the wall is far from the middle (the corners of a square tank, the points of a heart): its height at the wall is the same as in a round tank, so it never rises above the glass
         float c1=cos(q.x*2.5+uTime*1.6), c2=cos(q.y*3.1-uTime*1.3), c3=cos((q.x+q.y)*5.+uTime*2.4);
         float h=.035*sin(q.x*2.5+uTime*1.6)+.03*sin(q.y*3.1-uTime*1.3)+.018*sin((q.x+q.y)*5.+uTime*2.4)+(uSlosh.x*q.x+uSlosh.y*q.y)*tilt;
         vec2 gr=vec2(.0875*c1+.09*c3+uSlosh.x*tilt, .093*c2+.09*c3+uSlosh.y*tilt);   // analytic slope of the base waves (no extra samples)
-        bool act=false; for(int i=0;i<4;i++){ float age=uTime-uRip[i].z; if(age>0. && age<3.2) act=true; }
-        if(uVort.x>.001){ h+=vort(q); gr+=vec2(vort(q+vec2(e,0.))-vort(q-vec2(e,0.)), vort(q+vec2(0.,e))-vort(q-vec2(0.,e)))/(2.*e); }
-        if(act){ h+=rip(q); gr+=vec2(rip(q+vec2(e,0.))-rip(q-vec2(e,0.)), rip(q+vec2(0.,e))-rip(q-vec2(0.,e)))/(2.*e); }
+        bool act=false; for(int i=0;i<8;i++){ float age=uTime-uRip[i].z; if(age>0. && age<4.5) act=true; }
+        float edgeK=1.-smoothstep(.5,.97,length(q)/max(wr0,.5));   /* the whirl, ripples and slosh die away towards the wall, so the water never rises above the glass rim there */
+        h=.035*sin(q.x*2.5+uTime*1.6)*mix(1.,edgeK,.5)+.03*sin(q.y*3.1-uTime*1.3)*mix(1.,edgeK,.5)+.018*sin((q.x+q.y)*5.+uTime*2.4)*mix(1.,edgeK,.5)+(uSlosh.x*q.x+uSlosh.y*q.y)*tilt*edgeK;
+        if(uVort.x>.001){ h+=vort(q)*edgeK; gr+=vec2(vort(q+vec2(e,0.))-vort(q-vec2(e,0.)), vort(q+vec2(0.,e))-vort(q-vec2(0.,e)))/(2.*e); }
+        if(act){ h+=rip(q)*edgeK; gr+=vec2(rip(q+vec2(e,0.))-rip(q-vec2(e,0.)), rip(q+vec2(0.,e))-rip(q-vec2(0.,e)))/(2.*e); }
         vec3 n=vec3(-gr.x*3.2,1.,-gr.y*3.2); vNm=normalize(mat3(modelMatrix)*n);
         p.y+=h; vec4 w=modelMatrix*vec4(p,1.); vW=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }`,
     fragmentShader: `uniform float uTime; uniform vec3 uWater; varying vec3 vW; varying vec2 vL; varying vec3 vNm;
@@ -1402,18 +1432,15 @@ function surfaceSplash(x, z, s = 1, quiet = false) {
   const P = new THREE.Vector3(x, WATER_Y, z);
   for (let k = 0; k < 30; k++) { const a = rand(0, 6.283), sp = rand(.3, 1.8) * (k < 10 ? 1.6 : 1); dropFx.emit(P, _v3.set(Math.cos(a) * sp, rand(2.6, 5.4) * s, Math.sin(a) * sp)); }
   burstFx.emit(P.clone().setY(WATER_Y - .2), 0xffffff, 8, 1.2);
-  const ring = new THREE.Mesh(new THREE.RingGeometry(.18, .2, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xcff6ff, transparent: true, opacity: .9, ...ADD, depthWrite: false, side: THREE.DoubleSide, fog: false }));
-  ring.position.set(x, WATER_Y + .03, z); ring.userData = { t: 0, s, ring: true, maxS: Math.max(1.4, (wallAt(x, z, WATER_Y) * .96 - Math.hypot(x, z)) / .2) }; ring.renderOrder = 13; scene.add(ring); shocks.push(ring);
-  addRipple(x, z, .16 * s); kick(1.6); if (!quiet) Snd.play('splash');
+  addRipple(x, z, .22 * s); sloshV.x += x * .05 * s; sloshV.y += z * .05 * s; kick(1.6);   /* the surface dips and rings, and the whole water rocks a little (the flat additive ring that used to be drawn here is gone) */ if (!quiet) Snd.play('splash');
 }
 function exitSpray(x, z, vel) {   // a fish bursting out of the water: a crown of drops all round, a jet thrown the way it goes, and a thump on the surface
   const P = new THREE.Vector3(x, WATER_Y, z), vl = Math.min(7, vel.length());
   for (let k = 0; k < 34; k++) { const a = rand(0, 6.283), sp = rand(.7, 2.3); dropFx.emit(P, _v3.set(Math.cos(a) * sp, rand(2.2, 4.8), Math.sin(a) * sp)); }
   for (let k = 0; k < 26; k++) dropFx.emit(P, _v3.set(vel.x * rand(.15, .5) + rand(-.7, .7), Math.max(2.6, vel.y * rand(.3, .7)) + rand(0, 2), vel.z * rand(.15, .5) + rand(-.7, .7)));
-  const ring = new THREE.Mesh(new THREE.RingGeometry(.18, .2, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xcff6ff, transparent: true, opacity: .8, ...ADD, depthWrite: false, side: THREE.DoubleSide, fog: false }));
-  ring.position.set(x, WATER_Y + .03, z); ring.userData = { t: 0, s: 1.15, ring: true, maxS: Math.max(1.4, (wallAt(x, z, WATER_Y) * .96 - Math.hypot(x, z)) / .2) }; ring.renderOrder = 13; scene.add(ring); shocks.push(ring); addRipple(x, z, .1 + .02 * vl);
+  addRipple(x, z, .16 + .03 * vl); sloshV.x += x * .03; sloshV.y += z * .03;
 }
-function addRipple(x, z, amp = .09) { const r = ripples[ripIdx++ % 4]; r.set(x, z, U.uTime.value, amp); }
+function addRipple(x, z, amp = .09) { const r = ripples[ripIdx++ % 8]; r.set(x, z, U.uTime.value, amp); }
 
 
 /* ============================== aquarium hall (3D surroundings) ============================== */
@@ -1653,9 +1680,10 @@ canvas.addEventListener('pointermove', e => {
   const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
   if (ptrs.size === 2 && pinch0) { camAct = performance.now(); camDrag = true; const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y), my = (a.y + b.y) / 2; orbit.dist = clamp(pinch0.dist * pinch0.d / d, orbit.fit * .5, orbit.fit * 1.15); if (camTut.step === 'tilt') { camTut.panAcc = (camTut.panAcc || 0) + Math.abs(my - (pinch0.my ?? my)); if (camTut.panAcc > 70) camTut.pressed = 1; }   // tutorial: two fingers dragged up / down
     orbit.target.y += (my - (pinch0.my ?? my)) * .011 * orbit.dist / orbit.fit; pinch0.my = my; applyCam(); return; }
-  if (downInfo) { downInfo.moved += Math.abs(dx) + Math.abs(dy); if (downInfo.moved > 10) setHover(null); }
+  if (downInfo) { downInfo.moved += Math.abs(dx) + Math.abs(dy); if (downInfo.moved > 18) setHover(null); }
   if (e.shiftKey || (e.buttons & 2)) { camAct = performance.now(); camDrag = true; if (camTut.step === 'tilt') { camTut.panAcc = (camTut.panAcc || 0) + Math.abs(dy); if (camTut.panAcc > 70) camTut.pressed = 1; } orbit.target.y += dy * .011 * orbit.dist / orbit.fit; applyCam(); return; }   // desktop: shift-drag or right-drag moves the camera up / down
-  if (!downInfo || downInfo.moved > 10) { camAct = performance.now(); camDrag = true; }   // a real drag, not the wobble of a tap
+  if (downInfo && !downInfo.drag) { if (downInfo.moved <= 18) return; downInfo.drag = 1; }   /* a dead zone: the finger must travel 18 px before the tank turns at all, so a light tap no longer nudges the view (the first 18 px are not replayed, so there is no jump) */
+  camAct = performance.now(); camDrag = true;
   const dAz = -dx * .0075; orbit.az += dAz; if (camTut.step === 'rot') camTut.acc += Math.abs(dAz);
   const dEl = Math.abs(dy) > Math.abs(dx) * .35 ? dy * .0045 : 0;   // mostly-horizontal drags stay purely horizontal
   orbit.el = clamp(orbit.el + dEl, EL_MIN, EL_MAX);
@@ -1663,7 +1691,7 @@ canvas.addEventListener('pointermove', e => {
 });
 const endPtr = e => {
   const had = ptrs.delete(e.pointerId); if (!ptrs.size) { camDrag = false; camAct = 0; }
-  if (had && downInfo && ptrs.size === 0 && downInfo.moved < 10 && performance.now() - downInfo.t < 450) onTap(e.clientX, e.clientY);
+  if (had && downInfo && ptrs.size === 0 && downInfo.moved <= 18 && performance.now() - downInfo.t < 450) onTap(e.clientX, e.clientY);
   if (ptrs.size < 2) pinch0 = null; downInfo = null; if (e.pointerType !== 'mouse') setHover(null);
   if (performance.now() - lastMove > 90) { orbit.azV = 0; orbit.elV = 0; }
 };
@@ -1964,7 +1992,6 @@ function newLevel(L) {
     const w = waves[i], n = w.specs.length, k = n > 10 ? Math.round(n / 8.5) : 1; if (k > 1) { const all = w.specs.splice(0), per = Math.ceil(all.length / k); w.specs = all.slice(0, per); for (let j = 1; j < k; j++) waves.splice(i + j, 0, { t: w.t, specs: all.slice(j * per, (j + 1) * per) }); i += k - 1; }
   }
   for (; extra > 0; extra--) spawn.push(nextDecoy());
-  for (let i = 0; i < cfg.urchin; i++) spawn.push({ kind: 'urchin' });
   for (let i = 0; i < cfg.jelly; i++) spawn.push({ kind: 'jelly' });
   for (let i = 0; i < cfg.squid; i++) spawn.push({ kind: 'squid' });
 
@@ -1975,7 +2002,7 @@ function newLevel(L) {
   for (const s of shuffle(spawn)) {
     let pos = null;
     for (let tr = 0; tr < 40; tr++) {
-      const a = rand(0, 6.28), r = Math.sqrt(Math.random()) * RF * shK(Math.cos(a), Math.sin(a)); const y = s.kind === 'urchin' ? rand(FLOOR_Y + .5, 2.0) : s.kind === 'squid' ? rand(FLOOR_Y + 1.2, WATER_Y - .8) : rand(FLOOR_Y + .6, WATER_Y - .55);
+      const a = rand(0, 6.28), r = Math.sqrt(Math.random()) * RF * shK(Math.cos(a), Math.sin(a)); const y = s.kind === 'squid' ? rand(FLOOR_Y + 1.2, WATER_Y - .8) : rand(FLOOR_Y + .6, WATER_Y - .55);
       const p = new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r);
       if (placed.every(q => q.distanceTo(p) > .5)) { pos = p; break; }
       pos = p;
@@ -2017,12 +2044,11 @@ function newLevel(L) {
 function spawnThing(s, pos, idx) {
   let built, o;
   if (s.kind === 'fish') { built = buildFish(SPECIES[s.type]); o = { kind: 'fish', type: s.type, id: SPECIES[s.type].id }; }
-  else if (s.kind === 'urchin') { built = buildUrchin(); o = { kind: 'obstacle', id: 'urchin' }; }
   else if (s.kind === 'squid') { built = buildSquid(); o = { kind: 'obstacle', id: 'squid' }; }
   else if (s.kind === 'clam') { built = buildClam(); o = { kind: 'clam', id: 'clam', state: 'open', cool: 0, shake: 0 }; }
   else { built = buildJelly(); o = { kind: 'obstacle', id: 'jelly', hue: built.hue }; }
   if (s.kind === 'fish') o.group = built.group; else { o.group = new THREE.Group(); built.group.scale.setScalar(s.kind === 'clam' ? 1 : .78); o.group.add(built.group); }
-  o.parts = built; o.rad = s.kind === 'fish' ? built.hx * .95 + .07 : (s.kind === 'urchin' ? .4 : s.kind === 'clam' ? .42 : s.kind === 'squid' ? .5 : .34); o.pos = pos.clone(); o.dir = new THREE.Vector3(rand(-1, 1), 0, rand(-1, 1)).normalize();
+  o.parts = built; o.rad = s.kind === 'fish' ? built.hx * .95 + .07 : (s.kind === 'clam' ? .42 : s.kind === 'squid' ? .5 : .34); o.pos = pos.clone(); o.dir = new THREE.Vector3(rand(-1, 1), 0, rand(-1, 1)).normalize();
   o.speed = s.kind === 'fish' ? rand(.62, .95) : s.kind === 'clam' ? 0 : s.kind === 'squid' ? rand(.14, .24) : rand(.05, .14); o.wp = pos.clone(); o.wpT = 0; o.phase = rand(0, 6.28); o.wag = rand(6, 9); o.turn = rand(1, 2.2);
   if (s.kind === 'fish') { o.sz = built.big ? 1 : G.cfg.sizeK; o.rf = Math.min(RF, R - .3 - built.hx * o.sz * .8); o.ym = Math.max(.42, (built.hy || 0) + .26); o.big = !!built.big; if (o.big) { o.speed *= .7; o.turn *= .6; } } else { o.rf = RF; o.ym = .42; }
   if (s.kind === 'fish' && G && G.cfg) o.speed *= G.cfg.speedK;
@@ -2092,7 +2118,7 @@ function randomPoint0(o) {
     const q = Math.random(); if (q < .2) best.y = rand(FLOOR_Y + .5, FLOOR_Y + 1.4); else if (q < .4) best.y = rand(WATER_Y - 1.2, WATER_Y - .5); return best;
   }
   const a = rand(0, 6.28), r = Math.sqrt(Math.random()) * (o.rf || RF) * shK(Math.cos(a), Math.sin(a));
-  const lo = o.id === 'urchin' ? FLOOR_Y + .5 : FLOOR_Y + .6, hi = o.id === 'urchin' ? 2.1 : WATER_Y - .55;
+  const lo = FLOOR_Y + .6, hi = WATER_Y - .55;
   let y = rand(lo, hi); if (o.kind === 'fish') { const q = Math.random(); if (q < .2) y = rand(FLOOR_Y + .5, FLOOR_Y + 1.4); else if (q < .4) y = rand(WATER_Y - 1.2, WATER_Y - .5); }   // some legs dive to the sand, some skim the surface
   if (o.big) y = clamp(y, FLOOR_Y + o.ym + .1, WATER_Y - o.ym - .1);
   return new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r);
@@ -2164,7 +2190,7 @@ function updateThing(o, dt, t) {
   if (o.dive) {   // dropping into the tank through its open top (see diveState)
     const D = o.dive; D.t += dt; D.cruise = (o.speed || 1) * 1.25; const st = diveState(D, D.t), sz = o.sz || 1; diveMove(D, st.hOff, RF - .3);
     o.pos.set(D.px, st.y, D.pz); o.group.position.copy(o.pos);
-    const pitch = o.kind === 'fish' ? clamp(st.thv * .62, -.8, .5) : 0;   /* only fish dive nose-first; a jellyfish or an urchin goes down upright */   // nose-down while it is fast, levelling off as the water slows it
+    const pitch = o.kind === 'fish' ? clamp(st.thv * .62, -.8, .5) : 0;   /* only fish dive nose-first; a jellyfish goes down upright */   // nose-down while it is fast, levelling off as the water slows it
     Y.set(0, D.yaw, pitch, 'YZX'); qT.setFromEuler(Y); if (D.first) { D.first = false; o.group.quaternion.copy(qT); } else o.group.quaternion.slerp(qT, 1 - Math.exp(-dt * 14));
     if (o.kind === 'fish') { o.parts.tail.rotation.y = Math.sin(t * 38) * .8 * (st.water ? Math.exp(-st.tw * .8) * .6 + .4 : 1); o.parts.body.rotation.y = Math.sin(t * 38 + 1) * .15; }
     o.group.scale.setScalar(sz);
@@ -2868,13 +2894,13 @@ function giveToTarget(i, from, delay, size = 56, sprite = null, combo = 0) {
 function completeTarget(i) {
   if (G.status !== 'play') return;
   if (G.completed + 1 >= G.cfg.goal) winStopEvents();
-  G.completed++; updateGoal(true); const gc = gid;   /* the lid shuts first (it starts closing as the last fish lands), then the tank whirls, shrinks into a bubble and flies up into the progress gauge */
+  G.completed++; const gc = gid;   /* (the gauge is not touched yet: it fills and bounces when the bubble of this tank reaches it) */   /* the lid shuts first (it starts closing as the last fish lands), then the tank whirls, shrinks into a bubble and flies up into the progress gauge */
   setTimeout(() => { if (gc !== gid || !G) return; Snd.play('tankdone'); boxEls[i].root.classList.add('done'); tankFx.startClear(i); kick(2.5); }, 900);
   if (G.completed >= G.cfg.goal) { G.status = 'won'; winPrep(); clearBackup(true); const gw = gid; setTimeout(() => { if (gw === gid && G && !G.celebrated) { G.celebrated = true; celebrate(); } }, 3500); return; }   // (the celebration starts when the last bubble reaches the gauge)
   const gi = gid, old = G.targets[i]; setTimeout(() => { if (gi !== gid) return; old.res.forEach(ovRemove); old.res = []; if (G.status === 'play' && G.targets[i] === old) assignTarget(i, false); }, 1700);   /* 900 ms of lid and CLEARED! before the swirl, then the same 800 ms as before */
 }
 function updateGoal(bump) {
-  $('goalNow').textContent = G.completed; $('goalFill').style.width = (G.completed / G.cfg.goal * 100) + '%';
+  const shown = G.goalShown || 0; $('goalNow').textContent = shown; $('goalFill').style.width = (shown / G.cfg.goal * 100) + '%';   /* what the gauge shows is what has really arrived (the bubbles that have flown into it) */
   if (bump) { const g = $('goal'); g.classList.remove('bump'); void g.offsetWidth; g.classList.add('bump'); }
 }
 function renderBackup() {
@@ -2897,7 +2923,7 @@ function appClip(el) { const a = document.getElementById('app'); if (!a || !el) 
 function ovResize() { appClip(ov.wrap); appClip(document.getElementById('spotOv')); ov.W = window.innerWidth; ov.H = window.innerHeight; ov.renderer.setPixelRatio(prFor()); ov.renderer.setSize(ov.W, ov.H, false); Object.assign(ov.cam, { left: -ov.W / 2, right: ov.W / 2, top: ov.H / 2, bottom: -ov.H / 2 }); ov.cam.updateProjectionMatrix(); }
 window.addEventListener('resize', ovResize); ovResize();
 function makeSprite(kind, id, type, hue) {
-  const built = kind === 'fish' ? buildFish(SPECIES[type]) : id === 'urchin' ? buildUrchin() : id === 'squid' ? buildSquid() : buildJelly(hue);
+  const built = kind === 'fish' ? buildFish(SPECIES[type]) : id === 'squid' ? buildSquid() : buildJelly(hue);
   const holder = new THREE.Group(), model = built.group; holder.rotation.order = 'ZYX'; holder.add(model);
   const box = built.bounds ? built.bounds.clone() : new THREE.Box3().setFromObject(model), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3()); model.position.sub(ctr);
   holder.visible = false; ov.scene.add(holder);
@@ -3071,9 +3097,9 @@ const tankFx = (() => {
   function waterMat(mask) {   // the water of a target tank, all in code: a glass box (back wall, side walls, sand floor, surface) seen in perspective, with light shafts, caustics, a rippling surface that sloshes (kicked by every fish that lands)
     return new THREE.ShaderMaterial({ uniforms: { uMask: { value: mask }, uGw: { value: 0 }, uOff: { value: new THREE.Vector2() }, uRx: { value: .5 }, uRt: { value: 99 }, uDr: { value: 0 }, uT: { value: 0 }, uA: { value: 1 }, uTw: { value: 0 }, uSl: { value: 0 }, uAsp: { value: 1 }, uM: { value: mask }, uBase: { value: TANKP.base }, uRim: { value: TANKP.rim } }, transparent: true, depthWrite: false,
       vertexShader: TWIST_VS,
-      fragmentShader: `uniform sampler2D uMask, uBase, uRim; uniform float uT, uA, uTw, uSl, uRx, uRt, uDr, uAsp; varying vec2 vU;
+      fragmentShader: `uniform sampler2D uMask, uBase, uRim; uniform float uT, uA, uTw, uSl, uRx, uRt, uDr, uAsp, uGw; varying vec2 vU;
         float caus(vec2 p, float t){ float a = sin(p.x * 7. + sin(p.y * 5. + t) * 1.5), b = sin(p.y * 7. + sin(p.x * 4. - t * .8) * 1.5); return pow(1. - abs(a * b), 7.); }
-        void main(){ vec2 pc = (vU - .5) * vec2(uAsp, 1.), hf = vec2(uAsp * .5, .5), dq = abs(pc) - hf + .03; float sdf = length(max(dq, vec2(0.))) + min(max(dq.x, dq.y), 0.) - .03, m = smoothstep(.004, -.004, sdf); if (m < .01 || vU.y > .915) discard;   // a plain rectangle with small corners: a real glass tank (the lid is a separate mesh above it)
+        void main(){ vec2 pc = (vU - .5) * vec2(uAsp, 1.), hf = vec2(uAsp * .5, .5), dq = abs(pc) - hf + .03; float sdf = length(max(dq, vec2(0.))) + min(max(dq.x, dq.y), 0.) - .03, m = smoothstep(.004, -.004, sdf); if (uGw > .001) m *= texture2D(uMask, vU).a; if (m < .01 || vU.y > .915) discard;   /* while the tank is being wrung the water is also cut by the silhouette of the glass (the same shape twists with it), so it can never stick out of the tank */   // a plain rectangle with small corners: a real glass tank (the lid is a separate mesh above it)
           vec2 c = (vU - vec2(.5, .45)) * vec2(uAsp, 1.); float r = length(c), tw = uTw * smoothstep(.5, .0, r), cs = cos(tw), sn = sin(tw); vec2 q = vec2(cs * c.x - sn * c.y, sn * c.x + cs * c.y) / vec2(uAsp, 1.) + vec2(.5, .45);   // the swirl turns in a round space (the tank is wide), the deeper the faster
           float surf = ${JAR_FILL.toFixed(3)} - uDr * .5 + sin(q.x * 9. + uT * 2.2) * .018 + sin(q.x * 4.5 - uT * 1.4) * .022 + sin(q.x * 15. + uT * 3.3 + 1.) * .008 + uSl * (sin(q.x * 7. - uT * 7.) * .03 + (q.x - .5) * sin(uT * 5.5) * .12) + sin((q.x - uRx) * 70. - uRt * 24.) * .014 * exp(-uRt * 2.6) * exp(-abs(q.x - uRx) * 5.);   // uRx/uRt: the ring left by the last droplet that fell back
           vec2 b = vec2((q.x - .012) / .976, (q.y - .13) / .75); float W = max(uAsp, .5); vec3 col; float alpha = m * uA; float vy = vU.y, vx = vU.x; bool frame = true;
@@ -3115,18 +3141,27 @@ const tankFx = (() => {
   function drawCageFrame(q, FW, FH, arr, barW) {   /* the frame of the Backup on a canvas: the opening is left empty; used by the game, by the Out of space pop-up and by the pieces of the broken tank */
     const pw = .014 * FW, capH = (1 - .905) * FH, baseH = .16 * FH, I = CAGE.img; q.imageSmoothingQuality = 'high';
     for (let k = 1; k < 7; k++) { const x = arr[k] * FW; q.drawImage(I.b, x - barW / 2, capH - 2, barW, FH - capH - baseH + 4); }
-    /* only the straight part of each piece is used (no rounded ends, no transparent margin), so the rails, the posts and the corners meet edge to edge */
-    q.drawImage(I.h, 29, 7, 1067, 147, pw, 0, FW - 2 * pw, capH); q.drawImage(I.h, 29, 7, 1067, 147, pw, FH - baseH, FW - 2 * pw, baseH); q.drawImage(I.v, 8, 30, 147, 748, 0, capH, pw, FH - capH - baseH); q.drawImage(I.v, 8, 30, 147, 748, FW - pw, capH, pw, FH - capH - baseH);
-    const corner = (sx, sy, w, h, tx, ty) => { q.save(); q.translate(tx, ty); q.scale(sx, sy); q.drawImage(I.c, 8, 7, 147, 147, 0, 0, w, h); q.restore(); };
-    corner(1, 1, pw, capH, 0, 0); corner(-1, 1, pw, capH, FW, 0); corner(1, -1, pw, baseH, 0, FH); corner(-1, -1, pw, baseH, FW, FH);
+    /* a picture frame: the four sides are whole pieces (only their straight part is used) and each is cut at 45 degrees where it meets the next, so the joints are one clean mitre with no corner piece and no seam */
+    const poly = pts => { q.beginPath(); pts.forEach(([x, y], i) => i ? q.lineTo(x, y) : q.moveTo(x, y)); q.closePath(); };
+    const hi = capH * .5, lo = FH - baseH;
+    q.save(); poly([[0, 0], [pw, capH], [pw, lo], [0, FH]]); q.clip(); q.drawImage(I.v, 8, 30, 147, 748, 0, 0, pw, FH); q.restore();   /* left post */
+    q.save(); poly([[FW, 0], [FW - pw, capH], [FW - pw, lo], [FW, FH]]); q.clip(); q.drawImage(I.v, 8, 30, 147, 748, FW - pw, 0, pw, FH); q.restore();   /* right post */
+    q.save(); poly([[0, 0], [FW, 0], [FW - pw, capH], [pw, capH]]); q.clip(); q.drawImage(I.h, 29, 7, 1067, 147, 0, 0, FW, capH); q.restore();   /* top rail */
+    q.save(); poly([[pw, lo], [FW - pw, lo], [FW, FH], [0, FH]]); q.clip(); q.drawImage(I.h, 29, 7, 1067, 147, 0, lo, FW, baseH); q.restore();   /* bottom rail */
+    void hi;
   }
-  function cageCanvas(W, H, layer) {   /* a picture of the Backup cell: 'back' = the murky water with its floor, 'front' = frame and bars, 'all' = both */
-    if (CAGE.ready < 4) return null; const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const q = cv.getContext('2d'), pw = .014 * W, capH = (1 - .905) * H, baseH = .16 * H, ix = pw, iy = capH, iw = W - 2 * pw, ih = H - capH - baseH;
+  function cageCanvas(W, H, layer, t, into) {   /* a picture of the Backup cell: 'back' = the murky water with its floor, 'front' = frame and bars, 'all' = both. With a time t the water moves (the Out of space pop-up draws it again every frame, into the canvas it is given): a rippling surface, drifting light and bubbles */
+    if (CAGE.ready < 4) return null; const cv = into || document.createElement('canvas'); if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; } const q = cv.getContext('2d'); q.clearRect(0, 0, W, H); const pw = .014 * W, capH = (1 - .905) * H, baseH = .16 * H, ix = pw, iy = capH, iw = W - 2 * pw, ih = H - capH - baseH, T = t || 0;
     if (layer !== 'front') {
       let gr = q.createLinearGradient(0, iy, 0, iy + ih); gr.addColorStop(0, '#5cc8f2'); gr.addColorStop(.35, '#2a9ae0'); gr.addColorStop(1, '#125ca8'); q.fillStyle = gr; q.fillRect(ix, iy, iw, ih);
+      q.save(); q.beginPath(); q.rect(ix, iy, iw, ih); q.clip();
+      if (t !== undefined) { for (let k = 0; k < 4; k++) { const x = ((k * .27 + T * .02) % 1.2 - .1) * iw + ix, w2 = iw * (.05 + .02 * k), g2 = q.createLinearGradient(x, 0, x + w2, 0); g2.addColorStop(0, 'rgba(210,245,255,0)'); g2.addColorStop(.5, `rgba(210,245,255,${.1 + .05 * Math.sin(T * .8 + k)})`); g2.addColorStop(1, 'rgba(210,245,255,0)'); q.fillStyle = g2; q.fillRect(x, iy, w2, ih); } }   /* shafts of light drifting along */
       gr = q.createLinearGradient(0, iy + ih * .8, 0, iy + ih); gr.addColorStop(0, 'rgba(176,160,128,0)'); gr.addColorStop(1, 'rgba(150,136,110,.95)'); q.fillStyle = gr; q.fillRect(ix, iy + ih * .8, iw, ih * .2);
-      q.strokeStyle = 'rgba(235,252,255,.75)'; q.lineWidth = Math.max(2, H * .012); q.beginPath(); for (let x = 0; x <= iw; x += 6) { const y = iy + ih * .1 + Math.sin(x / iw * 12) * ih * .018; x ? q.lineTo(ix + x, y) : q.moveTo(ix, y); } q.stroke();
+      if (t !== undefined) { q.strokeStyle = 'rgba(235,252,255,.35)'; q.lineWidth = Math.max(1.5, H * .008); for (let r = 0; r < 3; r++) { q.beginPath(); for (let x = 0; x <= iw; x += 8) { const y = iy + ih * (.86 + r * .045) + Math.sin(x / iw * 22 + T * 1.6 + r * 2) * ih * .012; x ? q.lineTo(ix + x, y) : q.moveTo(ix, y); } q.stroke(); } }   /* the light net on the sand moves */
+      q.strokeStyle = 'rgba(235,252,255,.75)'; q.lineWidth = Math.max(2, H * .012); q.beginPath(); for (let x = 0; x <= iw; x += 6) { const y = iy + ih * .1 + Math.sin(x / iw * 12 + T * 2.2) * ih * .018 + Math.sin(x / iw * 5 - T * 1.3) * ih * .022; x ? q.lineTo(ix + x, y) : q.moveTo(ix, y); } q.stroke();
       q.fillStyle = 'rgba(215,240,246,.2)'; q.fillRect(ix, iy, iw, ih * .1);
+      if (t !== undefined) { q.fillStyle = 'rgba(235,252,255,.55)'; for (let k = 0; k < 9; k++) { const ph = (T * .11 + k * .137) % 1, bx = ix + ((k * 97) % 100) / 100 * iw + Math.sin(T * 1.6 + k) * 6, by = iy + ih * (.92 - ph * .8), br = H * (.012 + (k % 3) * .006); q.globalAlpha = Math.sin(Math.PI * ph) * .8; q.beginPath(); q.arc(bx, by, br, 0, 6.2832); q.fill(); } q.globalAlpha = 1; }   /* little bubbles rise */
+      q.restore();
       q.strokeStyle = 'rgba(150,170,196,.5)'; q.lineWidth = 2; for (let k = 1; k < 7; k++) { const x = ix + iw * k / 7; q.beginPath(); q.moveTo(x, iy); q.lineTo(x, iy + ih); q.stroke(); }
     }
     if (layer !== 'back') drawCageFrame(q, W, H, Array.from({ length: 8 }, (_, k) => k / 7), Math.max(4, W * .0034));
@@ -3144,7 +3179,7 @@ const tankFx = (() => {
       fragmentShader: `uniform float uA, uT, uAsp, uHot, uSl, uBw, uHas; uniform sampler2D uFrame; uniform float uBx[8]; varying vec2 vU;
         float caus(vec2 p, float t){ float a = sin(p.x * 7. + sin(p.y * 5. + t) * 1.5), b = sin(p.y * 7. + sin(p.x * 4. - t * .8) * 1.5); return pow(1. - abs(a * b), 7.); }
         void main(){ vec2 pc = (vU - .5) * vec2(uAsp, 1.), hf = vec2(uAsp * .5, .5), dq = abs(pc) - hf + .02; float sdf = length(max(dq, vec2(0.))) + min(max(dq.x, dq.y), 0.) - .02, m = smoothstep(.004, -.004, sdf); if (m < .01) discard;
-          float vy = vU.y, vx = vU.x; vec3 col; float alpha = m * uA; float pulse = .5 + .5 * sin(uT * 7.); bool frame = false, isBar = false;
+          float vy = vU.y, vx = vU.x; vec3 col; float alpha = m * uA; float pulse = .5 + .5 * sin(uT * 7.); bool frame = false, isBar = false, noW = false;
           const float OX = .014, OY0 = .16, OY1 = .905; float X = vx * uAsp, ox0 = OX * uAsp, ox1 = (1. - OX) * uAsp;
           float dx = max(max(ox0 - X, X - ox1), 0.), dy = max(max(OY0 - vy, vy - OY1), 0.); frame = dx > 0. || dy > 0.;
           if (frame && uHas > .5) { vec4 ft = texture2D(uFrame, vU); col = ft.rgb; alpha = m * uA * ft.a; if (vy > OY1) col = mix(col, vec3(1., .18, .12), uHot * (.3 + .3 * pulse)); }   // the painted frame (see cageFrame)
@@ -3158,7 +3193,7 @@ const tankFx = (() => {
           }
           if (!frame) {
             vec2 b = vec2((vU.x - .014) / .972, (vU.y - .16) / .745); float W = max(uAsp, .5); const float DP = ${BOX_DP.toFixed(3)}; vec3 P0 = vec3(clamp(b.x, 0., 1.) * W, clamp(b.y, 0., 1.), 0.), E = vec3(W * .5, ${BOX_EY.toFixed(3)}, ${BOX_EZ.toFixed(3)}), D = P0 - E; float Ys = .87 + sin(vU.x * 9. + uT * 2.2) * .03 + sin(vU.x * 4.5 - uT * 1.4) * .035 + sin(vU.x * 15. + uT * 3.3 + 1.) * .014 + uSl * (sin(vU.x * 7. - uT * 7.) * .06 + (vU.x - .5) * sin(uT * 5.5) * .16);
-            vec3 S = P0; bool viaSurf = false; if (P0.y > Ys) { float ts = (Ys - P0.y) / D.y; S = P0 + D * ts; viaSurf = true; if (S.z > DP || S.x < 0. || S.x > W) discard; }
+            vec3 S = P0; bool viaSurf = false; if (P0.y > Ys) { float ts = (Ys - P0.y) / D.y; S = P0 + D * ts; viaSurf = true; if (S.z > DP || S.x < 0. || S.x > W) noW = true; }   /* (no water to show here: the pixel is dropped below unless a bar stands on it - the bars must never be cut off by the sloshing surface) */
             float tz = (DP - S.z) / D.z, tx = D.x < 0. ? -S.x / D.x : (W - S.x) / D.x, tf = -S.y / D.y, t = min(tz, min(tx, tf)); vec3 H = S + D * t; float zf = clamp(H.z / DP, 0., 1.), dY = clamp((Ys - H.y) / Ys, 0., 1.);
             if (t == tf) { float gr = fract(sin(dot(floor(H.xz * vec2(60. / W * 2.2, 60.)), vec2(12.9, 78.2))) * 43758.5); col = mix(vec3(.68, .64, .55), vec3(.38, .38, .4), zf) * (.92 + gr * .16); col += vec3(.6, .9, .9) * caus(H.xz * 3., uT * .6) * .06; }
             else if (t == tz) { col = mix(vec3(.34, .78, .96), vec3(.05, .42, .78), smoothstep(.0, .85, dY)); for (int i = 1; i < 7; i++) { float Xk = (uBx[i] - .014) / .972 * W; col = mix(col, vec3(.6, .67, .76), smoothstep(.022, .008, abs(H.x - Xk)) * .8); } }
@@ -3170,6 +3205,7 @@ const tankFx = (() => {
           }
           if (!frame && uHas > .5) { vec4 bt = texture2D(uFrame, vU); if (bt.a > .02) { col = mix(col, bt.rgb, bt.a); alpha = m * uA; isBar = true; } }
           else if (!frame) { for (int i = 1; i < 7; i++) { float w = uBw; float d = abs(vU.x - uBx[i]); if (d < w) { float t2 = d / w; float sh = vU.x > uBx[i] ? 1. : 0.; col = mix(vec3(.98, .99, 1.), vec3(.42, .52, .66), mix(t2 * t2, .35 + .65 * t2, sh)); col = mix(col, vec3(.35, .45, .6), smoothstep(.88, .91, vy) * .5 + smoothstep(.2, .165, vy) * .5); alpha = m * uA; isBar = true; } } }
+          if (noW && !isBar) discard;
           #if PASS == 1
           if (!(frame || isBar)) { float by2 = (vU.y - .16) / .745; if (by2 > .86 || by2 < 0.) discard; col = mix(vec3(.55, .9, 1.), vec3(.1, .5, .82), clamp((.86 - by2) / .86, 0., 1.) * .8 + .1); alpha = m * uA * (.1 + .08 * clamp((.86 - by2) / .86, 0., 1.)); col += vec3(.5, .8, .9) * caus(vU * vec2(uAsp, 1.) * .8, uT * .6) * .05; }   /* a veil of water IN FRONT of the animals in the cell, so they sit inside the water and not on top of it */
           #else
@@ -3430,7 +3466,7 @@ const tankFx = (() => {
       if (u > 0) { ovFx.emit(x, y, 3, 55, 0xb4ffd2); ovFx.emit(x - vx * 2, y - vy * 2, 1, 25, 0xffffff); if (Math.random() < .35) ovFx.emit(x, y, 1, 90, 0xfff3b0); }
       if (u >= 1) {
         ovFx.emit(gx, gy, 30, 210, 0xb4ffd2); ovFx.emit(gx, gy, 16, 120, 0xffffff); ovFx.emit(gx, gy, 6, 150, 0xfff3b0); ov.scene.remove(c.ball);
-        if (c.gid === gid && G) { if (G.status === 'won' && !G.celebrated) { G.celebrated = true; celebrate(); } G.goalShown = Math.min(G.cfg.goal, (G.goalShown || 0) + 1); window.__gaugePulse = performance.now(); Snd.play('gaugehit'); Snd.play('gaugefill', { at: .1 }); }
+        if (c.gid === gid && G) { if (G.status === 'won' && !G.celebrated) { G.celebrated = true; celebrate(); } G.goalShown = Math.min(G.cfg.goal, (G.goalShown || 0) + 1); updateGoal(true); window.__gaugePulse = performance.now(); Snd.play('gaugehit'); Snd.play('gaugefill', { at: .1 }); }
         T.back.material = T.basic; T.clear = null; T.g.visible = false; if (window.__whirl) window.__whirl[T.idx] = undefined;
       }
     }
@@ -3465,7 +3501,7 @@ const tankFx = (() => {
     splash(i, cx) { const T = S.list[i]; if (!T || !T.jar) return; T.sl = Math.min(1.2, T.sl + .9); const sy = T.cy - (JAR_FILL - .5) * T.rh, x = cx == null ? T.cx : cx; dropFx.emit(x, sy, 22, 185, { x0: T.cx - T.rw / 2 + 8, x1: T.cx + T.rw / 2 - 8, top: T.cy - T.rh / 2 + 6, surf: sy, idx: i }, 4); T.rx = clamp((x - (T.cx - T.rw / 2)) / T.rw, .06, .94); T.basic.uniforms.uRx.value = T.rx; T.rt = 0; for (let k = 0; k < 6; k++) ovFx.emit(x + rand(-.12, .12) * T.rw, sy + rand(4, .3 * T.rh), 1, 30, 0xffffff, .6); },   // a fish lands: the water sloshes, a ring spreads from the spot, a crown of light droplets flies up inside the tank (a short jet in the middle) and falls back, a few bubbles rise
     startClear(i) {   // the finishing tank becomes an effect of its own; a fresh tank takes its place when the next target arrives
       const T = S.list[i] || make('target'), q = boxEls[i].aq.getBoundingClientRect(); T.idx = i; T.clear = { t0: nowS(), r: { left: q.left, top: q.top, width: q.width, height: q.height }, gid, R: clamp(q.height * .45, 16, 28) };
-      if (T.lidI) { T.lidI.visible = T.lidO.visible = T.lipM.visible = T.rimM.visible = false; T.hinges.forEach(h => { h.visible = false; }); } T.back.material = T.twirl; T.twirl.uniforms.uAsp.value = q.width / q.height; if (T.jar) boardMesh(T, i, q); S.fx.push(T); S.list[i] = null; S.wait[i] = true;
+      if (T.lidI) { T.lidI.visible = T.lidO.visible = T.lipM.visible = T.rimM.visible = false; T.hinges.forEach(h => { h.visible = false; }); } T.back.material = T.twirl; T.twirl.uniforms.uAsp.value = q.width / q.height; if (T.jar) { T.back.position.z = T.front.position.z - .5; boardMesh(T, i, q); }   /* the water swirls in the same plane as the glass, so the two stay one shape (from farther back it was twisted by a different amount on screen and stuck out of the glass) */ S.fx.push(T); S.list[i] = null; S.wait[i] = true;
     },
     winBall: setWinBall, winBallOff: clearWinBall,
     reset() {
@@ -3695,6 +3731,9 @@ function orbitPlane() {   // every fish gets its own tilted orbit round the bubb
 }
 function orbitPt(W, V, T, out) { const an = V.ang + V.om * T, R0 = Math.min(1.0, W.rOrb) * V.rf; return out.copy(W.gp).addScaledVector(V.e1, Math.cos(an) * R0).addScaledVector(V.e2, Math.sin(an) * R0); }
 function bez(a, c, b2, e, out) { const k = 1 - e; return out.set(k * k * a.x + 2 * k * e * c.x + e * e * b2.x, k * k * a.y + 2 * k * e * c.y + e * e * b2.y, k * k * a.z + 2 * k * e * c.z + e * e * b2.z); }
+function winDepthBack(o) {   /* a fish thrown out of the burst is an ordinary fish of the 3D scene again: the glass and the rims (drawn after the water) are depth-tested against it, so it falls IN FRONT of the far wall and its rim, not behind them (while it circled the bubble it was drawn over everything) */
+  if (!o.winFront || !o.group) return; o.winFront = false; o.winBacked = true; o.group.traverse(m => { if (m.isMesh) { if (m._ro0 !== undefined) m.renderOrder = m._ro0; for (const mt of [].concat(m.material)) if (mt._dt0 !== undefined) mt.depthTest = mt._dt0; } });
+}
 function vortexStep(o, dt, t) {   // a chosen fish in the win sequence: helix up, an arc out over the rim, circling the bubble, then an arc back into the water
   const W = G.win, V = o.vtx, T = W ? W.t : 99; if (!W) { o.vtx = null; return; }
   let flying = false;
@@ -3709,9 +3748,9 @@ function vortexStep(o, dt, t) {   // a chosen fish in the win sequence: helix up
     if (u >= 1) { V.mode = 'orbit'; W.arrived++; W.pulse = W.t; beadFx.emit(o.pos, 1, .2, .3); }
   } else if (V.mode === 'orbit') {   // circling the bubble
     orbitPt(W, V, T, _oc); o.pos.copy(_oc); flying = true;
-    if (W.burst && T >= V.homeAt) { V.mode = 'home'; V.hb = o.pos.clone(); V.ht0 = T; const an = rand(0, 6.283), rr = rand(.5, RF * .85), hd = new THREE.Vector3(Math.cos(an) * rr, WATER_Y - .1, Math.sin(an) * rr), g = 11, vy0 = rand(3.2, 5.2), y0 = V.hb.y, tf = (vy0 + Math.sqrt(vy0 * vy0 + 2 * g * Math.max(0.1, y0 - hd.y))) / g; V.hv = new THREE.Vector3((hd.x - V.hb.x) / tf, vy0, (hd.z - V.hb.z) / tf); V.hg = g; V.htf = tf; V.hspin = rand(-1, 1) * 9; V.splashed = false; burstFx.emit(V.hb, 0xffffff, 6, 1.2); }
+    if (W.burst && T >= V.homeAt) { V.mode = 'home'; winDepthBack(o); V.hb = o.pos.clone(); V.ht0 = T; const an = rand(0, 6.283), rr = rand(.5, RF * .85), hd = new THREE.Vector3(Math.cos(an) * rr, WATER_Y - .1, Math.sin(an) * rr); clampXZ(hd, RF * .8); /* the landing spot is held inside THIS tank's wall (the heart, the square... are not round), not inside a circle */ const g = 11, vy0 = rand(3.2, 5.2), y0 = V.hb.y, tf = (vy0 + Math.sqrt(vy0 * vy0 + 2 * g * Math.max(0.1, y0 - hd.y))) / g; V.hv = new THREE.Vector3((hd.x - V.hb.x) / tf, vy0, (hd.z - V.hb.z) / tf); V.hd = hd; V.hg = g; V.htf = tf; V.htr = Math.min(tf * .8, Math.max(.25, (vy0 + Math.sqrt(vy0 * vy0 + 2 * g * Math.max(0, y0 - (TANK_H + .5)))) / g));   /* htr: when it is over its spot, above the rim */ V.hspin = rand(-1, 1) * 9; V.splashed = false; burstFx.emit(V.hb, 0xffffff, 6, 1.2); }
   } else if (V.mode === 'home') {   // thrown out of the burst: up, over and down into the water in a ballistic arc, tumbling
-    const q = Math.min(V.htf, T - V.ht0); o.pos.set(V.hb.x + V.hv.x * q, V.hb.y + V.hv.y * q - .5 * V.hg * q * q, V.hb.z + V.hv.z * q); flying = true;
+    const q = Math.min(V.htf, T - V.ht0), hu = Math.min(1, q / V.htr), he = 1 - (1 - hu) * (1 - hu); o.pos.set(V.hb.x + (V.hd.x - V.hb.x) * he, V.hb.y + V.hv.y * q - .5 * V.hg * q * q, V.hb.z + (V.hd.z - V.hb.z) * he); flying = true;   /* it slides sideways until it is right over its spot above the rim, then drops straight down into the water (before, it flew one straight diagonal line and came in from outside the tank) */
     if (!V.splashed && q >= V.htf) { V.splashed = true; surfaceSplash(o.pos.x, o.pos.z, 1.1); addRipple(o.pos.x, o.pos.z, .1); burstFx.emit(new THREE.Vector3(o.pos.x, WATER_Y - .05, o.pos.z), 0xffffff, 12, 1.3); burstFx.emit(new THREE.Vector3(o.pos.x, WATER_Y - .05, o.pos.z), 0xbfeaff, 8, 1.8); Snd.play('splash'); if (W.firstHome === undefined) W.firstHome = W.t; }
     if (q >= V.htf) { const dx = V.hv.x, dz = V.hv.z, dl = Math.hypot(dx, dz) || 1; o.vtx = null; o.boost = 2.6; o.dir.set(dx / dl, -.9, dz / dl).normalize(); o.wp = new THREE.Vector3(o.pos.x + rand(-1.2, 1.2), clamp(WATER_Y - rand(2.4, 3.4), FLOOR_Y + .8, WATER_Y - 1.6), o.pos.z + rand(-1.2, 1.2)); o.wpT = 3; o.plg = .7;   /* it sinks by its inertia, then rises */ V.trail.done = true; return; }
   }
@@ -3731,8 +3770,8 @@ function winCam(c, T) {   // the camera starts by pulling back wide, then closes
 }
 function celUpdate(dt) {
   const W = G && G.win; if (!W) { if (VORT.v.x) VORT.v.x = 0; LENS.sw = 0; return; } if (W.gid !== gid) { winCleanup(W); G.win = null; window.__winText = undefined; return; }
-  W.t += dt * (window.__winScale || 1); const T = W.t; if (!W.swirlSnd && T >= 1.1) { W.swirlSnd = true; Snd.play('swirl'); }   /* after the camera has pulled back, as the fish are winding up the helix */
-   { const sw = ez(clamp((T - .15) / 1.0, 0, 1)) * (1 - ez(clamp((T - 3.0) / 1.2, 0, 1))); VORT.v.x = sw; VORT.v.y = -3.6 * T; LENS.sw = sw; if (W.vort) vortexUpdate(W.vort, T, sw, dt * (window.__winScale || 1)); sloshV.x += Math.cos(T * 4.2) * 3.5 * sw * dt; sloshV.y += Math.sin(T * 4.2) * 3.5 * sw * dt; }   // the whole water sways and shakes with the whirl: a rotating push on the surface tilt
+  const wsc = (window.__winScale || 1) * (W.ff && !W.textOn ? 5 : 1); W.t += dt * wsc; const T = W.t;   /* a tap fast-forwards the sequence (5x) until LEVEL COMPLETE has come: the WELL DONE screen and the coins are never skipped */ if (!W.swirlSnd && T >= 1.1) { W.swirlSnd = true; if (!W.ff) Snd.play('swirl'); }   /* after the camera has pulled back, as the fish are winding up the helix */
+   { const sw = ez(clamp((T - .15) / 1.0, 0, 1)) * (1 - ez(clamp((T - 3.0) / 1.2, 0, 1))); VORT.v.x = sw; VORT.v.y = -3.6 * T; LENS.sw = sw; if (W.vort) vortexUpdate(W.vort, T, sw, dt * wsc); sloshV.x += Math.cos(T * 4.2) * 3.5 * sw * dt; sloshV.y += Math.sin(T * 4.2) * 3.5 * sw * dt; }   // the whole water sways and shakes with the whirl: a rotating push on the surface tilt
 
   const  c = W.cam0; camTween.on = false; orbit.azV = 0; orbit.elV = 0;
   if (W.rinse) {   // the water of the lose animation hits the glass: the screen frosts, the next level is built behind it, the water runs down and the frost clears
@@ -3768,7 +3807,7 @@ function celUpdate(dt) {
   if (!W.burst && W.anyOut) {   // the bubble is born the moment the first fish leaves the water, and swells as the fish close in on it (and one more beat for each that melts into it)
     if (W.bubStart === undefined) { W.bubStart = T; W.rCur = 0; }
     let inflight = 0; for (const o of W.fish) if (o.vtx && o.vtx.mode === 'fly' && o.vtx.u) inflight += o.vtx.u * o.vtx.u * .7; const fr2 = W.n ? Math.min(1, (W.arrived + inflight) / W.n) : 1;
-    W.rCur += (18 + 80 * fr2 - W.rCur) * (1 - Math.exp(-dt * (window.__winScale || 1) * 12));
+    W.rCur += (18 + 80 * fr2 - W.rCur) * (1 - Math.exp(-dt * wsc * 12));
     const bump = Math.max(0, 1 - (T - (W.pulse || -9)) / .26), rpx = W.rCur * (1 + .2 * bump * bump);
     W.rw = rpx * dpx; bubbleSet(W.bub, W.gp, W.rw, clamp((T - W.bubStart) / .18, 0, 1), .2 + .8 * bump, T); if (frac >= 1) W.full ??= T;
   } else if (!W.burst) W.rw = 12 * dpx;
@@ -3779,12 +3818,12 @@ function celUpdate(dt) {
   }
   if (W.burst) {
     const q = clamp((T - W.burstT) / .26, 0, 1);
-    { const mine = new Set(W.fish); for (const o of G.things) if (o.kind === 'fish' && o.alive && !mine.has(o) && o.group) o.winK = undefined; for (const o of W.fish) if (o.group && W.burst && !o.winFront) { o.winFront = true; o.group.traverse(m => { if (m.isMesh) { m.renderOrder = 40; for (const mt of [].concat(m.material)) mt.depthTest = false; } }); } }   // everyone else fades out of the picture, the orbiting fish are drawn in front
+    { const mine = new Set(W.fish); for (const o of G.things) if (o.kind === 'fish' && o.alive && !mine.has(o) && o.group) o.winK = undefined; for (const o of W.fish) if (o.group && W.burst && !o.winFront && !o.winBacked) { o.winFront = true; o.group.traverse(m => { if (m.isMesh) { m._ro0 = m.renderOrder; m.renderOrder = 40; for (const mt of [].concat(m.material)) { mt._dt0 = mt.depthTest; mt.depthTest = false; } } }); } }   // everyone else fades out of the picture, the orbiting fish are drawn in front
     for (const o of W.fish) if (o.vtx && o.vtx.mode !== 'orbit' && o.vtx.mode !== 'home' && T >= (o.vtx.homeAt || 1e9)) o.vtx.mode = 'orbit';
     if (W.bub) { if (q < 1) bubbleSet(W.bub, W.gp, (W.rw || 1) * (1 + .5 * ezo(q)), 1 - q, 1.3, T); else if (W.bub.visible) { bubbleMagic(W.bub, W.gp, 1, 0, T); W.bub.visible = false; } }
     if (!W.textOn && q >= 1) { W.textOn = true; window.__winText = { t0: performance.now() }; if (!PLAYTEST) setTimeout(() => { if (G && G.win === W && !window.__well) wellOpen(); }, 1650); Snd.play('win', { at: .35 }); }   /* the words burst out as before; the dim and the screen follow once they have docked */   // the words come only once the bubble has gone
   }
-  if (!W.cover && (!W.watchers || !W.watchers.some(o => o.hop)) && (PLAYTEST ? (T >= WIN.cover + 2 || (W.textOn && performance.now() - window.__winText.t0 > 2000)) : (W.wellDone || T >= WIN.cover + 60))) { W.cover = true; startRinse(cam1); }   /* the curtain closes once the coins are taken (the editor's play test keeps the old words) */
+  if (!W.cover && (!W.watchers || !W.watchers.some(o => o.hop)) && (PLAYTEST ? (T >= WIN.cover + 2 || (W.textOn && performance.now() - window.__winText.t0 > 2000)) : (W.wellDone || (T >= WIN.cover + 60 && !window.__well))))   /* (the WELL DONE screen waits for the player as long as it takes: the 60 s timer is only a safety net for a pop-up that never opened) */ { W.cover = true; startRinse(cam1); }   /* the curtain closes once the coins are taken (the editor's play test keeps the old words) */
 }
 let winOut = null;
 /* the aquarium curtains: two panels of cloth in their own 3D canvas. Each panel is a finely divided sheet bent into pleats by a vertex shader (pleats are deep when the cloth is gathered, shallow when it is pulled flat),
@@ -3841,8 +3880,8 @@ function nextLevel(c) {   // under the water: the pop-up words go and the next l
   const L = G.level; window.__winText = undefined;
   newLevel(PLAYTEST ? L : L + 1);
 }
-// a tap during the sequence skips straight to the water
-document.addEventListener('pointerdown', () => { const W = G && G.win; if (W && W.gid === gid && !W.rinse && W.t > .4 && !window.__well && PLAYTEST) {   /* (with the WELL DONE screen a tap must not skip it) */ W.cover = true; startRinse({ az: orbit.az, el: orbit.el, dist: cam.position.distanceTo(orbit.target), ty: orbit.target.y }); } }, true);
+// a tap during the sequence: in the editor's play test it skips straight to the water; in the game it fast-forwards the sequence up to LEVEL COMPLETE (the WELL DONE screen still comes)
+document.addEventListener('pointerdown', () => { const W = G && G.win; if (W && W.gid === gid && !W.rinse && !PLAYTEST && !W.textOn && !window.__well && W.t > .4 && !W.ff) { W.ff = true; Snd.stopSfx('sfx_win_swirl', .25); } if (W && W.gid === gid && !W.rinse && W.t > .4 && !window.__well && PLAYTEST) {   /* (with the WELL DONE screen a tap must not skip it) */ W.cover = true; startRinse({ az: orbit.az, el: orbit.el, dist: cam.position.distanceTo(orbit.target), ty: orbit.target.y }); } }, true);
 function ovRemove(sp) { if (!sp) return; ov.scene.remove(sp.holder); ov.sprites.delete(sp); }
 function ovClear() { for (const sp of ov.sprites) ov.scene.remove(sp.holder); ov.sprites.clear(); ov.flights.length = 0; ov.cel.length = 0; tankFx.reset(); paused = false; }
 /* a fish (same 3D model as in the big tank) leaps along an arc to a DOM element */
@@ -4068,8 +4107,7 @@ function pickThing(o, booster = false) {   // booster: the Clear Tank booster ca
     if (gi !== gid) return; Snd.play('tobackup'); item.res = sp; item.landed = true; renderBackup(); G.targets.forEach((t, ti) => { if (t) pullFromBackup(ti); });   // a target may already be waiting for this fish
     const b = $('backup'); b.classList.remove('danger'); void b.offsetWidth; b.classList.add('danger');
     if (G.backup.length >= BACKUP_MAX && G.status === 'play' && G.backup.every(it => it.landed)) {   // (when the last fish has landed: fast taps can fill the strip while earlier fish are still flying)
-      if (!G.playOnUsed) { G.status = 'playon'; setTimeout(() => { if (gi === gid && G.status === 'playon') { paused = true; setPoFish(); showOnly('ovPlayOn'); } }, 500); }   // once per level: offer Play On before the tank breaks
-      else loseNow();
+      { G.status = 'playon'; setTimeout(() => { if (gi === gid && G.status === 'playon') { paused = true; setPoFish(); showOnly('ovPlayOn'); } }, 500); }   // Play On is offered every time the Backup is full, as often as the player wants (by coins; by ad up to 5 times a day)
     }
   } });
 }
@@ -4080,7 +4118,7 @@ function devWin() {   // developer tool (Settings): finish the level now
   if (!G || G.status !== 'play') return; closePause(); const i = G.targets.findIndex(t => t && !t.done); if (i < 0) return; G.completed = G.cfg.goal - 1; const t = G.targets[i]; t.count = t.shown = perOf(t.type); t.done = true; completeTarget(i);
 }
 function devLose() {   // developer tool (Settings): lose the level the way a full Backup does: the Play On offer first (once per level), then the lose screen
-  if (!G || G.status !== 'play') return; closePause(); if (!G.playOnUsed) { G.status = 'playon'; const gi = gid; setTimeout(() => { if (gi === gid && G.status === 'playon') { paused = true; setPoFish(); showOnly('ovPlayOn'); } }, 300); } else loseNow();
+  if (!G || G.status !== 'play') return; closePause(); { G.status = 'playon'; const gi = gid; setTimeout(() => { if (gi === gid && G.status === 'playon') { paused = true; setPoFish(); showOnly('ovPlayOn'); } }, 300); }
 }
 function loseNow() { G.status = 'lost'; tankFx.breakBackup(); setTimeout(showLose, 3700); }
 let popupOn = false;   // a pop-up is open: the music ducks, the open / close sounds play
@@ -4242,11 +4280,14 @@ $('bRestart1').onclick = () => { if (G) newLevel(G.level); };   // one tap resta
 $('bNext').onclick = () => newLevel(G.level + 1);
 $('bReplay').onclick = () => newLevel(G.level);
 $('bRetry').onclick = () => newLevel(G.level);
-function doPlayOn() { G.playOnUsed = true; hideOverlays(); G.status = 'play'; paused = false; clearBackup(); }
+const dayKey = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+function rvLeft(k) { const r = save.rv; return !r || r.d !== dayKey() ? COIN.adCap : Math.max(0, COIN.adCap - (r[k] || 0)); }   /* rewarded ads a day, each kind on its own (k = playon / hint / tank / clear / x2): at most 5 of each */
+function rvUse(k) { const r = save.rv && save.rv.d === dayKey() ? save.rv : (save.rv = { d: dayKey() }); r[k] = (r[k] || 0) + 1; persist(); }
+function doPlayOn() { hideOverlays(); G.status = 'play'; paused = false; clearBackup(); }
 let poBusy = false;
-$('bPlayOn').onclick = () => { if (!G || G.status !== 'playon' || poBusy) return; if (save.coins < COIN.playOn) { window.__poShake = performance.now(); return; } poBusy = true; addCoins(-COIN.playOn); setTimeout(() => { poBusy = false; if (G && G.status === 'playon') doPlayOn(); }, 950); };   /* Play on costs coins ... */
-$('bPlayOnAd').onclick = () => { if (!G || G.status !== 'playon') return; watchAd(() => { if (G && G.status === 'playon') doPlayOn(); }); };   /* ... or an advertisement */   // the Backup fish jump back into the tank and the game goes on
-$('bWellCoin').onclick = () => wellClaim(1); $('bWellAd').onclick = () => watchAd(() => wellClaim(2));
+$('bPlayOn').onclick = () => { if (!G || G.status !== 'playon' || poBusy) return; if (!save.poFreeUsed) { poBusy = true; save.poFreeUsed = 1; persist(); setTimeout(() => { poBusy = false; if (G && G.status === 'playon') doPlayOn(); }, 300); return; }   /* the very first Play On of the player is FREE (until it is used) */ if (save.coins < COIN.playOn) { window.__poShake = performance.now(); return; } poBusy = true; addCoins(-COIN.playOn); setTimeout(() => { poBusy = false; if (G && G.status === 'playon') doPlayOn(); }, 950); };   /* Play on costs coins ... */
+$('bPlayOnAd').onclick = () => { if (!G || G.status !== 'playon') return; if (rvLeft('playon') <= 0) { window.__poShake = performance.now(); return; } watchAd(() => { if (G && G.status === 'playon') { rvUse('playon'); doPlayOn(); } }); };   /* ... or an advertisement */   // the Backup fish jump back into the tank and the game goes on
+$('bWellCoin').onclick = () => wellClaim(1); $('bWellAd').onclick = () => { if (rvLeft('x2') <= 0) return; watchAd(() => { rvUse('x2'); wellClaim(2); }); };
 $('bBuyCoin').onclick = () => buyBoost(false); $('bBuyAd').onclick = () => buyBoost(true); $('bBuyX').onclick = closeBuy;
 $('bNoPlayOn').onclick = () => { if (!G || G.status !== 'playon') return; hideOverlays(); paused = false; loseNow(); };
 let lvReturn = 'ovPause';
@@ -4345,8 +4386,8 @@ function wellComposite() {   /* the obstacle's live picture, with everything abo
     if (b >= 0) { W.top = Math.min(W.top ?? a, a); W.bot = Math.max(W.bot ?? b, b); } }   /* the rows the object really covers (union over the frames): the colour rises through THEM, so 60% looks like 60% of the object */
   const top = (W.top ?? 13) * 10, bot = ((W.bot ?? 52) + 1) * 10, span = Math.max(80, bot - top), cutY = bot + 8 - (span + 52) * pr;
   g.globalCompositeOperation = 'source-atop';
-  g.fillStyle = 'rgba(5,12,36,0.95)'; if (cutY > 0) g.fillRect(0, 0, 640, cutY);
-  const gr = g.createLinearGradient(0, cutY, 0, cutY + 36); gr.addColorStop(0, 'rgba(5,12,36,0.95)'); gr.addColorStop(1, 'rgba(5,12,36,0)'); g.fillStyle = gr; g.fillRect(0, cutY, 640, 36); g.globalCompositeOperation = 'source-over';
+  g.fillStyle = 'rgb(4,10,30)'; if (cutY > 0) g.fillRect(0, 0, 640, cutY);   /* fully solid: the part not filled yet is a flat dark shape, with no eyes, spots or mouth showing through */
+  const gr = g.createLinearGradient(0, cutY, 0, cutY + 36); gr.addColorStop(0, 'rgb(4,10,30)'); gr.addColorStop(1, 'rgba(4,10,30,0)'); g.fillStyle = gr; g.fillRect(0, cutY, 640, 36); g.globalCompositeOperation = 'source-over';
   g.globalCompositeOperation = 'destination-in'; { const rg = g.createRadialGradient(320, 322, 200, 320, 322, 318); rg.addColorStop(0, 'rgba(0,0,0,1)'); rg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(0, 0, 640, 640); }   /* a round soft fade at the border: whatever reaches the edge of the picture (an ink cloud, the pipe, the swarm) fades out instead of being cut off square */
   g.globalCompositeOperation = 'source-over';
   W.pr = pr; if (W.full && pr >= 0.999 && !W.fullAt) W.fullAt = performance.now(); window.__fvWell = { on: true, cv: WCV };
@@ -4359,6 +4400,7 @@ function addCoins(n, claimedAt) {
     const steps = [], part = Math.floor(n / COIN_FLY.n); let v = from;
     for (let i = 0; i < COIN_FLY.n; i++) { v += i === COIN_FLY.n - 1 ? save.coins - v : part; steps.push({ t: claimedAt + 1000 * (COIN_FLY.d0 + i * COIN_FLY.gap + COIN_FLY.dur), v }); }
     window.__coinAnim = { kind: 'gain', from, to: save.coins, t0: now, steps };
+    steps.forEach(st => setTimeout(() => Snd.play('cfly'), Math.max(0, st.t - performance.now())));   /* one sound as each coin lands in the coin counter */
   } else window.__coinAnim = { kind: n > 0 ? 'gain' : 'spend', from, to: save.coins, t0: now };
 }
 function boostLeft(k) { return (G && G.free && G.free[k]) ? 'free' : save.bst[k] > 0 ? 'n' : 'plus'; }
@@ -4374,15 +4416,19 @@ function boostUse(k, can, run) {   /* every booster goes through here: the free 
   if (st === 'free') { G.free[k] = false; giftBoost(k); } else { save.bst[k]--; persist(); }
   boostRefresh(); run();
 }
+function giveBoosters(k, n, d = 80) {   /* the boosters appear in the middle and fly into their button, d ms from now: one sound as they appear, one as each lands (same timing numbers as paintTools in src/ui/panels.ts: HOLD 650, GAP 230, FLY 340). Called at the moment of the purchase, so the button already counts the boosters as "in the air" and keeps showing its old state (the plus) until each one lands, also while the pop-up is still draining the coins */
+  window.__bgive = { kind: k, n, t0: performance.now() + d }; setTimeout(() => Snd.play('bearn'), d);
+  for (let i = 0; i < n; i++) setTimeout(() => Snd.play('bfly'), d + 650 + i * 230 + 340);
+}
 let buyKind = null, buyBusy = false;
 function openBuy(k) { buyKind = k; window.__buy = { kind: k, price: COIN.price[k], pack: COIN.pack, t0: performance.now() }; introOn = false; paused = true; showOnly('ovBuy'); }
 function closeBuy() { buyKind = null; window.__buy = null; hideOverlays(); paused = false; }
 function watchAd(done) { done(); }   /* no advertisement is attached yet: the ad buttons only show on the screens, and pressing one gives the reward at once (the real one goes here later) */
 function buyBoost(viaAd) {
   if (!buyKind) return; const k = buyKind;
-  if (viaAd) { watchAd(() => { save.bst[k] += 1; persist(); boostRefresh(); closeBuy(); }); return; }
+  if (viaAd) { if (rvLeft(k) <= 0) { window.__buyShake = performance.now(); return; } watchAd(() => { rvUse(k); save.bst[k] += 1; giveBoosters(k, 1); persist(); boostRefresh(); closeBuy(); }); return; }
   if (save.coins < COIN.price[k]) { window.__buyShake = performance.now(); return; }
-  if (buyBusy) return; buyBusy = true; addCoins(-COIN.price[k]); save.bst[k] += COIN.pack; persist(); boostRefresh(); setTimeout(() => { buyBusy = false; closeBuy(); }, 950);   /* the coins drain out of the counter first */
+  if (buyBusy) return; buyBusy = true; addCoins(-COIN.price[k]); Snd.play('coinspend'); save.bst[k] += COIN.pack; giveBoosters(k, COIN.pack, 1030); persist(); boostRefresh(); setTimeout(() => { buyBusy = false; closeBuy(); }, 950);   /* the coins drain out of the counter first */
 }
 function hintUseful() { if (!G) return false; const need = new Set(G.targets.filter(t => t && !t.done && t.count < perOf(t.type)).map(t => t.type)); return G.things.some(o => o.alive && o.kind === 'fish' && !o.locked && need.has(o.type)) || G.things.some(c => c.kind === 'clam' && c.state === 'closed' && c.fish && need.has(c.fish.type)); }
 function hint() {
@@ -4466,7 +4512,7 @@ function updateHint() {
   if (!G) return; const need = new Set(G.targets.filter(t => t && !t.done && t.count < perOf(t.type)).map(t => t.type));
   for (const o of G.things) if (o.outline) { const on = o.alive && o.hinted && need.has(o.type); o.outline.visible = on; o.mark.visible = on; if (o.parts.setGlow) o.parts.setGlow(Math.max(on ? .65 + .35 * (.5 + .5 * Math.sin(U.uTime.value * 5 + o.phase)) : 0, o.hv > .03 ? Math.min(1, o.hv * 1.7) : 0));
     if (on) { const k = .5 + .5 * Math.sin(U.uTime.value * 5 + o.phase); o.outline.scale.setScalar(1.07 + .03 * k); o.outline.material.color.setRGB(1, .74 + .12 * k, .12 + .1 * k); const tt = U.uTime.value; if (!o.markOn) { o.markOn = true; o.markT0 = tt; } const u = clamp((tt - o.markT0) / .4, 0, 1), pop = u >= 1 ? 1 : 1 + 2.7 * Math.pow(u - 1, 3) + 1.7 * Math.pow(u - 1, 2), bob = Math.sin(tt * 6 + o.phase), sq = 1 + .1 * Math.sin(tt * 12 + o.phase + 1.2);   // pops in with an overshoot, then bobs, squashes and sways
-      o.mark.position.set(o.pos.x, o.pos.y + .42 + .08 * bob + (1 - pop) * .4, o.pos.z); o.mark.scale.set(.34 * pop / sq, .228 * pop * sq, 1); o.mark.material.rotation = Math.sin(tt * 3 + o.phase) * .12;
+      o.mark.position.set(o.pos.x, o.pos.y + .42 + .08 * bob + (1 - pop) * .4, o.pos.z); o.mark.scale.set(.374 * pop / sq, .251 * pop * sq, 1); o.mark.material.rotation = Math.sin(tt * 3 + o.phase) * .12;
       if (tt > (o.markSp || 0)) { o.markSp = tt + .38; burstFx.emit(o.mark.position, 0xffd23a, 2, .5); } }
     else { o.markOn = false; if (o.hinted && !need.has(o.type)) o.hinted = false; } }
 }
@@ -4547,7 +4593,7 @@ document.addEventListener('click', e => { if (e.target.closest && e.target.close
    The tank is a water-filled glass cylinder, so it acts like a lens: from the side the fish look wider (magnified horizontally, strongest in the middle)
    and get squeezed + colour-fringed near the glass edges; from above, the surface ripples wobble the view. This is done as a screen-space pass on the
    finished frame. The same mapping is used backwards for taps and forwards for flights, so what you tap is always what you see. */
-const LENS = { k: 0, K: .42, KV: .26, on: QP('lens') ? QP('lens') === '1' : !COARSE, edge: new THREE.Vector4(), y0: 0, y1: 1, surf: new THREE.Vector4(), rim: new THREE.Vector4(), wob: 0, ca: .012, sw: 0 };
+const LENS = { k: 0, K: .42, KV: .26, on: QP('lens') === '1', edge: new THREE.Vector4(), y0: 0, y1: 1, surf: new THREE.Vector4(), rim: new THREE.Vector4(), wob: 0, ca: .012, sw: 0 };
 const _lp = new THREE.Vector3();
 function lensUpdate() { lensUpdate0(); PW.uEdge.value.copy(LENS.edge); PW.uYr.value.set(LENS.y0, LENS.y1); PW.uK.value = LENS.k; PW.uKV.value = LENS.k * LENS.KV / LENS.K; }
 function lensUpdate0() {
@@ -4592,7 +4638,7 @@ const lensMat = new THREE.ShaderMaterial({
       vec2 uv=gl_FragCoord.xy/uRes;
       float xl=uEdge.x+uEdge.y*uv.y, xr=uEdge.z+uEdge.w*uv.y, c=.5*(xl+xr), hw=.5*(xr-xl);
       float s=(uv.x-c)/hw, as=abs(s), band=(uY.y-uY.x)*.08+1e-6;
-      float wy=clamp((uv.y-uY.x)/band,0.,1.)*clamp((uY.y-uv.y)/band,0.,1.);
+      float bandB=(uY.y-uY.x)*.3+1e-6, wy=smoothstep(0.,1.,clamp((uv.y-uY.x)/bandB,0.,1.))*clamp((uY.y-uv.y)/band,0.,1.);   /* the bulge dies away towards the floor: the sand and the glass rim at the bottom (drawn after the lens, so never bent) must stay one shape */
       float inside=step(as,1.)*wy, k=uK*inside;
       float sp=s/(1.+k*(1.-s*s));
       float b2=(uY.y-uY.x)*.2+1e-6, wv=clamp((uv.y-uY.x)/b2,0.,1.)*clamp((uY.y-uv.y)/b2,0.,1.)*(1.-smoothstep(.78,1.,as))*step(as,1.);
@@ -4850,10 +4896,22 @@ window.__qa = {   /* automatic checks (see docs/qa.md): each returns a report wi
     let worst = 0, stopFrames = 0, n3 = 0; for (const [, a] of tr) { n3++; let prev = null, seenFast = false; for (let i = 3; i < a.length; i++) { const dt = (a[i].t - a[i - 3].t) / 1000; if (dt < .03) continue; const v = Math.hypot(a[i].x - a[i - 3].x, a[i].y - a[i - 3].y, a[i].z - a[i - 3].z) / dt;   /* over 3 frames: a single late frame of the browser is not a jerk */ if (v > 2.5) seenFast = true; if (prev !== null && i > 6 && Math.abs(v - prev) > worst) { worst = Math.abs(v - prev); rep.at = { i, of: a.length, v: +v.toFixed(2), prev: +prev.toFixed(2), y: +a[i].y.toFixed(2), dive: a[i].dive, around: a.slice(Math.max(1, i - 4), i + 3).map((q, k, arr) => k ? +(Math.hypot(q.x - arr[k - 1].x, q.y - arr[k - 1].y, q.z - arr[k - 1].z) / ((q.t - arr[k - 1].t) / 1000)).toFixed(1) : 0) }; } if (seenFast && v < .25 && a[i].dive) stopFrames++; prev = v; } }
     Object.assign(rep, { fishSeen: n3, maxSpeedStep: +worst.toFixed(2), stopFramesDuringDive: stopFrames }); if (!n3) rep.fails.push('no fish released: the run is not valid'); if (worst > 3.5) rep.fails.push('speed jumps by ' + worst.toFixed(1) + ' units/s between two frames'); if (stopFrames > 3) rep.fails.push('stops for ' + stopFrames + ' frames while still diving'); rep.pass = !rep.fails.length; return rep;
   },
+  decorFit() {   /* every visible decor piece of every look: how far it sticks out through the glass (must be <= 0), and how much two solid pieces overlap on the floor (each pair must have no overlap of the middle 76% of their footprints) */
+    const bx = new THREE.Box3(), c = new THREE.Vector3(), s0 = tank.scale.clone(), p0 = tank.position.clone(), rep = { name: 'decorFit', pieces: 0, outGlass: 0, overlaps: 0, fails: [] }; tank.scale.set(1, 1, 1); tank.position.set(0, 0, 0); tank.updateMatrixWorld(true);
+    const def = THREE.Material.prototype.onBeforeCompile, solid = m => { let ok = false; m.traverse(n => { if (n.isMesh && n.material && n.material.onBeforeCompile === def && n.geometry.type !== 'PlaneGeometry' && n.geometry.type !== 'CircleGeometry') ok = true; }); return ok; };
+    themeG.forEach((g, gi) => { const sol = []; for (const m of g.children) { if (!m.userData.pl || !m.visible) continue; rep.pieces++; m.updateMatrixWorld(true); bx.setFromObject(m); let worst = -9;
+        for (let i = 0; i < 8; i++) { c.set(i & 1 ? bx.max.x : bx.min.x, i & 2 ? bx.max.y : bx.min.y, i & 4 ? bx.max.z : bx.min.z); const th = Math.atan2(c.z, c.x), wl = PLAN ? wallR(th) : BOWL ? R * bowlP(c.y) : R; worst = Math.max(worst, Math.hypot(c.x, c.z) - (wl - .05)); }
+        if (worst > 0.001) { rep.outGlass++; rep.fails.push({ theme: gi, kind: 'glass', over: +worst.toFixed(2) }); }
+        if (solid(m)) { const iw = (bx.max.x - bx.min.x) * .12, id = (bx.max.z - bx.min.z) * .12; sol.push({ m, r: [bx.min.x + iw, bx.min.z + id, bx.max.x - iw, bx.max.z - id], y0: bx.min.y, y1: bx.max.y }); } }
+      for (const m of g.children) { if (!m.userData.pl || !m.visible || sol.some(q => q.m === m) || solid(m)) continue; for (const q of sol) { const b = q.r, x = m.position.x, z = m.position.z, iw = (b[2] - b[0]) * .12, id = (b[3] - b[1]) * .12; if (x > b[0] - iw && x < b[2] + iw && z > b[1] - id && z < b[3] + id && q.y0 < FLOOR_Y + 1.2) { rep.softInSolid = (rep.softInSolid || 0) + 1; rep.fails.push({ theme: gi, kind: 'soft-in-solid', soft: m.children.length, solid: q.m.userData.pl2 ? 'pot' : q.m.children.length }); break; } } }
+      for (let i = 0; i < sol.length; i++) for (let j = i + 1; j < sol.length; j++) { const a = sol[i].r, b = sol[j].r; if (a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1] && sol[i].y0 < sol[j].y1 && sol[j].y0 < sol[i].y1) { rep.overlaps++; rep.fails.push({ theme: gi, kind: 'overlap', a: sol[i].m.userData.pl2 ? 'pot' : sol[i].m.children.length, b: sol[j].m.userData.pl2 ? 'pot' : sol[j].m.children.length }); } } });
+    tank.scale.copy(s0); tank.position.copy(p0); tank.updateMatrixWorld(true); rep.pass = rep.outGlass === 0 && rep.overlaps === 0 && !rep.softInSolid; return rep;
+  },
   async fishClip(sec = 20) {   /* fish bodies (middle, nose, tail) must never be inside a solid decoration */
     const wait = ms => new Promise(r => setTimeout(r, ms)), rep = { name: 'fishClip', samples: 0, inSolid: 0, fails: [] }, t0 = performance.now(); while (performance.now() - t0 < sec * 1000) { await wait(250); const r = window.__ff.clipTest(); rep.samples += r.n; rep.inSolid += r.solid; } if (rep.inSolid) rep.fails.push(rep.inSolid + ' fish samples inside solid decor'); rep.pass = !rep.fails.length; return rep;
   }
 };
+window.__rvLeft = rvLeft; window.__poFree = () => !save.poFreeUsed;
 window.__ff = { get G() { return G; }, newLevel, orbit, coin: { COIN, wellOpen, wellClaim, wellProgress, addCoins, boostRefresh, giftBoost, boostUse, openBuy, closeBuy, watchAd, boostLeft }, uiReady, guide, lvTitle: () => CHEER.lv && { gy: +CHEER.lv.g.position.y.toFixed(1), meshY: +CHEER.lv.mesh.position.y.toFixed(1), h: +CHEER.lv.mesh.geometry.parameters.height.toFixed(1), tier: window.__lvTier | 0, screenY: +(ov.H / 2 - CHEER.lv.g.position.y).toFixed(1) }, why: () => ({ paused, introOn, tutI, camIntro: !!camIntro, lvShown: window.__lvShown, lid: (window.__lid || []).map(v => +v.toFixed(2)), hud: performance.now() - (window.__hudInT0 || 0), status: G.status, tgtAlive: !!(guide.tgt && guide.tgt.alive), locked: !!(guide.tgt && guide.tgt.locked) }), clam: { loadClam, buildClam, CLAM }, ovScene: () => { const out = []; ov.scene.traverse(m => { if (m.isMesh && m.visible) { let go = 0, q = m.parent; const chain = []; while (q && q !== ov.scene) { chain.push(q.renderOrder); q = q.parent; } out.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' chain=[' + chain.join(',') + '] tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' z=' + +m.getWorldPosition(new THREE.Vector3()).z.toFixed(0) + ' ' + (m.material && m.material.type)); } }); return out; }, ovInfo: () => [...ov.sprites].map(sp => { const r = []; sp.holder.traverse(m => { if (m.isMesh) r.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' op=' + (m.material && +m.material.opacity.toFixed(2))); }); return { id: sp.id, zTop: sp.zTop, z: sp.holder.position.z, px: Math.round(sp.holder.position.x + ov.W / 2), py: Math.round(ov.H / 2 - sp.holder.position.y), meshes: r }; }), U, buildJelly, loadJelly, tapThing: id => { const o = G.things.find(x => x.id === id && x.alive); if (o) pickThing(o); return !!o; }, evInfo: () => { const e = EVT.cur; if (!e) return null; return { kind: e.kind, t: +e.t.toFixed(1), d: +e.d.toFixed(1), n: e.m.length, pinned: e.m.filter(o => o.evPin).length, fish: G.things.filter(o => o.kind === 'fish' && o.alive && !o.big).length, p: e.m.slice(0, 4).map(o => [+o.pos.x.toFixed(1), +o.pos.y.toFixed(1), +o.pos.z.toFixed(1), !!o.evPin]) }; }, devEvents: ['conga', 'waltz', 'swirl', 'squabble', 'drop', 'feed', 'startle', 'swarm', 'octo ink', 'octo floor', 'octo swim', 'pump'], devEvent: (n) => {   /* developer tool (Settings): start one event now, to test it */
   if (!G || G.status !== 'play') return; hideOverlays(); paused = false;
   if (EVT.cur) { for (const o of EVT.cur.m) { o.evOn = false; o.evTight = false; o.evPin = null; } EVT.cur = null; }

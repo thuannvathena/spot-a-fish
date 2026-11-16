@@ -2,7 +2,7 @@
 // defaultsFor(L) is the built-in rule set (moved unchanged from the old levelConfig in main.js).
 // cfgFromLevel(json, L) lays a level file (see docs/guide/editor.md) over those defaults.
 
-// goal = target tanks, obstacles (urchin + jelly), decoy = decoy fish. The 2nd column (species) is unused; species = 2 x goal.
+// goal = target tanks, obstacles (jellyfish), decoy = decoy fish. The 2nd column (species) is unused; species = 2 x goal.
 export const LEVELS = [
   [3, 5, 1, 8], [4, 5, 1, 12], [4, 6, 2, 14], [5, 7, 2, 18], [5, 8, 3, 24],
   [6, 9, 3, 30], [6, 10, 4, 36], [7, 11, 4, 42], [7, 12, 5, 48], [8, 13, 5, 54],
@@ -23,7 +23,7 @@ export function defaultsFor(L) {
     squid: L < 11 ? 0 : 1, clams: L < 21 ? 0 : 1, clamTaps: 1, feed: L >= EVENT_UNLOCK.feed, feedGap: [24, 34], tanks: null };
   const only = { 11: 'squid', 16: 'tube', 21: 'clam', 31: 'swarm' }[L];   // the level that introduces an obstacle shows that obstacle alone
   if (only) { C.obstacles = 0; C.squid = only === 'squid' ? 1 : 0; C.clams = only === 'clam' ? 1 : 0; C.swarm = only === 'swarm'; }
-  C.urchin = Math.ceil(C.obstacles / 2); C.jelly = Math.floor(C.obstacles / 2);   // the old code alternated urchin, jelly, urchin...
+  C.jelly = C.obstacles;   // every obstacle of the table is a jellyfish (the sea urchin is out of the game)
   C.autoPump = true; C.stuckDelay = 2.5; C.theme = null; C.tubeExtra = null; C.tubeWaves = null;
   return C;
 }
@@ -43,7 +43,7 @@ export function cfgFromLevel(lv, L) {
   if (num(lv.look)) C.look = lv.look;
   if (num(lv.sizeK)) C.sizeK = lv.sizeK;
   if (num(lv.speedK)) C.speedK = lv.speedK;
-  if (num(lv.urchin) || num(lv.jelly)) { C.urchin = lv.urchin || 0; C.jelly = lv.jelly || 0; C.obstacles = C.urchin + C.jelly; }
+  if (num(lv.jelly)) { C.jelly = lv.jelly || 0; C.obstacles = C.jelly; }
   if (num(lv.squid)) C.squid = lv.squid;
   if (num(lv.clam)) C.clams = lv.clam;
   if (typeof lv.swarm === 'boolean') C.swarm = lv.swarm;
@@ -86,7 +86,7 @@ export function levelToJson(L) {
     status: 'Ready', difficulty: L <= 4 ? 'Easy' : L <= 10 ? 'Medium' : 'Hard', category: L === 1 ? 'Tutorial' : C.bounty.length ? 'Bounty' : 'Normal',
     refLevel: L, goal: C.goal, per: C.per, bounty: C.bounty.slice(),
     species: C.typesTotal, decoyFish: C.decoys, startFish: C.startFish, maxFish: C.maxFish, look: C.look, sizeK: C.sizeK, speedK: C.speedK,
-    urchin: C.urchin, jelly: C.jelly, squid: C.squid, clam: C.clams, swarm: !!C.swarm,
+    jelly: C.jelly, squid: C.squid, clam: C.clams, swarm: !!C.swarm,
     tube: { enabled: !!C.tube, autoPumpWhenStuck: true, stuckDelaySec: 2.5 },
     backup: C.backup, hint: C.hint, tank: C.tank, clear: C.clear,
     eventGap: C.evGap, feed: !!C.feed, feedGap: C.feedGap, swarmGap: C.swarmGap, startle: !!C.startle, startleGap: C.startleGap

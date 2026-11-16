@@ -23,8 +23,7 @@
 
 | Obstacle | From level | Behaviour |
 |---|---|---|
-| Sea urchin | L1 | Wanders. Tapping sends it to Backup like junk |
-| Jellyfish | L4 | Same as urchin |
+| Jellyfish | L8 | Wanders. Tapping sends it to Backup like junk |
 | Octopus (was Squid) | L11 (alone, as intro) | Sprays ink that hides the view. If tapped, takes 3 Backup slots |
 | Clam | L6 (alone, as intro) | Opens and closes, hides a fish inside; the player must open it |
 | Fish swarm | L9 | 400–560 grey-silver fish come out of a cave and cover the tank for 18–26 s, then go back. **Only hides the view**: a tap through the swarm still hits the real fish |
@@ -83,3 +82,12 @@ Nothing passes through anything. Fish and obstacles are pushed out of the boundi
 The hall changes theme (water colour, light, decoration set) **every 3 levels**: 5 themes.
 
 See [Levels](./levels) for the per-level table.
+
+## 3.11 Coins, boosters and ads <Badge type="warning" text="Prototype: ads not connected" />
+
+- **Coins:** start with 900. A win pays 30 (Easy, Medium), 60 (Hard) or 90 (Very Hard); the WELL DONE screen lets the player take it, or watch an ad for x2.
+- **Booster prices (3 per pack):** Hint 300, Clear Backup 900, Clear Tank 1500. Each booster has an FTUE use: free once at its introduction level (Hint L4, Clear Tank L7, Clear Backup L9), 3 more given when that level is won; then 3 uses per purchase; a purchase by ad gives 1.
+- **Play on** when the Backup is full: clears the Backup (the fish jump back into the tank, no extra slot). The player's **first Play on is FREE**: the pop-up has one button, "FREE", until that free one has been used. After that: no limit per level when paid with coins (900). By ad: at most **5 a day**.
+- **Rewarded ads** (x2 reward, booster by ad, Play on by ad): each kind is capped at **5 a day**, and each booster (Hint, Clear Tank, Clear Backup) has its own 5; x2 reward means 5 levels a day. When a kind is used up its ad button is removed and the pop-up shows the coin button alone, in the middle. In the prototype the ad buttons grant the reward at once; no ad network is attached yet.
+- **Interstitial ads:** the first one appears at **Level 15**, and two interstitials are at least **120 seconds** apart (the spacing). Not built yet: this is the agreed design. A rewarded ad does not reset or count towards the 120 s unless decided otherwise (open question for the full GDD).
+

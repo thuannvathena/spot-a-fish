@@ -5,7 +5,7 @@
 1. Two **target tanks** (`NT = 2`) sit above the main tank. Each shows a species and a count (×1, ×2 or ×3).
 2. The player looks through the crowded tank (rotate, zoom, tilt) and taps a fish of the needed species.
 3. **Right tap:** the fish jumps out and flies into the target tank. When the count is filled, that tank is done and a new one appears, until all targets of the level are done.
-4. **Wrong tap** (another species, or a sea urchin / jellyfish / squid): the thing goes to the **Backup** tray (7 slots). Fish in Backup are **not lost**: when a later target tank needs that species, it is pulled out automatically.
+4. **Wrong tap** (another species, or a jellyfish / squid): the thing goes to the **Backup** tray (7 slots). Fish in Backup are **not lost**: when a later target tank needs that species, it is pulled out automatically.
 5. **Tap on empty water:** nearby fish panic and scatter.
 6. **Win** when every target tank is done. **Lose** when Backup reaches 7 slots.
 

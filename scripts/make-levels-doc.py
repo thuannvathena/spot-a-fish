@@ -11,8 +11,8 @@ NOTE = {1: 'Tutorial', 3: 'Backup Slot', 4: 'Booster 1: Hint', 7: 'Booster 2: Ta
 rows = []
 for i, l in enumerate(L, 1):
     t = l['tanks']; pump = l['tube']['enabled']; w = len(l['tube']['waves']) if pump else 0
-    rows.append(f"| {i} | {l['difficulty']} | {tanks(t)} | {T[i-1]} | {l['startFish']} | {l['maxFish']} | " + (f"{w} / {l['tube']['extraFish']}" if pump else '–') + f" | {len(l['fishKeys']) + l['look']} | {l['decoyFish']} | {l['look']} | {l['urchin']} / {l['jelly']} | {l['squid']} / {l['clam']} / {int(bool(l['swarm']))} | {', '.join(l['bounty']) or '–'} | {wr[i]['sim']:.0f}% | {tw.get(i, '')} | {secs[i-1]} | {NOTE.get(i, '')} |")
-head = "| L | Diff | Tanks (fish each) | To catch | Start fish | Total fish | Pipe (waves / fish) | Species (+ colour copies) | Wrong fish | Look-alikes | Urchin / jelly | Squid / clam / swarm | Bounty | Bot WR | Old target WR | Time (s) | New in this level |\n|" + "---|" * 17
+    rows.append(f"| {i} | {l['difficulty']} | {tanks(t)} | {T[i-1]} | {l['startFish']} | {l['maxFish']} | " + (f"{w} / {l['tube']['extraFish']}" if pump else '–') + f" | {len(l['fishKeys']) + l['look']} | {l['decoyFish']} | {l['look']} | {l['jelly']} | {l['squid']} / {l['clam']} / {int(bool(l['swarm']))} | {', '.join(l['bounty']) or '–'} | {wr[i]['sim']:.0f}% | {tw.get(i, '')} | {secs[i-1]} | {NOTE.get(i, '')} |")
+head = "| L | Diff | Tanks (fish each) | To catch | Start fish | Total fish | Pipe (waves / fish) | Species (+ colour copies) | Wrong fish | Look-alikes | Jellyfish | Squid / clam / swarm | Bounty | Bot WR | Old target WR | Time (s) | New in this level |\n|" + "---|" * 17
 text = f"""## L.2 Level table <Badge type="tip" text="Live" />
 
 60 levels on one smooth ramp, made by `scripts/plan-levels.py --apply` (it writes `game/src/levels.json`; `scripts/make-levels-doc.py` writes this table). About {tot} minutes in total at 5 s per fish to catch. The Hard and Very Hard levels are the long ones (up to {max(secs)} s); the Easy levels between them are shorter, so long levels do not come one after another. The bot counts {bot} minutes because it also waits for the pipe and the swarm.
@@ -26,7 +26,7 @@ text = f"""## L.2 Level table <Badge type="tip" text="Live" />
 - **New fish are met a few at a time:** 4 species at L1, 9 by L3, 24 by L10, 34 by L20, 41 by L30 and all 49 by L45 (the whale, the shark and the sea horse are wrong fish only). A level uses at most 30 species including colour copies.
 - **Fish look and speed:** every fish is size 1.4 and speed 0.85 (bounty fish excepted).
 - **Bounty tanks** (tiny / camo / fast, 1 fish each) only from L25: L25 tiny, L35 camo, L45 fast, L55 tiny + camo, L60 fast + camo.
-- **Urchin and jelly:** first urchin in L8, first jellyfish in L10; none in a level that introduces a feature.
+- **Jellyfish:** first jellyfish in L8 (the sea urchin is out of the game); none in a level that introduces a feature.
 - **Themes and tank shapes:** 6 themes and 6 tank shapes (cylinder, bowl, rounded box, hexagon, flower, heart), 10 levels each.
 - **Win rate:** the bot (`node game/tools/wr-sim.mjs`) plays each level thousands of times with a model of a player and reports the first-try win rate (no boosters, no Play On). It is a guess until real players are measured: it says about 100% up to L30 and about 69% at L60. The target win rates of the old design sheet are NOT met for about 30 levels: the ramp has far fewer fish in the middle levels. `game/tools/wr-tune-plan.mjs` can nudge colour copies, urchins and jellyfish towards those targets but it cannot close the gap.
 - **Lose position:** the bot reports where in the level a lost run ended (`lossAt`, `lateShare` in `--json`); in the Hard levels it does not lose late, so the choke point at the end is not confirmed by the bot.

@@ -11,7 +11,7 @@ const csvPath = process.argv[2] || fileURLToPath(new URL('../../Level-related/Sp
 const rows = fs.readFileSync(csvPath, 'utf8').split(/\r?\n/).filter(Boolean).map(splitCsv);
 const H = rows[0], ix = n => { const i = H.indexOf(n); if (i < 0) throw new Error('column missing: ' + n); return i; };
 const col = { diff: ix('Difficulty'), lv: ix('Level'), note: ix('Feature/Note'), T: ix('Total Target Fish'), tanks: ix('Total Tanks'), types: ix('Total Type'), start: ix('Start Fish'),
-  pump: ix('Pump'), urchin: ix('urchin'), jelly: ix('jelly'), squid: ix('Squid'), shell: ix('Shell'), swarm: ix('Fish Swarm'), mix: ix('Tank mix (fish per tank)'), pumpFish: ix('Pump fish (total in pipe)'), special: ix('Special fish (x1 tank each)'), hold: ix('Held target fish per wave'), look: H.indexOf('Look-alike species') };   // the look-alike column is optional: without it the cluster rule below applies
+  pump: ix('Pump'), jelly: ix('jelly'), squid: ix('Squid'), shell: ix('Shell'), swarm: ix('Fish Swarm'), mix: ix('Tank mix (fish per tank)'), pumpFish: ix('Pump fish (total in pipe)'), special: ix('Special fish (x1 tank each)'), hold: ix('Held target fish per wave'), look: H.indexOf('Look-alike species') };   // the look-alike column is optional: without it the cluster rule below applies
 const num = v => (v === '' || v == null ? 0 : +v);
 
 // fish look-alike steps, in clusters of 10 levels: how many decoy species are colour look-alikes of a target, and how far their hue is turned (smaller = more alike)
@@ -33,7 +33,7 @@ for (const r of rows.slice(1)) {
     schema: LEVEL_SCHEMA, version: 2, id: 'L' + String(L).padStart(2, '0'), name: note || 'Level ' + L, status: 'Ready', difficulty: r[col.diff], category: L === 1 ? 'Tutorial' : bounty.length ? 'Bounty' : 'Normal', refLevel: L,
     goal: nTanks, per: 3, tanks, bounty,
     species: num(r[col.types]), decoyFish: decoyStart + pumpFish, look: col.look >= 0 && r[col.look] !== '' ? num(r[col.look]) : LOOK(L), shift: SHIFT(L), sizeK: 1.4, speedK: 0.85,
-    urchin: num(r[col.urchin]), jelly: num(r[col.jelly]), squid: num(r[col.squid]), clam: num(r[col.shell]), swarm: num(r[col.swarm]) > 0,
+    jelly: num(r[col.jelly]), squid: num(r[col.squid]), clam: num(r[col.shell]), swarm: num(r[col.swarm]) > 0,
     tube: { enabled: L >= UNLOCK.tube, extraFish: pumpFish, waves: afterTanks.map(t => ({ afterTanks: t, holdLast: true, holdFish })), autoPumpWhenStuck: true, stuckDelaySec: 2.5 },
     backup: L >= 2, hint: L >= 4, tank: L >= 7, clear: L >= 9, theme: Math.floor((L - 1) / 10),
     events, eventGap: [8, 10], feed: L >= EVENT_UNLOCK.feed, feedGap: [24, 34], startle: L >= EVENT_UNLOCK.startle, startleGap: [26, 38], swarmGap: [30, 30]
@@ -44,7 +44,7 @@ for (const r of rows.slice(1)) {
 }
 // level 61: a test level for the Tripo fish (public/models/tripo): 4 target tanks of 1 fish, 8 decoys, one fish of each of the 12 kinds
 const TRIPO = ['Emerald_blue', 'Golden_Flame', 'Goldie_tot', 'Green_Orby', 'Green_finny', 'brown_stripe', 'deep_lantern_fish', 'ghostly_wave', 'golden_spot', 'golden_tide', 'goldie', 'green_beast'];
-out.push({ schema: LEVEL_SCHEMA, version: 2, id: 'L61', name: 'Tripo fish test', status: 'Draft', difficulty: 'Easy', category: 'Normal', refLevel: 61, goal: 4, per: 1, tanks: [1, 1, 1, 1], bounty: [], species: 12, decoyFish: 8, look: 0, shift: 55, sizeK: 1.4, speedK: 0.85, urchin: 0, jelly: 0, squid: 0, clam: 0, swarm: false,
+out.push({ schema: LEVEL_SCHEMA, version: 2, id: 'L61', name: 'Tripo fish test', status: 'Draft', difficulty: 'Easy', category: 'Normal', refLevel: 61, goal: 4, per: 1, tanks: [1, 1, 1, 1], bounty: [], species: 12, decoyFish: 8, look: 0, shift: 55, sizeK: 1.4, speedK: 0.85, jelly: 0, squid: 0, clam: 0, swarm: false,
   tube: { enabled: false, extraFish: 0, waves: [], autoPumpWhenStuck: true, stuckDelaySec: 2.5 }, backup: true, hint: true, tank: true, clear: true, theme: 5, events: [], eventGap: [8, 10], feed: false, feedGap: [24, 34], startle: false, startleGap: [26, 38], swarmGap: [30, 30], fishKeys: TRIPO.map(n => 'tripo_' + n) });
 fs.writeFileSync(new URL('../src/levels.json', import.meta.url), JSON.stringify(out, null, 2) + '\n');
 console.log('wrote', out.length, 'levels');

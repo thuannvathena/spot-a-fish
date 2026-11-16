@@ -3,7 +3,7 @@
 ## A.1 Current state <Badge type="tip" text="Live" />
 
 - Fish are 2D PNGs (side view) inflated into pillow meshes. No skeletal animation and no expressions yet; only a code-built blink lid on some species.
-- Everything that is not a fish is a code-built shape used as a placeholder: urchin, jellyfish, squid, clam, rocks, houses, columns, seaweed, pump tube, food bucket, pearl.
+- Everything that is not a fish is a code-built shape used as a placeholder: jellyfish, squid, clam, rocks, houses, columns, seaweed, pump tube, food bucket, pearl.
 - UI (HUD, target tanks, tools, popups, level list) is drawn by Phaser in code in a brass-and-glass aquarium style, with the Lilita One font. It reads from hidden HTML elements. No official UI art yet; the shapes are placeholders that real art can replace piece by piece.
 - No icon or store art.
 
@@ -32,7 +32,7 @@ None of this is integrated yet. Everything else (bounce on spawn, shake on touch
 |---|---|---|---|---|
 | Neutral | Medium, round, pupil centred, blink (~0.2 s, every 2–5 s) | Closed, corners slightly up | Relaxed | Normal |
 | Happy | Curved ^ ^ (or big round with highlight), slightly puffed cheeks | Wide smile, may be open | Pectoral fins slightly up | Correct fish, celebration |
-| Scared | Very big round, tiny pupil | Crooked, small open, trembling | Fins stiff upright, body tucked | Near urchin / squid, tapped, pushed from tube |
+| Scared | Very big round, tiny pupil | Crooked, small open, trembling | Fins stiff upright, body tucked | Near jellyfish / squid, tapped, pushed from tube |
 | Sad | Big, outer corners drooping, pupil looking down | Closed, curved down | Fins drooping, tail low | Wrong tap, sent to Backup |
 | Surprised | Big round, tiny pupil, lid fully open | Round O | Fins slightly spread | Just spawned, caught, startled by a falling object |
 
@@ -42,7 +42,7 @@ Convention: keep the same bone names and the same eye and mouth positions across
 
 ## A.4 Other art to consider
 
-- Real models for urchin, jellyfish, squid, clam, pearl, food bucket. Code reads sizes from bounding boxes, so replacing a model means re-checking [collision](./rules#_3-8-collision).
+- Real models for jellyfish, squid, clam, pearl, food bucket. Code reads sizes from bounding boxes, so replacing a model means re-checking [collision](./rules#_3-8-collision).
 - Decoration sets for the 5 themes.
 - Official UI kit: buttons, Backup tray, target tanks, win/lose popups, stars.
 - App icon and store images.

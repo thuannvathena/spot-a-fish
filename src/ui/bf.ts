@@ -1,4 +1,4 @@
-import { Layer, R } from './kit';
+import { Layer, R, FONT } from './kit';
 import type { Ctx } from './panels';
 
 // The pop-ups and the first-time guides drawn from the painted pieces in public/ui/bf.
@@ -6,13 +6,13 @@ import type { Ctx } from './panels';
 // measured from those pictures and scaled by one number: screen width / 1080. Each pop-up still has a hidden HTML twin (game/src/template.html) that carries state and clicks.
 export const NEW_FILES = ['board_hole', 'lock', 'btn_round_grey', 'btn_round', 'ic_hint', 'ic_net', 'ic_back', 'badge_level', 'badge_level_t1', 'badge_level_t2', 'btn_pause'];   // the newly made pieces (public/ui/new): booster button + icons, level badge, pause button
 export const BF_FILES = ['pop_set_top', 'pop_set_mid', 'pop_set_bot', 'btn_sq_blue', 'btn_sq_grey', 'ic_sound', 'ic_music', 'ic_vib_off', 'btn_x', 'ic_restart', 'btn_green', 'btn_orange', 'btn_blue', 'btn_red', 'btn_grey', 'bar_blue', 'panel_in', 'ic_sound_off', 'ic_music_off', 'ic_vib_on', 'pic_bubble', 'spark', 'qbubble',
-    'pop_base', 'pop_base_blue', 'rib_blue', 'rib_purple', 'hand', 'board', 'board_icon', 'trophy', 'ic_net', 'ic_clear', 'ic_hint', 'pic_water', 'buy_pic', 'buy_d18', 'buy_d20', 'buy_d21', 'buy_d22', 'buy_d23', 'buy_d24', 'buy_d25', 'buy_d26', 'buy_d27', 'buy_d28', 'buy_d33', 'buy_d34', 'buy_d35', 'buy_frame', 'buy_rib', 'badge_count', 'pic_lose', 'fish_fail', 'fish_think', 'txt_levelfailed', 'hand_white', 'nf_title', 'name_squid', 'name_clam', 'name_swarm', 'name_pipe', 'name_frozen', 'fx_light', 'fx_stars', 'board_btn', 'ring', 'ic_coin', 'ic_ad', 'coin_holder', 'ic_plus', 'tag_free', 'ic_plus_round', 'txt_welldone', 'pic_tank_cyl', 'txt_unlocked', 'prog_outline', 'prog_base', 'prog_fill', 'btn_x2', 'pic_tank_frame'];
+    'pop_base', 'pop_base_blue', 'rib_blue', 'rib_purple', 'hand', 'board', 'board_icon', 'trophy', 'ic_net', 'ic_clear', 'ic_hint', 'pic_water', 'badge_red', 'buy_pic', 'buy_d18', 'buy_d20', 'buy_d21', 'buy_d22', 'buy_d23', 'buy_d24', 'buy_d25', 'buy_d26', 'buy_d27', 'buy_d28', 'buy_d33', 'buy_d34', 'buy_d35', 'badge_count', 'pic_lose', 'fish_fail', 'fish_think', 'txt_levelfailed', 'hand_white', 'nf_title', 'name_squid', 'name_clam', 'name_swarm', 'name_pipe', 'name_frozen', 'fx_light', 'fx_stars', 'board_btn', 'ring', 'ic_coin', 'ic_ad', 'coin_holder', 'ic_plus', 'tag_free', 'ic_plus_round', 'txt_welldone', 'pic_tank_cyl', 'txt_unlocked', 'prog_outline', 'prog_base', 'prog_fill', 'btn_x2', 'pic_tank_frame'];
 export const BF_OVERLAYS = ['ovPause', 'ovPlayOn', 'ovLose', 'ovIntro', 'ovBuy', 'ovWell'];
 
 const click = (id: string) => () => (document.getElementById(id) as HTMLElement | null)?.click();
 const txt = (id: string) => (document.getElementById(id)?.textContent ?? '').trim();
 const attr = (id: string, a: string) => (document.getElementById(id) as HTMLElement | null)?.getAttribute(a) ?? '';
-type FF = { save?: { muted?: boolean; noMusic?: boolean; noVib?: boolean }; G?: { backup?: { type?: number; id?: string; junk?: boolean; filler?: boolean }[]; level?: number }; THUMB?: Record<string, string>; SPECIES?: { id: string }[]; cageCanvas?: (w: number, h: number, layer: string) => HTMLCanvasElement | null };
+type FF = { save?: { muted?: boolean; noMusic?: boolean; noVib?: boolean }; G?: { backup?: { type?: number; id?: string; junk?: boolean; filler?: boolean }[]; level?: number }; THUMB?: Record<string, string>; SPECIES?: { id: string }[]; cageCanvas?: (w: number, h: number, layer: string, t?: number, into?: HTMLCanvasElement) => HTMLCanvasElement | null };
 const ff = () => ((window as unknown as { __ff?: FF }).__ff ?? {}) as FF;
 const DEV_FLAG = /[?&]dev=1/.test(location.search);   // ?dev=1 opens the developer tools at once; otherwise tap the version text 10 times in the Settings pop-up
 
@@ -72,7 +72,7 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
     // every position goes through the pop in / out transform (scale K about the screen centre)
     const D = (x: number, y: number, w: number, h: number): R => ({ x: cx0 + (x * s - cx0) * K, y: cy0 + (y * s - cy0) * K, w: w * s * K, h: h * s * K });
     const P = {
-        pic: (k: string, tex: string, r: R, o: { alpha?: number } = {}) => L.pic(k, tex, r, { alpha: A * (o.alpha ?? 1) }),
+        pic: (k: string, tex: string, r: R, o: { alpha?: number; rot?: number; fill?: number; mul?: number; flipX?: boolean; dz?: number } = {}) => L.pic(k, tex, r, { alpha: A * (o.alpha ?? 1), rot: o.rot, fill: o.fill, mul: o.mul, flipX: o.flipX, dz: o.dz }),
         nine: (k: string, tex: string, r: R, ins: [number, number, number, number], o: { alpha?: number; k?: number } = {}) => L.nine(k, tex, r, ins, { alpha: A * (o.alpha ?? 1), k: o.k !== undefined ? o.k * K : undefined }),
         image: (k: string, src: string, r: R, o: { alpha?: number; rot?: number } = {}) => L.image(k, src, r, { alpha: A * (o.alpha ?? 1), rot: o.rot })
     };
@@ -106,6 +106,18 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         if (an.steps) { let v = an.from; for (const st of an.steps) if (now >= st.t) v = st.v; return v; }   // a reward: one step as each coin lands
         const u = Math.min(1, (now - an.t0) / 700); return Math.round(an.from + (an.to - an.from) * (1 - Math.pow(1 - u, 3)));   // spending: counts down
     };
+    // the coins in flight are drawn on a canvas of their own ABOVE every other layer (the 3D overlay with the LEVEL COMPLETE words included)
+    const topCv = ((): HTMLCanvasElement => { let cv = document.getElementById('topfx') as HTMLCanvasElement | null; if (!cv) { cv = document.createElement('canvas'); cv.id = 'topfx'; cv.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:90'; document.body.appendChild(cv); } return cv; })();
+    const tdpr = Math.min(2, window.devicePixelRatio || 1); if (topCv.width !== Math.round(window.innerWidth * tdpr)) { topCv.width = Math.round(window.innerWidth * tdpr); topCv.height = Math.round(window.innerHeight * tdpr); }
+    const tq = topCv.getContext('2d')!; tq.setTransform(tdpr, 0, 0, tdpr, 0, 0); tq.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    (window as unknown as { __topLast?: number; __topWatch?: number }).__topLast = performance.now();
+    if (!(window as unknown as { __topWatch?: number }).__topWatch) (window as unknown as { __topWatch?: number }).__topWatch = window.setInterval(() => { if (performance.now() - ((window as unknown as { __topLast?: number }).__topLast ?? 0) > 120) { const g2 = topCv.getContext('2d')!; g2.setTransform(1, 0, 0, 1, 0, 0); g2.clearRect(0, 0, topCv.width, topCv.height); } }, 120);   // nothing paints it any more: wipe the last frame
+    const tint = (window as unknown as { __topTint?: Record<string, HTMLCanvasElement> }); tint.__topTint ??= {};
+    const TP = (_k: string, tex: string, r: R, o: { alpha?: number; rot?: number; fill?: number; flipX?: boolean } = {}) => {   // draws a picture of the HUD textures on the top canvas
+        if (!c.scene.textures.exists(tex)) return; const src = c.scene.textures.get(tex).getSourceImage() as CanvasImageSource & { width: number; height: number }; let im: CanvasImageSource = src;
+        if (o.fill !== undefined) { const key = tex + o.fill; let tc = tint.__topTint![key]; if (!tc) { tc = document.createElement('canvas'); tc.width = src.width; tc.height = src.height; const x2 = tc.getContext('2d')!; x2.drawImage(src, 0, 0); x2.globalCompositeOperation = 'source-in'; x2.fillStyle = '#' + o.fill.toString(16).padStart(6, '0'); x2.fillRect(0, 0, tc.width, tc.height); tint.__topTint![key] = tc; } im = tc; }
+        tq.save(); tq.globalAlpha = Math.max(0, Math.min(1, A * (o.alpha ?? 1))); tq.translate(c.o.left + r.x + r.w / 2, c.o.top + r.y + r.h / 2); if (o.rot) tq.rotate(o.rot); tq.scale(o.flipX ? -1 : 1, 1); tq.drawImage(im, -r.w / 2, -r.h / 2, r.w, r.h); tq.restore();
+    };
     const coinHeader = (dy = 0) => {
         const an = cAnim(), now = performance.now(); let bump = 0;
         if (an && an.steps) for (const st of an.steps) { const u = (now - st.t) / 260; if (u >= 0 && u < 1) bump = Math.max(bump, Math.sin(Math.PI * u)); }   // every coin that lands makes the header bounce
@@ -116,9 +128,29 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         P.pic('chP', 'bf_ic_plus_round', H(806, 113 + dy, 40, 40));
         const pop = 1 + 0.38 * bump, tp = D(938, 105 + dy, 0, 0), sz = 52 * pop * s * K;
         L.text('chT', tp.x, tp.y, String(coinsNow()), { size: sz, color: spending ? '#e23a3a' : bump > 0.05 ? '#0b6bd6' : '#17408f', stroke: '#ffffff', sw: 0, sh: 0, alpha: A });   // the number jumps when it changes (red while it drops)
-        if (an && an.kind === 'spend') for (let i = 0; i < 4; i++) {   // coins spent: their shadows drop out of the counter one after another, while the number counts down
-            const u = (now - an.t0 - i * 130) / 560; if (u <= 0 || u >= 1) continue; const e = u * u;
-            P.pic('chG' + i, 'bf_ic_coin', D(776 + i * 14 - 40 * u * (i % 2 ? -1 : 1), 62 + dy + e * 360, 76 * (1 - 0.3 * u), 82 * (1 - 0.3 * u)), { alpha: 0.75 * (1 - u) });
+        // ---- the juice: a glow behind the pill, a ring and sparkles from the coin icon, a "+N" / "-N" that floats away, the icon popping, real coins leaving when spending
+        if (!c.scene.textures.exists('bf_goldglow')) { const gc = document.createElement('canvas'); gc.width = gc.height = 128; const gq = gc.getContext('2d')!; const gg = gq.createRadialGradient(64, 64, 0, 64, 64, 64); gg.addColorStop(0, 'rgba(255,246,190,1)'); gg.addColorStop(0.3, 'rgba(255,214,90,0.7)'); gg.addColorStop(0.65, 'rgba(255,170,30,0.22)'); gg.addColorStop(1, 'rgba(255,150,0,0)'); gq.fillStyle = gg; gq.fillRect(0, 0, 128, 128); c.scene.textures.addCanvas('bf_goldglow', gc); }
+        if (!c.scene.textures.exists('bf_ringfx')) { const rc = document.createElement('canvas'); rc.width = rc.height = 128; const rq = rc.getContext('2d')!; const rg = rq.createRadialGradient(64, 64, 40, 64, 64, 63); rg.addColorStop(0, 'rgba(255,255,255,0)'); rg.addColorStop(0.55, 'rgba(255,255,255,0.95)'); rg.addColorStop(0.8, 'rgba(255,255,255,0.35)'); rg.addColorStop(1, 'rgba(255,255,255,0)'); rq.fillStyle = rg; rq.fillRect(0, 0, 128, 128); c.scene.textures.addCanvas('bf_ringfx', rc); }
+        const ix = 806, iy = 104.5 + dy;
+        if (an) {
+            const lands: number[] = an.kind === 'gain' ? (an.steps ? an.steps.map(q => q.t) : [an.t0]) : [];
+                        lands.forEach((tl, i) => {   // every coin that lands
+                const u = (now - tl) / 650; if (u < 0 || u >= 1) return;
+                const gs = 330 * (0.6 + 0.5 * u); P.pic('cgG' + i, 'bf_goldglow', H(cx - gs / 2 - 20, cy - gs * 0.28, gs, gs * 0.56), { alpha: 0.85 * (1 - u) * (1 - u * 0.3) });   // the pill lights up
+                const rs = 70 + 230 * (1 - Math.pow(1 - u, 2)); P.pic('cgR' + i, 'bf_ringfx', D(ix - rs / 2, iy - rs / 2, rs, rs), { alpha: 0.9 * (1 - u), fill: 0xffe27a });   // a ring runs out of the coin icon
+                for (let k = 0; k < 7; k++) { const an2 = (k / 7) * Math.PI * 2 + i * 0.7, d = 40 + 95 * (1 - Math.pow(1 - u, 2)), sz = (34 - (k % 3) * 8) * (1 - 0.6 * u); P.pic(`cgS${i}_${k}`, 'bf_star3d', D(ix + Math.cos(an2) * d - sz / 2, iy + Math.sin(an2) * d * 0.8 - sz / 2, sz, sz), { alpha: 1 - u, rot: an2 + u * 3 }); }   // sparkles fly out
+            });
+            if (an.kind === 'spend') {   // coins spent: the pill flashes red and shakes, five real coins fly out of the icon and fall away, "-N" drops
+                const su = (now - an.t0) / 900;
+                if (su >= 0 && su < 1) {
+                    const gs = 330 * (0.9 + 0.2 * su); P.pic('cgSG', 'bf_goldglow', H(cx - gs / 2 - 20, cy - gs * 0.28, gs, gs * 0.56), { alpha: 0.75 * (1 - su), fill: 0xff4040 });
+                    for (let i = 0; i < 5; i++) {
+                        const u = (now - an.t0 - i * 90) / 640; if (u <= 0 || u >= 1) continue; const dir = (i - 2) * 0.55, e = u * u, x = ix + Math.sin(dir) * 190 * u + 30 * u, y = iy - Math.sin(Math.PI * Math.min(1, u * 1.6)) * 50 + e * 520, spin = u * Math.PI * 5 + i, cs2 = Math.cos(spin), w2 = 66 * (0.2 + 0.8 * Math.abs(cs2)) * (1 - 0.25 * u), h2 = 70 * (1 - 0.25 * u);
+                        for (let k = 8; k >= 1; k--) { const uu = Math.max(0, u - k * 0.02), ee = uu * uu, tx = ix + Math.sin(dir) * 190 * uu + 30 * uu, ty = iy - Math.sin(Math.PI * Math.min(1, uu * 1.6)) * 50 + ee * 520, tsz = 46 * (1 - k / 9); P.pic(`cgT${i}_${k}`, 'bf_goldglow', D(tx - tsz / 2, ty - tsz / 2, tsz, tsz), { alpha: 0.5 * (1 - u) * (1 - k / 9) }); }   // a short golden trail
+                        P.pic('cgC' + i, 'bf_ic_coin', D(x - w2 / 2, y - h2 / 2, w2, h2), { alpha: 1 - u * u, flipX: cs2 < 0 });
+                    }
+                }
+            }
         }
     };
     const STROKE = { green: '#14420b', orange: '#7a3a05', grey: '#2b3548' }, LBL = 62;   // ONE label style for the buttons of every coin pop-up: the same size, white letters, an outline in the dark shade of the button
@@ -127,7 +159,7 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         const age = shakeAt ? performance.now() - shakeAt : 1e9, sh = age < 450 ? Math.sin(age / 28) * 14 * s * K * (1 - age / 450) : 0, rr: R = { ...r, x: r.x + sh };
         button(key, kind, rr, '', onClick);
         const dy = z.pressed === key ? 6 * s : 0, cy = rr.y + dy * K + rr.h * 0.45, isz = rr.h * 0.54, iw = isz * 0.93, tw = width(amount, LBL) * s * K * vis, gap = 16 * s * K * vis, x0 = rr.x + (rr.w - (iw + gap + tw)) / 2;   // the icon and the number are one group, centred on the button
-        P.pic(key + 'c', 'bf_ic_coin', { x: x0, y: cy - isz / 2, w: iw, h: isz }, { alpha: vis });
+        P.pic(key + 'c', 'bf_ic_coin', { x: x0, y: cy - isz / 2, w: iw, h: isz }, { alpha: vis, dz: 0.04 });   // (above its button even when the button was made later: it switches from grey to green when the coins are enough)
         label(key + 'n', kind, x0 + iw + gap + tw / 2, cy, amount, vis, vis);
     };
     const wordBtn = (key: string, kind: 'green' | 'orange' | 'grey', r: R, word: string, onClick: () => void) => {   // a button with a word on it, in the same label style
@@ -183,10 +215,23 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         return;
     }
 
+    const buyDeco = () => {
+        const DEC: [number, number, number, number, number, string][] = [[35, 668, 217, 66, 70, 'b'], [34, 368, 188, 55, 59, 'b'], [33, 503, 172, 48, 47, 'b'], [28, 423, 227, 241, 222, 'c'], [27, 214, 315, 160, 153, 's'], [26, 798, 269, 179, 153, 's'], [25, 380, 260, 171, 253, 'w'], [24, 687, 315, 166, 153, 's'], [23, 113, 331, 184, 215, 'w'], [22, 271, 276, 184, 215, 'w'], [21, 806, 329, 120, 184, 'w'], [20, 648, 279, 120, 184, 'w'], [18, 548, 241, 136, 177, 'w']];
+        for (const [di, dx, dy, dw, dh, dk] of DEC) {
+            let ox = 0, oy = 0, rot = 0, al = 1;
+            if (dk === 'w') { rot = Math.sin(t * 1.6 + di * 1.7) * 0.07; const px = dx + dw / 2, py = dy + dh, cx = dx + dw / 2, cy = dy + dh / 2, rx = cx - px, ry = cy - py; ox = rx * Math.cos(rot) - ry * Math.sin(rot) - rx; oy = rx * Math.sin(rot) + ry * Math.cos(rot) - ry; }   /* the seaweed turns about its root */
+            else if (dk === 's') { rot = Math.sin(t * 1.1 + di) * 0.05; oy = Math.sin(t * 1.4 + di) * 2.5; }
+            else if (dk === 'c') { oy = Math.sin(t * 1.2) * 1.5; }
+            else { const u = ((t * 0.16 + di * 0.37) % 1); oy = -u * 44; ox = Math.sin(t * 2 + di) * 5; al = Math.min(1, u * 5, (1 - u) * 3); }   /* a bubble rises, sways and fades out, then comes again */
+            P.pic('bd' + di, 'bf_buy_d' + di, D(dx + ox, dy + oy, dw, dh), { alpha: al, rot });
+        }
+    };
+
     if (id === 'ovPlayOn') {   // outofspace.png: the frame, the ribbon, the tank holding the 7 fish of the full Backup, one line, one button
         const top = 448, bottom = 1435;
+        buyDeco();   /* the seaweed, shell and bubbles of the Purchase pop-up, behind the header */
         P.nine('pf', 'bf_pop_base', D(58, top, 965, bottom - top), [80, 80, 80, 80], { k: 0.9 * s });
-        P.pic('pFish', 'bf_fish_think', D(290, 110 + Math.sin(t * 1.8) * 8, 360, 285));   // the puzzled fish over the ribbon
+        P.pic('pFish', 'bf_fish_think', D(360, 110 + Math.sin(t * 1.8) * 8, 360, 285));   // the puzzled fish over the ribbon
         P.pic('pr', 'bf_rib_blue', D(97, 390, 878, 222));   // placed so the ribbon's inner band lands on the fake's band
         arcText('pT', 'Out of space!', 543, 500, 600, TITLE, 878, 52);
         const xr = D(921, 454, 114, 120); P.pic('pX', 'bf_btn_x', { ...xr, y: xr.y + (z.pressed === 'pX' ? 2 : 0) }); add('pX', xr, click('bNoPlayOn'));
@@ -194,6 +239,7 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         // the Backup as it looks in the game: the murky cell behind, the fish, then the steel frame and the bars in front (both pictures are drawn once from the same pieces as the game)
         const CW = 1560, CH = 355;
         if (!c.scene.textures.exists('tk_cage_b')) { const cb = ff().cageCanvas?.(CW, CH, 'back'), cf = ff().cageCanvas?.(CW, CH, 'front'); if (cb && cf) { c.scene.textures.addCanvas('tk_cage_b', cb); c.scene.textures.addCanvas('tk_cage_f', cf); } }
+        else { const bt = c.scene.textures.get('tk_cage_b') as Phaser.Textures.CanvasTexture; ff().cageCanvas?.(CW, CH, 'back', t, bt.getSourceImage() as HTMLCanvasElement); bt.refresh(); }   // the water of the cell moves, as it does in the game
         const cage = c.scene.textures.exists('tk_cage_b'), tk = !cage && c.scene.textures.exists('tk_back') ? c.scene.textures.get('tk_back').getSourceImage() as HTMLImageElement : null, ar = cage ? CW / CH : tk ? tk.width / tk.height : 2.2, tw = 780, th = tw / ar, tx = 540 - tw / 2, ty = 672;
         P.pic('pv1', cage ? 'tk_cage_b' : 'tk_back', D(tx, ty, tw, th));
         const F = ff(), items = (F.G?.backup ?? []).slice(0, 7), cw = (tw * (cage ? 0.972 : 0.9)) / 7;
@@ -201,15 +247,18 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
             const src = it.filler ? '' : ((it.junk ? F.THUMB?.[it.id ?? ''] : F.THUMB?.[F.SPECIES?.[it.type ?? 0]?.id ?? '']) ?? ''), fx = tx + tw * (cage ? 0.014 : 0.05) + cw * i;
             const wide = it.id === 'squid' && !it.filler ? (F.THUMB?.['squid_wide'] ?? '') : '';   // the octopus takes three cells: its picture is wide and spread over all three
             if (wide) P.image('pvf' + i, wide, (() => { const ar = parseFloat(F.THUMB?.['squid_wide_ar'] ?? '1.5') || 1.5, nL = items[i - 1]?.filler ? 1 : 0, nR = items[i + 1]?.filler ? 1 : 0, w = Math.min(cw * (1 + nL + nR) * 0.96, th * 0.8 * ar) * 0.9, h = w / ar; return D(fx + cw / 2 + (nR - nL) * cw / 2 - w / 2 + (nL ? 0 : 0), ty + th * 0.5 - h / 2 + Math.sin(t * 2 + i) * 2, w, h); })());
-            else if (src) P.image('pvf' + i, src, cage ? D(fx + cw * 0.08, ty + th * 0.2 + Math.sin(t * 2 + i) * 3, cw * 0.84, th * 0.56) : D(fx + cw * 0.06, ty + th * 0.36 + Math.sin(t * 2 + i) * 3, cw * 0.88, th * 0.5));
+            else if (src) P.image('pvf' + i, src, cage ? D(fx + cw * 0.08 + Math.sin(t * 0.9 + i * 1.7) * cw * 0.05, ty + th * 0.2 + Math.sin(t * 1.9 + i * 1.3) * th * 0.04 + Math.sin(t * 0.7 + i) * th * 0.02, cw * 0.84, th * 0.56) : D(fx + cw * 0.06, ty + th * 0.36 + Math.sin(t * 2 + i) * 3, cw * 0.88, th * 0.5), { rot: Math.sin(t * 1.4 + i * 2.1) * 0.07 });
         });
         P.pic('pv3', cage ? 'tk_cage_f' : 'tk_front', D(tx, ty, tw, th));
         const cap = 'Clear the tank to keep playing!', capY = (ty + th + 1025) / 2;
         text('pL', cap, 540, capY, 780, { fill: '#ffffff', stroke: '#0d2a5c', sw: 9, sh: 4 }, Math.min(64, fit(cap, 780 - 9)));
         const poCost = ((ff() as unknown as { coin?: { COIN?: { playOn?: number } } }).coin?.COIN?.playOn) ?? 900, poShake = (window as unknown as { __poShake?: number }).__poShake ?? 0;
         coinHeader();
-        coinBtn('pA', coinsNow() >= poCost ? 'green' : 'grey', D(100, 1110, 430, 170), String(poCost), click('bPlayOn'), poShake);   // pay with coins ...
-        wordBtn('pAd', 'orange', D(550, 1110, 430, 170), 'Play on', click('bPlayOnAd')); P.pic('pAdI', 'bf_ic_ad', D(878, 1072, 96, 104));   // ... or watch an advertisement
+        const poFree = !!(window as unknown as { __poFree?: () => boolean }).__poFree?.();   // the player's first Play On is FREE: one button, "FREE", until it has been used
+        const adLeft = ((window as unknown as { __rvLeft?: (k: string) => number }).__rvLeft?.('playon') ?? 5), single = poFree || adLeft <= 0;   // the ad Play On is capped at 5 a day: when it is used up the advertisement button is gone and the coin button stands alone in the middle
+        if (poFree) wordBtn('pA', 'green', D(325, 1110, 430, 170), 'FREE', click('bPlayOn'));
+        else coinBtn('pA', coinsNow() >= poCost ? 'green' : 'grey', D(single ? 325 : 100, 1110, 430, 170), String(poCost), click('bPlayOn'), poShake);   // pay with coins ...
+        if (!single) { wordBtn('pAd', 'orange', D(550, 1110, 430, 170), 'Play on', click('bPlayOnAd')); P.pic('pAdI', 'bf_ic_ad', D(878, 1072, 96, 104)); }   // ... or watch an advertisement
         text('pN', 'No thanks', 540, 1340, 220, { fill: '#e8f4ff', stroke: '#0d3d7a', sw: 8, sh: 3 }); add('pNo', D(400, 1305, 280, 70), click('bNoPlayOn'));
         return;
     }
@@ -221,7 +270,65 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         const sd = (x: number, y: number, w: number, h: number, sc: number): R => D(x + (w / 2) * (1 - sc), y + (h / 2) * (1 - sc), w * sc, h * sc);
         const hd = eo((age - 0.25) / 0.55);
         coinHeader((1 - hd) * -170);   // the coins slide down from the top
-        const pL = pop(0.5, 0.45); text('wL', `Level ${Wn.level}`, 540, 400, 280, WHITE, 80 * pL.sc);
+        {   // the celebration: confetti and fireworks fired from both sides when the title has docked, then a calmer loop (a little confetti rains, small bursts every few seconds, sparkles twinkle)
+            const wc = Wn as unknown as { __c0?: number }; wc.__c0 ??= performance.now(); const ageS = (performance.now() - wc.__c0) / 1000;
+            const cfw = window as unknown as { __cf6?: number };   // the artist's confetti sheet (Win Anim / Win_BG_scene: "confetti 6", 4 x 4 pieces of bent, curled paper): cut into 16 pictures; a piece flips through them as it falls, which is the flutter
+            if (!cfw.__cf6) { cfw.__cf6 = 1; const im = new Image(); im.onload = () => { const cell = im.width / 4; for (let k = 0; k < 16; k++) { const cv = document.createElement('canvas'); cv.width = cv.height = 150; cv.getContext('2d')!.drawImage(im, (k % 4) * cell, Math.floor(k / 4) * cell, cell, cell, 0, 0, 150, 150); c.scene.textures.addCanvas('bf_cs' + k, cv); } cfw.__cf6 = 2; }; im.src = new URL('ui/confetti6.png', document.baseURI).href; }
+            const M = 16, SH: [string, number, number, number][] = [['bf_cg0', 120, 64, 1], ['bf_cg0', 120, 64, 1], ['bf_cg1', 64, 64, 0.55], ['bf_cg2', 150, 50, 1.35], ['bf_cg3', 84, 74, 0.7]];   // key, shape width, shape height, size factor (each picture has a margin M around the shape for its soft shadow)
+            if (!c.scene.textures.exists('bf_cg0')) {   // glossy paper confetti drawn at twice the size: a bright body that keeps the tint saturated, a fold or a curved light across it, a gloss band, a bright top edge and a soft drop shadow, so each piece has volume
+                const mk = (key: string, ws: number, hs: number, draw: (q: CanvasRenderingContext2D) => void, shape: (q: CanvasRenderingContext2D) => void) => { const cv = document.createElement('canvas'); cv.width = ws + 2 * M; cv.height = hs + 2 * M; const q = cv.getContext('2d')!; q.translate(M, M); q.save(); q.shadowColor = 'rgba(10,14,50,0.45)'; q.shadowBlur = 9; q.shadowOffsetY = 5; q.shadowOffsetX = 2; shape(q); q.fillStyle = '#ffffff'; q.fill(); q.restore(); q.save(); shape(q); q.clip(); draw(q); q.restore(); c.scene.textures.addCanvas(key, cv); };
+                const body = (q: CanvasRenderingContext2D, w: number, h: number) => { const g = q.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#ffffff'); g.addColorStop(0.55, '#f1f3fb'); g.addColorStop(1, '#c9cfe8'); q.fillStyle = g; q.fillRect(0, 0, w, h); };
+                const gloss = (q: CanvasRenderingContext2D, w: number, h: number) => { const gl = q.createLinearGradient(0, 0, w, h * 0.6); gl.addColorStop(0, 'rgba(255,255,255,0)'); gl.addColorStop(0.28, 'rgba(255,255,255,0.85)'); gl.addColorStop(0.4, 'rgba(255,255,255,0)'); gl.addColorStop(1, 'rgba(255,255,255,0)'); q.fillStyle = gl; q.fillRect(0, 0, w, h); const rim = q.createLinearGradient(0, 0, 0, h); rim.addColorStop(0, 'rgba(255,255,255,0.95)'); rim.addColorStop(0.1, 'rgba(255,255,255,0)'); rim.addColorStop(0.9, 'rgba(30,40,110,0)'); rim.addColorStop(1, 'rgba(30,40,110,0.3)'); q.fillStyle = rim; q.fillRect(0, 0, w, h); };
+                mk('bf_cg0', 120, 64, q => { body(q, 120, 64); q.fillStyle = 'rgba(20,30,100,0.2)'; q.fillRect(60, 0, 60, 64); const cr = q.createLinearGradient(54, 0, 66, 0); cr.addColorStop(0, 'rgba(255,255,255,0)'); cr.addColorStop(0.45, 'rgba(255,255,255,0.7)'); cr.addColorStop(0.55, 'rgba(20,30,100,0.35)'); cr.addColorStop(1, 'rgba(20,30,100,0)'); q.fillStyle = cr; q.fillRect(54, 0, 12, 64); gloss(q, 120, 64); }, q => { q.beginPath(); q.roundRect(0, 0, 120, 64, 12); });
+                mk('bf_cg1', 64, 64, q => { const g = q.createRadialGradient(22, 20, 2, 32, 32, 38); g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, '#eef0fa'); g.addColorStop(1, '#bcc3e2'); q.fillStyle = g; q.fillRect(0, 0, 64, 64); q.fillStyle = 'rgba(255,255,255,0.95)'; q.beginPath(); q.ellipse(22, 18, 12, 6, -0.6, 0, Math.PI * 2); q.fill(); }, q => { q.beginPath(); q.arc(32, 32, 32, 0, Math.PI * 2); });
+                mk('bf_cg2', 150, 50, q => { const g = q.createLinearGradient(0, 0, 0, 50); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#c9cfe8'); q.fillStyle = g; q.fillRect(0, 0, 150, 50); q.strokeStyle = 'rgba(255,255,255,0.9)'; q.lineWidth = 4; q.lineCap = 'round'; q.beginPath(); for (let x = 6; x <= 144; x += 2) { const y = 25 + 12 * Math.sin((x - 6) / 138 * Math.PI * 3) - 4; if (x === 6) q.moveTo(x, y); else q.lineTo(x, y); } q.stroke(); }, q => { q.beginPath(); for (let x = 8; x <= 142; x += 2) { const y = 25 + 13 * Math.sin((x - 8) / 134 * Math.PI * 3) - 6; if (x === 8) q.moveTo(x, y); else q.lineTo(x, y); } for (let x = 142; x >= 8; x -= 2) { const y = 25 + 13 * Math.sin((x - 8) / 134 * Math.PI * 3) + 6; q.lineTo(x, y); } q.closePath(); });
+                mk('bf_cg3', 84, 74, q => { body(q, 84, 74); q.fillStyle = 'rgba(20,30,100,0.2)'; q.beginPath(); q.moveTo(42, 0); q.lineTo(84, 74); q.lineTo(42, 74); q.closePath(); q.fill(); gloss(q, 84, 74); }, q => { q.beginPath(); q.moveTo(42, 4); q.lineTo(80, 70); q.lineTo(4, 70); q.closePath(); q.lineJoin = 'round'; q.lineWidth = 6; q.strokeStyle = '#fff'; q.stroke(); });
+            }
+            if (!c.scene.textures.exists('bf_goldglow')) { const gc = document.createElement('canvas'); gc.width = gc.height = 128; const gq = gc.getContext('2d')!; const gg = gq.createRadialGradient(64, 64, 0, 64, 64, 64); gg.addColorStop(0, 'rgba(255,246,190,1)'); gg.addColorStop(0.3, 'rgba(255,214,90,0.7)'); gg.addColorStop(0.65, 'rgba(255,170,30,0.22)'); gg.addColorStop(1, 'rgba(255,150,0,0)'); gq.fillStyle = gg; gq.fillRect(0, 0, 128, 128); c.scene.textures.addCanvas('bf_goldglow', gc); }
+            const PAL = [0xff5fa8, 0xffd23f, 0x39d0ff, 0xff8a2b, 0xa66bff, 0x5be37a, 0xffffff], rnd = (a: number, b: number) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); };
+            const lit = (col: number, cs: number) => { const k = 0.88 + 0.14 * Math.abs(cs) + (cs < 0 ? -0.06 : 0), glint = Math.pow(Math.max(0, Math.abs(cs) - 0.9) / 0.1, 2) * 0.55, ch = (v: number) => Math.min(255, Math.round(v * k + (255 - v * k) * glint)); return (ch((col >> 16) & 255) << 16) | (ch((col >> 8) & 255) << 8) | ch(col & 255); };   // a piece's shade follows how it is turned to the light, with a white glint when it lies flat to it
+                        let n = 0; const piece = (bi: number, i: number, a: number, side: number, big: boolean) => {   // one piece shot from a side: fast at first, then slowed by the air and fluttering down
+                const r1 = rnd(bi * 13 + side, i), r2 = rnd(i + 7, bi * 5 + side), r3 = rnd(i * 3 + 1, bi + side * 9), r4 = rnd(bi + i, i * 2 + side);
+                const ang = (35 + r1 * 40) * Math.PI / 180, sp = (big ? 1500 : 1150) + r2 * (big ? 900 : 600), k = 1.55, vt = 170 + r3 * 120, vx = Math.cos(ang) * sp * (side ? -1 : 1), vy = -Math.sin(ang) * sp;
+                const x = (side ? 1110 : -30) + vx / k * (1 - Math.exp(-k * a)) + Math.sin(a * 3 + r4 * 6) * 16 * Math.min(1, a), y = 820 - r2 * 90 + (vy - vt) / k * (1 - Math.exp(-k * a)) + vt * a;
+                const life = 3.1 + r3 * 0.8, fade = Math.min(1, (life - a) / 0.7); if (fade <= 0 || y > 2000) return;
+                const kind = i % 7, col = PAL[(i * 3 + bi) % PAL.length], spin = a * (5 + r1 * 7) + r4 * 6, cs = Math.cos(spin), key = `wfc${bi}_${side}_${i}`;
+                if (kind === 5) { const sz = 38 + r2 * 28, tw = 0.6 + 0.4 * Math.sin(a * 9 + r4 * 6); P.pic(key, 'bf_star3d', D(x - sz / 2, y - sz / 2, sz, sz), { alpha: fade * tw, rot: spin, fill: i % 2 ? 0xfff2a0 : 0xbfeaff }); n++; }
+                else if (kind === 6) { const sz = 26 + r2 * 16; P.pic(key, 'bf_goldglow', D(x - sz / 2, y - sz / 2, sz, sz), { alpha: fade * 0.9, fill: col }); n++; }
+                else if (cfw.__cf6 === 2 && kind !== 2) { const sz = 120 + r2 * 70, fr = Math.floor(r4 * 16) % 16, sx = 0.3 + 0.7 * Math.abs(cs), sy = 0.82 + 0.18 * Math.abs(Math.sin(spin * 0.5 + r1 * 3)); P.pic(key, 'bf_cs' + fr, D(x - sz * sx / 2, y - sz * sy / 2, sz * sx, sz * sy), { alpha: fade, rot: spin * 0.22 + r4 * 6, flipX: cs < 0, mul: lit(col, cs) }); n++; }   /* one paper piece of the artist's sheet per confetti, kept for its whole flight (the 16 pictures are different pieces, not an animation, so flipping through them jumped); it tumbles smoothly: it turns about its axis (narrowing edge-on), rotates continuously and its shade follows the turn */
+                else { const sh = kind % 5, [sk, sw, sh2, sf] = SH[sh], base = (54 + r2 * 30) * sf, cw = base * (sw + 2 * M) / sw, ch = base * (sh2 + 2 * M) / sw, w = cw * (0.14 + 0.86 * Math.abs(cs)), h = ch * (0.92 + 0.16 * Math.abs(Math.sin(spin * 0.7))); P.pic(key, sk, D(x - w / 2, y - h / 2, w, h), { alpha: fade, rot: spin * 0.35 + r4, mul: lit(col, cs) }); n++; }   // a piece turning over: it narrows edge-on and its shade follows the turn (fake 3D)
+            };
+            const bursts: { t: number; big: boolean; sides: number[] }[] = [{ t: 0.15, big: true, sides: [0, 1] }];   // the burst comes once
+            bursts.forEach((b, bi) => { const a = ageS - b.t; if (a < 0 || a > 4) return; for (const sd2 of b.sides) for (let i = 0; i < (b.big ? 56 : 24); i++) piece(bi, i, a, sd2, b.big); });
+            const shell = (x: number, y: number, t0: number, col: number, key: string, tag: number) => {   // a firework: a streak rises, a flash, then sparks fly out and droop with a glow trail
+                const a = ageS - t0; if (a < 0 || a > 2.2) return; const rise = 0.42;
+                if (a < rise) { const u = a / rise, yy = y + (1 - u * u) * 330; for (let k = 0; k < 6; k++) { const sz = 56 * (1 - k * 0.14); P.pic(`${key}r${k}`, 'bf_goldglow', D(x - sz / 2, yy + k * 20 - sz / 2, sz, sz), { alpha: 0.8 * (1 - k * 0.13) }); } return; }
+                const e = a - rise, ex = 1 - Math.exp(-e * 2.4), fadeS = Math.max(0, 1 - e / 1.55);
+                if (e < 0.22) { const sz = 340 * (e / 0.22 + 0.3); P.pic(`${key}f`, 'bf_star3d', D(x - sz / 2, y - sz / 2, sz, sz), { alpha: 1 - e / 0.22, rot: e * 3 }); }
+                for (let i = 0; i < 26; i++) { const an = (i / 26) * Math.PI * 2 + tag, rr = 290 * ex * (0.8 + 0.25 * ((i * 7) % 3) / 2), px = x + Math.cos(an) * rr, py = y + Math.sin(an) * rr + 110 * e * e, sz = 54 * fadeS + 10; P.pic(`${key}s${i}`, 'bf_goldglow', D(px - sz / 2, py - sz / 2, sz, sz), { alpha: fadeS, fill: i % 2 ? col : 0xffffff });
+                    for (let k = 1; k <= 2; k++) { const e2 = Math.max(0, e - k * 0.05), ex2 = 1 - Math.exp(-e2 * 2.4), qx = x + Math.cos(an) * 290 * ex2 * (0.8 + 0.25 * ((i * 7) % 3) / 2), qy = y + Math.sin(an) * 290 * ex2 * (0.8 + 0.25 * ((i * 7) % 3) / 2) + 70 * e2 * e2, s2 = sz * (1 - k * 0.3); P.pic(`${key}t${i}_${k}`, 'bf_goldglow', D(qx - s2 / 2, qy - s2 / 2, s2, s2), { alpha: fadeS * 0.5 / k, fill: col }); } }
+            };
+            shell(250, 470, 0.45, 0xff7ac8, 'wfa', 0.3); shell(830, 440, 0.75, 0x6fdcff, 'wfb', 1.1);
+            if (ageS > 1.2) for (let i = 0; i < 30; i++) {   // the only loop: confetti drifting lazily down the screen, turning over and swaying, one piece after another
+                const ph = (ageS * 0.115 + i / 30 + rnd(i, 3) * 0.2) % 1, ramp = Math.min(1, (ageS - 1.2) / 1.5), x = 50 + ((i * 373) % 980) + Math.sin(ageS * (0.9 + rnd(i, 1) * 0.8) + i) * 46, y = -70 + ph * 2150, al = Math.min(1, ph * 10, (1 - ph) * 5) * ramp * 0.95;
+                if (al <= 0.02) continue; const col = PAL[(i * 5) % PAL.length], spin = ageS * (2.4 + rnd(i, 2) * 3) + i * 1.7, cs = Math.cos(spin), kind = i % 6;
+                if (kind === 5) { const sz = 26 + rnd(i, 4) * 16, tw = 0.55 + 0.45 * Math.sin(ageS * 4 + i); P.pic('wfr' + i, 'bf_star3d', D(x - sz / 2, y - sz / 2, sz, sz), { alpha: al * tw, rot: spin * 0.5, fill: i % 2 ? 0xfff2a0 : 0xbfeaff }); }
+                else if (cfw.__cf6 === 2 && i % 6 !== 2) { const sz = 90 + rnd(i, 5) * 50, fr = (i * 5) % 16, sx = 0.3 + 0.7 * Math.abs(cs), sy = 0.85 + 0.15 * Math.abs(Math.sin(spin * 0.4 + i)); P.pic('wfr' + i, 'bf_cs' + fr, D(x - sz * sx / 2, y - sz * sy / 2, sz * sx, sz * sy), { alpha: al, rot: Math.sin(spin * 0.3) * 0.8 + i, flipX: cs < 0, mul: lit(col, cs) }); }
+                else { const sh = (i + 2) % 5, [sk, sw, sh2, sf] = SH[sh], base = (40 + rnd(i, 5) * 24) * sf, cw = base * (sw + 2 * M) / sw, ch = base * (sh2 + 2 * M) / sw, w = cw * (0.14 + 0.86 * Math.abs(cs)), h = ch; P.pic('wfr' + i, sk, D(x - w / 2, y - h / 2, w, h), { alpha: al, rot: Math.sin(spin * 0.6) * 0.9, mul: lit(col, cs) }); }
+            }
+            void n;
+        }
+        const pL = pop(0.5, 0.45), lvKey = 'wellLvTxt' + Wn.level;   // "Level N": smaller than the LEVEL COMPLETE words, with a soft gradient, a dark outline, a gloss and a shadow (painted once)
+        if (!c.scene.textures.exists(lvKey)) {
+            const str = `Level ${Wn.level}`, fs = 100, cv = document.createElement('canvas'), q = cv.getContext('2d')!; q.font = `${fs}px ${FONT}`; const tw = Math.ceil(q.measureText(str).width), pad = 26; cv.width = tw + pad * 2; cv.height = fs + pad * 2 + 10;
+            const q2 = cv.getContext('2d')!; q2.font = `${fs}px ${FONT}`; q2.textAlign = 'center'; q2.textBaseline = 'middle'; q2.lineJoin = 'round'; const cx2 = cv.width / 2, cy2 = pad + fs / 2;
+            q2.lineWidth = 18; q2.strokeStyle = 'rgba(0,10,50,0.55)'; q2.strokeText(str, cx2, cy2 + 8);   // shadow
+            q2.lineWidth = 16; q2.strokeStyle = '#0b2a6a'; q2.strokeText(str, cx2, cy2);   // outline
+            const gr = q2.createLinearGradient(0, cy2 - fs / 2, 0, cy2 + fs / 2); gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.55, '#d9efff'); gr.addColorStop(1, '#8ec8f5'); q2.fillStyle = gr; q2.fillText(str, cx2, cy2);
+            q2.save(); q2.globalCompositeOperation = 'source-atop'; const gl = q2.createLinearGradient(0, cy2 - fs / 2, 0, cy2); gl.addColorStop(0, 'rgba(255,255,255,0.55)'); gl.addColorStop(1, 'rgba(255,255,255,0)'); q2.fillStyle = gl; q2.fillRect(0, cy2 - fs / 2, cv.width, fs / 2); q2.restore();   // gloss on the upper half
+            c.scene.textures.addCanvas(lvKey, cv);
+        }
+        { const si = c.scene.textures.get(lvKey).getSourceImage() as HTMLCanvasElement, lw = si.width * 0.56, lh = (lw * si.height) / si.width; P.pic('wLv', lvKey, sd(540 - lw / 2, 400 - lh / 2, lw, lh, pL.sc), { alpha: pL.a }); }
         // the standing tank rises from below and floats; the obstacle floats inside it
         const TW = 452, TH = 800, TX = 540 - TW / 2, TY = 446, pT = pop(0.6, 0.75), rise = (1 - eo((age - 0.6) / 0.75)) * 150, bobT = 0;   // the tank stands still once it has risen
         const tcx = TX + TW / 2, tcy = TY + TH / 2 + rise + bobT, tk = (fx: number, fy: number, fw: number, fh: number): R => D(tcx + (fx - 0.5) * TW * pT.sc, tcy + (fy - 0.5) * TH * pT.sc, fw * TW * pT.sc, fh * TH * pT.sc);   // a rectangle given in fractions of the tank picture, following its pop-in
@@ -284,49 +391,67 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
                 f.strokeStyle = '#0a5fc0'; f.lineWidth = 2.5; f.stroke(); f.fillStyle = 'rgba(255,255,255,0.55)'; f.beginPath(); f.roundRect(14, 7, 132, 15, 8); f.fill();
                 c.scene.textures.addCanvas('bf_pbar_fill', fc);
             }
-            if (!c.scene.textures.exists('bf_unl2')) {   // UNLOCKED !: the artist's letters, given a warm gradient, a dark outline and a drop shadow so they read like the other game titles
-                const src = c.scene.textures.get('bf_txt_unlocked').getSourceImage() as HTMLImageElement, pad = 16, W2 = src.width + pad * 2, H2 = src.height + pad * 2 + 10, cv = document.createElement('canvas'); cv.width = W2; cv.height = H2; const q = cv.getContext('2d')!;
-                const sil = document.createElement('canvas'); sil.width = src.width; sil.height = src.height; const sq = sil.getContext('2d')!; sq.drawImage(src, 0, 0); sq.globalCompositeOperation = 'source-in'; sq.fillStyle = '#8a4d00'; sq.fillRect(0, 0, src.width, src.height);
-                for (let a = 0; a < 28; a++) { const an = (a / 28) * Math.PI * 2; q.drawImage(sil, pad + Math.cos(an) * 6, pad + 10 + Math.sin(an) * 6); }
-                q.globalAlpha = 0.5; q.drawImage(sil, pad, pad + 16); q.globalAlpha = 1;
-                const lt = document.createElement('canvas'); lt.width = src.width; lt.height = src.height; const lq = lt.getContext('2d')!; lq.drawImage(src, 0, 0); lq.globalCompositeOperation = 'source-atop';
-                const lg = lq.createLinearGradient(0, 0, 0, src.height); lg.addColorStop(0, '#fff7a0'); lg.addColorStop(0.55, '#ffe21a'); lg.addColorStop(1, '#ffae12'); lq.fillStyle = lg; lq.fillRect(0, 0, src.width, src.height);
-                lq.fillStyle = 'rgba(255,255,255,0.35)'; lq.fillRect(0, 0, src.width, src.height * 0.32);
-                q.drawImage(lt, pad, pad + 4); c.scene.textures.addCanvas('bf_unl2', cv);
+            if (!c.scene.textures.exists('bf_unl2')) {   // UNLOCKED !: the artist's letters (a flat yellow picture only 478 px wide) enlarged to twice the size with their edges sharpened again, drawn flat as the PSD shows them (no outline, no gradient, no shadow, no glow)
+                const src = c.scene.textures.get('bf_txt_unlocked').getSourceImage() as HTMLImageElement, S = 2, pad = 16 * S, w1 = src.width * S, h1 = src.height * S, W2 = w1 + pad * 2, H2 = h1 + pad * 2 + 10 * S, cv = document.createElement('canvas'); cv.width = W2; cv.height = H2; const q = cv.getContext('2d')!;
+                const big = document.createElement('canvas'); big.width = w1; big.height = h1; const bq = big.getContext('2d')!; bq.imageSmoothingEnabled = true; bq.imageSmoothingQuality = 'high'; bq.drawImage(src, 0, 0, w1, h1);
+                const im = bq.getImageData(0, 0, w1, h1), d = im.data; for (let i = 3; i < d.length; i += 4) { const t = Math.min(1, Math.max(0, (d[i] / 255 - 0.28) / 0.44)); d[i] = Math.round(255 * t * t * (3 - 2 * t)); } bq.putImageData(im, 0, 0);   // soft edges of the enlarged picture pulled back to crisp ones
+                const tint = (col: string) => { const t = document.createElement('canvas'); t.width = w1; t.height = h1; const tq = t.getContext('2d')!; tq.drawImage(big, 0, 0); tq.globalCompositeOperation = 'source-in'; tq.fillStyle = col; tq.fillRect(0, 0, w1, h1); return t; };   // depth, kept light so the letters stay the artist's flat yellow at a glance: a soft dark shadow, a thick golden edge under the letters (they look raised), a yellow that deepens a little towards the bottom and a bright sheen along the top
+                q.filter = 'blur(' + 5 * S + 'px)'; q.globalAlpha = 0.45; q.drawImage(tint('#06122e'), pad, pad + 12 * S); q.globalAlpha = 1; q.filter = 'none';
+                const edge = tint('#d98f00'); for (let k = 1; k <= 4 * S; k++) q.drawImage(edge, pad, pad + 4 * S + k);
+                const lt = document.createElement('canvas'); lt.width = w1; lt.height = h1; const lq = lt.getContext('2d')!; lq.drawImage(big, 0, 0); lq.globalCompositeOperation = 'source-atop';
+                const lg = lq.createLinearGradient(0, 0, 0, h1); lg.addColorStop(0, '#fffb9a'); lg.addColorStop(0.4, '#fff53a'); lg.addColorStop(1, '#ffd21c'); lq.fillStyle = lg; lq.fillRect(0, 0, w1, h1);
+                const sh = lq.createLinearGradient(0, 0, 0, h1 * 0.42); sh.addColorStop(0, 'rgba(255,255,255,0.55)'); sh.addColorStop(1, 'rgba(255,255,255,0)'); lq.fillStyle = sh; lq.fillRect(0, 0, w1, h1 * 0.42);
+                q.drawImage(lt, pad, pad + 4 * S); c.scene.textures.addCanvas('bf_unl2', cv);
             }
             if (!c.scene.textures.exists('bf_halo')) { const cv = document.createElement('canvas'); cv.width = cv.height = 128; const q = cv.getContext('2d')!; const g2 = q.createRadialGradient(64, 64, 4, 64, 64, 64); g2.addColorStop(0, 'rgba(255,240,140,0.95)'); g2.addColorStop(1, 'rgba(255,200,60,0)'); q.fillStyle = g2; q.fillRect(0, 0, 128, 128); c.scene.textures.addCanvas('bf_halo', cv); }
             if (filled) {   // UNLOCKED !: it pops in once and then stands still (no idle swell, no flicker)
                 const k2 = backOut(cl(fa / 0.5)), UW = 560, UH = (UW * (69 + 42)) / (478 + 32);
-                P.pic('wUh', 'bf_halo', D(540 - 330, 1366 - 120, 660, 240), { alpha: cl(fa / 0.4) * 0.45 });
                 P.pic('wU', 'bf_unl2', sd(540 - UW / 2, 1366 - UH / 2, UW, UH, k2));
             } else {   // the bar: the cyan fill grows (a spark rides its tip), the percent in the middle bumps while it is moving
                 const moving = Wn.pr !== undefined && Wn.pr > Wn.p0 + 0.002 && Wn.pr < Wn.p1 - 0.002, fw = Math.max(64, (504 - 8) * pr);
                 P.pic('wPf', 'bf_pbar_frame', sd(BX, BY, 540, 112, pU.sc), { alpha: pU.a });
                 P.nine('wPi', 'bf_pbar_fill', sd(BX + 22, BY + 22, fw, 68, pU.sc), [33, 33, 33, 33], { alpha: pU.a, k: 0.98 * s });
-                const tipX = BX + 22 + fw - 18; if (moving) P.pic('wPs', 'bf_star3d', sd(tipX - 36, BY + 56 - 36, 72, 72, pU.sc), { alpha: pU.a * (0.7 + 0.3 * Math.sin(t * 9)) });
-                if (Wn.soon) text('wPp', 'Coming Soon', 540, BY + 57, 330, { fill: '#ffffff', stroke: '#0a3a8e', sw: 8, sh: 3 }, 44 * pU.sc);
+                                if (Wn.soon) text('wPp', 'Coming Soon', 540, BY + 57, 330, { fill: '#ffffff', stroke: '#0a3a8e', sw: 8, sh: 3 }, 44 * pU.sc);
                 else text('wPp', `${Math.round(pr * 100)}%`, 540, BY + 57, 140, { fill: '#ffffff', stroke: '#0a3a8e', sw: 8, sh: 3 }, 46 * pU.sc * (moving ? 1 + 0.07 * Math.sin(t * 14) : 1));
             }
         }
         const open = !Wn.claimed, pulse = 1 + 0.03 * Math.sin(t * 3.4), u2 = cl((age - 1.85) / 0.6), u1 = cl((age - 2.2) / 0.6), v2 = Math.min(1, u2 * 4), v1 = Math.min(1, u1 * 4);
         const offR = (1 - backOut(u2)) * 640, offL = -(1 - backOut(u1)) * 640;   // the x2 reward slides in from the right first, then the plain coin button from the left (with a small settle)
-        const GY = 1520, GX = 56, GW = 420, XX = 584, XW0 = 440;   // lower than before, and a wide gap between the two buttons
-        if (u2 > 0) {
-            const XW = XW0 * pulse, XH = (XW * 254) / 466, XR = D(XX + (XW0 - XW) / 2 + offR, GY - 24 + (240 - XH) / 2, XW, XH);   // the x2 button: one picture with its own "x2 Reward" tag
-            P.pic('wA', 'bf_btn_x2', { ...XR, y: XR.y + (z.pressed === 'wA' && open ? 6 * s : 0) }, { alpha: (open ? 1 : 0.55) * v2 }); if (open && u2 >= 1) add('wA', XR, click('bWellAd'));
-            const cy = XR.y + XR.h * 0.36 + (z.pressed === 'wA' && open ? 6 * s : 0), isz = XR.h * 0.36, iw = isz * 0.93, str = '+' + Wn.base * 2, tw = width(str, LBL) * s * K * v2, gap = 16 * s * K * v2, x0 = XR.x + (XR.w - (iw + gap + tw)) / 2; P.pic('wAc', 'bf_ic_coin', { x: x0, y: cy - isz / 2, w: iw, h: isz }, { alpha: v2 });
-            label('wAn', 'orange', x0 + iw + gap + tw / 2, cy, str, v2, v2);
-            P.pic('wAd', 'bf_ic_ad', D(XX + XW0 - 92 + offR, GY - 62 + Math.sin(t * 5) * 3, 100, 108), { alpha: v2 });
+        const x2Left = ((window as unknown as { __rvLeft?: (k: string) => number }).__rvLeft?.('x2') ?? 5), GY = 1520, GX = x2Left > 0 ? 56 : 330, GW = 420, XX = 584, XW0 = 440;   // lower than before, and a wide gap between the two buttons (x2 used up for the day: the coin button alone, in the middle)
+        if (u2 > 0 && x2Left > 0) {   // the x2 button: the picture, the coin, the number and the advertisement icon are ONE group that bounces together about its centre
+            const XH0 = (XW0 * 254) / 466, BR = D(XX + offR, GY - 24 + (240 - XH0) / 2, XW0, XH0), pdy = z.pressed === 'wA' && open ? 6 * s : 0, px = BR.x + BR.w / 2, py = BR.y + BR.h / 2 + pdy;
+            const G = (r: R): R => ({ x: px + (r.x - px) * pulse, y: py + (r.y + pdy - py) * pulse, w: r.w * pulse, h: r.h * pulse });
+            const XR = G(BR); P.pic('wA', 'bf_btn_x2', XR, { alpha: v2 * (x2Left > 0 ? 1 : 0.45) }); if (open && u2 >= 1 && x2Left > 0) add('wA', XR, click('bWellAd'));
+            const cy = BR.y + BR.h * 0.36, isz = BR.h * 0.36, iw = isz * 0.93, str = '+' + Wn.base * 2, tw = width(str, LBL) * s * K * v2, gap = 16 * s * K * v2, x0 = BR.x + (BR.w - (iw + gap + tw)) / 2;
+            P.pic('wAc', 'bf_ic_coin', G({ x: x0, y: cy - isz / 2, w: iw, h: isz }), { alpha: v2 });
+            const lc = G({ x: x0 + iw + gap + tw / 2, y: cy, w: 0, h: 0 }); label('wAn', 'orange', lc.x, lc.y, str, v2, v2).setScale(pulse);   // (the size of the letters never changes, only the object is scaled: re-sizing the font every frame made the number shake)
+            P.pic('wAd', 'bf_ic_ad', G(D(XX + XW0 - 92 + offR, GY - 62, 100, 108)), { alpha: v2 });
         }
-        if (u1 > 0) coinBtn('wG', open ? 'green' : 'grey', D(GX + offL, GY, GW, 165), '+' + Wn.base, open && u1 >= 1 ? click('bWellCoin') : () => {}, 0, v1);
-        if (Wn.claimed) {   // five coins fly from the button you pressed up to the counter, each with a short trail; the header bounces as each one lands (see coinHeader)
+        if (u1 > 0) coinBtn('wG', 'green', D(GX + offL, GY, GW, 165), '+' + Wn.base, open && u1 >= 1 ? click('bWellCoin') : () => {}, 0, v1);
+        if (Wn.claimed) {   // five coins fly from the button you pressed into the coin ICON of the counter; each spins, leaves sparkles and pops a star where it lands; the header bounces as each one lands (see coinHeader)
             const fly = (window as unknown as { __coinFly?: { n: number; d0: number; gap: number; dur: number } }).__coinFly ?? { n: 5, d0: 0.06, gap: 0.1, dur: 0.6 }, ca = (performance.now() - Wn.claimed) / 1000;
-            const ox = Wn.mult > 1 ? XX + XW0 * 0.3 : GX + GW * 0.3, oy = Wn.mult > 1 ? GY + 40 : GY + 70, ex = 850, ey = 104;
+            const ox = Wn.mult > 1 ? XX + XW0 * 0.3 : GX + GW * 0.3, oy = Wn.mult > 1 ? GY + 40 : GY + 70, ex = 806, ey = 104.5;   // (the centre of the coin icon in the counter)
             const at = (i: number, u: number) => { const e = u * u * (3 - 2 * u), sw = (i % 2 ? 1 : -1) * (70 + i * 14); return { x: ox + (ex - ox) * e + Math.sin(u * Math.PI) * sw, y: oy + (ey - oy) * e - Math.sin(u * Math.PI) * 150 }; };
+            const bu = cl(ca / 0.45);
+            if (bu > 0 && bu < 1) for (let k = 0; k < 9; k++) { const an = (k / 9) * Math.PI * 2 + 0.3, e3 = 1 - Math.pow(1 - bu, 3), d = (60 + (k % 3) * 34) * e3, sz = (46 - (k % 3) * 8) * (1 - 0.5 * bu); TP('wBu' + k, 'bf_star3d', D(ox + Math.cos(an) * d - sz / 2, oy + Math.sin(an) * d * 0.8 - sz / 2, sz, sz), { alpha: 1 - bu, rot: an + bu * 2 }); }   // the burst of stars where the coins leave the button
             for (let i = 0; i < fly.n; i++) {
-                const u = cl((ca - fly.d0 - i * fly.gap) / fly.dur); if (u <= 0 || u >= 1) continue;
-                for (let k = 5; k >= 1; k--) { const uu = cl(u - k * 0.035); if (uu <= 0) continue; const q = at(i, uu), tsz = 58 * (1 - k * 0.12); P.pic(`wCt${i}_${k}`, 'bf_ic_coin', D(q.x - tsz / 2, q.y - tsz / 2, tsz, tsz * 1.06), { alpha: 0.5 * (1 - k * 0.17) }); }   // the trail: older positions, smaller and fainter
-                const q = at(i, u); P.pic('wCf' + i, 'bf_ic_coin', D(q.x - 33, q.y - 35, 66, 70), { alpha: 1 });
+                const t0 = fly.d0 + i * fly.gap, u = cl((ca - t0) / fly.dur);
+                const lu = (ca - t0 - fly.dur) / 0.4;   // after the landing: a star pops on the coin icon
+                if (lu > 0 && lu < 1) { const sz = 78 * (0.5 + 0.9 * lu); TP('wLs' + i, 'bf_star3d', D(ex - sz / 2, ey - sz / 2, sz, sz), { alpha: 1 - lu, rot: i + lu * 1.6 }); for (let k = 0; k < 4; k++) { const an = (k / 4) * Math.PI * 2 + i, d = 56 * lu, s2 = 24 * (1 - lu); TP(`wLk${i}_${k}`, 'bf_star3d', D(ex + Math.cos(an) * d - s2 / 2, ey + Math.sin(an) * d - s2 / 2, s2, s2), { alpha: 1 - lu }); } }
+                if (u <= 0 || u >= 1) continue;
+                if (!c.scene.textures.exists('bf_goldglow')) {   // a soft golden glow, painted once: the light trail and the little particles are made of it
+                    const gc = document.createElement('canvas'); gc.width = gc.height = 128; const gq = gc.getContext('2d')!; const gg = gq.createRadialGradient(64, 64, 0, 64, 64, 64); gg.addColorStop(0, 'rgba(255,246,190,1)'); gg.addColorStop(0.3, 'rgba(255,214,90,0.7)'); gg.addColorStop(0.65, 'rgba(255,170,30,0.22)'); gg.addColorStop(1, 'rgba(255,150,0,0)'); gq.fillStyle = gg; gq.fillRect(0, 0, 128, 128); c.scene.textures.addCanvas('bf_goldglow', gc);
+                }
+                const GOLD = 0xffd75a, DARK = 0xa8620f;
+                for (let k = 28; k >= 1; k--) { const uu = cl(u - k * 0.011); if (uu <= 0) continue; const q = at(i, uu), f = 1 - k / 29, sz = 74 * f + 16; TP(`wCt${i}_${k}`, 'bf_goldglow', D(q.x - sz / 2, q.y - sz / 2, sz, sz), { alpha: 0.8 * Math.pow(f, 1.4) }); }   // the light trail: a soft golden streak, thick behind the coin and thinning out
+                for (let k = 0; k < 9; k++) {   // small golden particles shed along the way: they drift sideways and fall a little, shrinking and fading
+                    const ph = u - 0.03 - k * 0.055; if (ph <= 0) continue; const q = at(i, ph), age2 = u - ph, dir = (k * 2.399 + i * 1.3) % (Math.PI * 2), dr = 34 * age2 * 4, sz = (11 + (k % 3) * 4) * (1 - age2 * 1.6);
+                    if (sz <= 1) continue; TP(`wCp${i}_${k}`, k % 3 === 0 ? 'bf_star3d' : 'bf_goldglow', D(q.x + Math.cos(dir) * dr - sz / 2, q.y + Math.sin(dir) * dr * 0.7 + age2 * 60 - sz / 2, sz, sz), { alpha: Math.max(0, 1 - age2 * 2.2), fill: k % 3 === 0 ? GOLD : undefined, rot: dir + t * 3 });
+                }
+                const q = at(i, u), pp = 0.75 + 0.4 * Math.sin(Math.min(1, u * 2.5) * Math.PI / 2) - 0.15 * u, th = u * Math.PI * 3.5 + i, cs = Math.cos(th), sn = Math.sin(th), fw = 66 * pp * (0.14 + 0.86 * Math.abs(cs)), fh = 70 * pp;   // a coin turning about its upright axis
+                for (let m = 5; m >= 1; m--) TP(`wCe${i}_${m}`, 'bf_ic_coin', D(q.x - fw / 2 + Math.sign(cs || 1) * sn * 15 * pp * (m / 5), q.y - fh / 2, fw, fh), { alpha: 1, fill: DARK });   // its thickness: darker copies of the face stacked behind it, showing more of an edge the more the coin is turned
+                TP('wCf' + i, 'bf_ic_coin', D(q.x - fw / 2, q.y - fh / 2, fw, fh), { alpha: 1, flipX: cs < 0 });
+                if (Math.abs(cs) > 0.55) { const gs = 26 * pp * (Math.abs(cs) - 0.5); TP('wCg' + i, 'bf_star3d', D(q.x - fw * 0.22 - gs / 2, q.y - fh * 0.24 - gs / 2, gs, gs), { alpha: (Math.abs(cs) - 0.55) * 2.2 }); }   // a glint that flashes when the face turns to the light
             }
         }
         return;
@@ -340,28 +465,22 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         coinHeader();
         // laid out like the artist's Popup file: the blue body, the flat purple header, the picture across the full width, one line, then the two buttons
         // the shell, starfish, seaweed and bubbles behind the header, all drawn from the artist's pieces and moving a little (the seaweed sways from its root, the starfish and shell rock, the bubbles rise and fade)
-        const DEC: [number, number, number, number, number, string][] = [[35, 668, 217, 66, 70, 'b'], [34, 368, 188, 55, 59, 'b'], [33, 503, 138, 48, 47, 'b'], [28, 423, 227, 241, 222, 'c'], [27, 214, 315, 160, 153, 's'], [26, 798, 269, 179, 153, 's'], [25, 380, 260, 171, 253, 'w'], [24, 687, 315, 166, 153, 's'], [23, 113, 331, 184, 215, 'w'], [22, 271, 276, 184, 215, 'w'], [21, 806, 329, 120, 184, 'w'], [20, 648, 279, 120, 184, 'w'], [18, 548, 241, 136, 177, 'w']];
-        for (const [di, dx, dy, dw, dh, dk] of DEC) {
-            let ox = 0, oy = 0, rot = 0, al = 1;
-            if (dk === 'w') { rot = Math.sin(t * 1.6 + di * 1.7) * 0.07; const px = dx + dw / 2, py = dy + dh, cx = dx + dw / 2, cy = dy + dh / 2, rx = cx - px, ry = cy - py; ox = rx * Math.cos(rot) - ry * Math.sin(rot) - rx; oy = rx * Math.sin(rot) + ry * Math.cos(rot) - ry; }   /* the seaweed turns about its root */
-            else if (dk === 's') { rot = Math.sin(t * 1.1 + di) * 0.05; oy = Math.sin(t * 1.4 + di) * 2.5; }
-            else if (dk === 'c') { oy = Math.sin(t * 1.2) * 1.5; }
-            else { const u = ((t * 0.16 + di * 0.37) % 1); oy = -u * 70; ox = Math.sin(t * 2 + di) * 5; al = Math.min(1, u * 5, (1 - u) * 3); }   /* a bubble rises, sways and fades out, then comes again */
-            P.pic('bd' + di, 'bf_buy_d' + di, D(dx + ox, dy + oy, dw, dh), { alpha: al, rot } as { alpha?: number });
-        }
-        P.pic('bF', 'bf_buy_frame', D(50, 400, 981, 1085));   // the body, cut out of the artist's NET picture (the top rows, the flat sides and the bottom rows)
-        P.pic('bW', 'bf_buy_pic', D(70, 593, 940, 499));
-        P.pic('bSt', 'bf_fx_stars', D(318, 604, 444, 420), { alpha: 0.85 });   // the sparkles stand still, inside the picture
-        P.pic('bR', 'bf_buy_rib', D(50, 400, 981, 240));   // the ribbon with its light rim, drawn over the picture's top corners as in the artist's picture
-        text('bT', info.name, 540, 500, 600, TITLE, Math.min(96, fit(info.name, 600 - 9)));
-        const xr = D(906, 458, 120, 124); P.pic('bX', 'bf_btn_x', { ...xr, y: xr.y + (z.pressed === 'bX' ? 2 : 0) }); add('bX', xr, click('bBuyX'));
+        buyDeco();
+        // the same build as the Settings / Out of Space pop-ups: the frame (blue), the purple ribbon with its curved title, the red X, then the picture inside the frame
+        P.nine('bF', 'bf_pop_base_blue', D(58, 448, 965, 1047), [80, 80, 80, 80], { k: 0.9 * s });
+        P.pic('bR', 'bf_rib_purple', D(97, 390, 878, 222));
+        arcText('bT', info.name, 538, 492, Math.min(504, 56 * info.name.length), TITLE, 878, 42);
+        const xr = D(921, 454, 114, 120); P.pic('bX', 'bf_btn_x', { ...xr, y: xr.y + (z.pressed === 'bX' ? 2 : 0) }); add('bX', xr, click('bBuyX'));
+        P.pic('bW', 'bf_buy_pic', D(100, 645, 880, 467));
+        P.pic('bSt', 'bf_fx_stars', D(318, 668, 444, 420), { alpha: 0.85 });   // the sparkles stand still, inside the picture
         const iw = info.w * 1.3, ih = info.h * 1.3;   // the game's own booster picture (the same one as on the booster button), standing still
-        P.pic('bIc', info.ic.startsWith('nw_') ? info.ic : 'bf_' + info.ic, D(520 - iw / 2, 843 - ih / 2, iw, ih));
-        P.pic('bX3b', 'bf_badge_count', D(612, 860, 146, 166));   // the "x3" badge from the artist's popup file
-        text('bX3', 'x' + (bw?.pack ?? 3), 685, 935, 120, { fill: '#ffffff', stroke: '#6b3a00', sw: 9, sh: 4 }, 70);
-        text('bD', info.txt, 540, 1152, 780, WHITE, Math.min(62, fit(info.txt, 780 - 9)));
-        coinBtn('bBc', coinsNow() >= price ? 'green' : 'grey', D(125, 1212, 393, 180), String(price), click('bBuyCoin'), shakeAt);
-        wordBtn('bBa', 'orange', D(562, 1212, 393, 180), 'GET 1', click('bBuyAd')); P.pic('bAd', 'bf_ic_ad', D(872, 1174, 96, 104));
+        P.pic('bIc', info.ic.startsWith('nw_') ? info.ic : 'bf_' + info.ic, D(540 - iw / 2, 878 - ih / 2, iw, ih));
+        P.pic('bX3b', 'bf_badge_count', D(622, 895, 146, 166));   // the "x3" badge from the artist's popup file
+        text('bX3', 'x' + (bw?.pack ?? 3), 695, 970, 120, { fill: '#ffffff', stroke: '#6b3a00', sw: 9, sh: 4 }, 70);
+        text('bD', info.txt, 540, 1170, 780, WHITE, Math.min(62, fit(info.txt, 780 - 9)));
+        const bAdLeft = ((window as unknown as { __rvLeft?: (k: string) => number }).__rvLeft?.(kind) ?? 5);   // 5 ads a day for each booster: when they are used up only the coin button is left, in the middle
+        coinBtn('bBc', coinsNow() >= price ? 'green' : 'grey', D(bAdLeft > 0 ? 110 : 340, 1232, 400, 180), String(price), click('bBuyCoin'), shakeAt);
+        if (bAdLeft > 0) { wordBtn('bBa', 'orange', D(570, 1232, 400, 180), 'GET 1', click('bBuyAd')); P.pic('bAd', 'bf_ic_ad', D(880, 1194, 96, 104)); }
         return;
     }
 
@@ -421,7 +540,7 @@ export function paintSpotBF(L: Layer, c: Ctx) {
     const rel = (el: Element | null) => { const r = el ? el.getBoundingClientRect() : null; return r ? { x: r.left - c.o.left, y: r.top - c.o.top, w: r.width, h: r.height } : null; };
     let box = rel(document.getElementById('spotBox')), hole = box ? Math.min(parseFloat((document.getElementById('spotBox') as HTMLElement).style.borderRadius) || 20, box.w / 2, box.h / 2) : 0;
     const btn = booster && sel ? rel(document.querySelector(sel)) : null;
-    if (btn) { const d = Math.max(btn.w, btn.h) - 2; box = { x: btn.x + btn.w / 2 - d / 2, y: btn.y + btn.h / 2 - d / 2, w: d, h: d }; hole = d / 2; }   // a circle exactly round the button
+    if (btn) { const d = Math.max(btn.w, btn.h) * 1.32, dy = btn.h * 0.12; box = { x: btn.x + btn.w / 2 - d / 2, y: btn.y + btn.h / 2 - d / 2 + dy, w: d, h: d }; hole = d / 2; }   // a circle round the button, a little larger and lower so the Free tag / the count badge under it are inside the light
     g.fillStyle(0x040c1c, 0.82 * A);
     if (box) {
         g.fillRect(0, 0, c.w, Math.max(0, box.y)).fillRect(0, box.y + box.h, c.w, Math.max(0, c.h - box.y - box.h)).fillRect(0, box.y, Math.max(0, box.x), box.h).fillRect(box.x + box.w, box.y, Math.max(0, c.w - box.x - box.w), box.h);

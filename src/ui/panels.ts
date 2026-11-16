@@ -134,8 +134,14 @@ export function paintTools(L: Layer, c: Ctx) {
     const g = L.gt, t = c.scene.time.now / 1000, fade = (window as unknown as { __toolA?: number }).__toolA ?? 1;   // the boosters fade away while the camera is being moved and come back when it stops
     g.setAlpha(fade); L.gu.setAlpha(fade);
     if (fade < 0.02) return;
+    const BG = (window as unknown as { __bgive?: { kind: string; n: number; t0: number } }).__bgive, nowP = performance.now(), GAP = 230, HOLD = 650, FLY = 340, landAt = (i: number) => HOLD + i * GAP + FLY;   // a purchase: the boosters appear in the middle of the screen one after another and fly into their button
+    if (BG && nowP > BG.t0 + landAt(BG.n - 1) + 600) (window as unknown as { __bgive?: unknown }).__bgive = undefined;
+    if (BG && !c.scene.textures.exists('pn_glow')) { const gc = document.createElement('canvas'); gc.width = gc.height = 128; const gq = gc.getContext('2d')!; const gg = gq.createRadialGradient(64, 64, 0, 64, 64, 64); gg.addColorStop(0, 'rgba(255,248,200,1)'); gg.addColorStop(0.3, 'rgba(255,216,96,0.7)'); gg.addColorStop(0.65, 'rgba(255,170,30,0.22)'); gg.addColorStop(1, 'rgba(255,150,0,0)'); gq.fillStyle = gg; gq.fillRect(0, 0, 128, 128); c.scene.textures.addCanvas('pn_glow', gc);
+        const sc = document.createElement('canvas'); sc.width = sc.height = 96; const sq = sc.getContext('2d')!; sq.translate(48, 48); sq.beginPath(); for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, r = i % 2 ? 9 : 44; sq.lineTo(Math.cos(a - Math.PI / 2) * r, Math.sin(a - Math.PI / 2) * r); } sq.closePath(); const sg = sq.createRadialGradient(0, 0, 2, 0, 0, 44); sg.addColorStop(0, '#ffffff'); sg.addColorStop(1, '#bfe9ff'); sq.fillStyle = sg; sq.fill(); c.scene.textures.addCanvas('pn_star', sc); }
     for (const id of ['bHint', 'bTank', 'bClear']) {   // (the camera up / down buttons are gone: two-finger drag moves the view)
         const el = document.getElementById(id); if (!el) continue;
+        const kindOf = ({ bHint: 'hint', bTank: 'tank', bClear: 'clear' } as Record<string, string>)[id]; let kb = 1, pend = 0;   // kb: the button bounces as each booster lands; pend: boosters still in the air (not counted on the button yet)
+        if (BG && BG.kind === kindOf) { let landedN = 0; for (let i = 0; i < BG.n; i++) { const a = nowP - BG.t0 - landAt(i); if (a >= 0) { landedN++; const u = a / 360; if (u < 1) kb = Math.max(kb, 1 + 0.32 * Math.sin(Math.PI * u) * (1 - 0.35 * u)); } } pend = BG.n - landedN; }
         const lockLv = (el as HTMLElement).dataset.lockLv;
         if (lockLv && getComputedStyle(el).display !== 'none') {   // not unlocked yet: a grey button with a padlock and the level that opens it, nothing to tap
             const rl = rectOf(el, c.o); if (!rl || rl.w < 4) continue; const lx = rl.x + rl.w / 2, ly = rl.y + rl.h / 2, lr = rl.w / 2;
@@ -146,7 +152,7 @@ export function paintTools(L: Layer, c: Ctx) {
             c.hits.push(rl); continue;
         }
         const r = rectOf(el, c.o); if (!r || r.w < 4 || !shown(el)) continue;
-        const cx = r.x + r.w / 2, cy = r.y + r.h / 2, rad = r.w / 2, press = c.zones.pressed === id, dy = press ? 3 : 0, off = el.classList.contains('off');
+        const cx = r.x + r.w / 2, cy = r.y + r.h / 2, rad = (r.w / 2) * kb, press = c.zones.pressed === id, dy = press ? 3 : 0, off = el.classList.contains('off');
         const IC: Record<string, string> = { bHint: 'nw_ic_hint', bTank: 'nw_ic_net', bClear: 'nw_ic_back' }, shade = off ? 0.55 : 1;
         if (L.pic('bt' + id, 'nw_btn_round', { x: cx - rad, y: cy + dy - rad, w: rad * 2, h: rad * 2 }, { alpha: fade * shade })) {   // the painted round button and its icon (public/ui/new); drawn as before when the pictures are missing
             const isz = rad * 2 * 0.54; L.pic('bi' + id, IC[id], { x: cx - isz / 2, y: cy + dy - isz / 2, w: isz, h: isz }, { alpha: fade * shade });
@@ -160,17 +166,38 @@ export function paintTools(L: Layer, c: Ctx) {
         }
         const glow = el.classList.contains('glow');
         if (glow) { const k = 0.5 + 0.5 * Math.sin(t * 6); L.gu.lineStyle(4, T.amber, 0.6 + 0.4 * k).strokeCircle(cx, cy + dy, rad + 3 + 3 * k); }
-        { const bs = (el as HTMLElement).dataset.bst;   // what the booster holds: the green Free tag, a count, or a plus (tap it to buy more)
+        { const cnt0 = (parseInt((el as HTMLElement).dataset.cnt ?? '0') || 0) - pend; let bs = (el as HTMLElement).dataset.bst; if (pend > 0) bs = cnt0 > 0 ? 'n' : 'plus';   // what the booster holds: the green Free tag, a count, or a plus (tap it to buy more)
             if (bs === 'free') { const w = rad * 1.9, h = w * 0.5; L.pic('bfree' + id, 'bf_tag_free', { x: cx - w / 2, y: cy + dy + rad - h * 0.62, w, h }, { alpha: fade }); }
-            else if (bs === 'plus') { const w = rad * 0.78, h = w * 1.12; L.pic('bplus' + id, 'bf_ic_plus', { x: cx + rad * 0.52 - w / 2, y: cy + dy + rad * 0.62 - h / 2, w, h }, { alpha: fade }); }
+            else if (bs === 'plus') { const rr = rad * 0.46, w = rr * 1.5, h = w * 1.14, px = cx + rad * 0.76, py = cy + dy + rad * 0.74; L.pic('bplus' + id, 'bf_ic_plus', { x: px - w / 2, y: py - h / 2, w, h }, { alpha: fade }); /* the plus sits exactly where the red count badge sits */ }
             else if (bs === 'n') {   // the count: a red badge picture (a picture, so it lies ON TOP of the round button, not under its rim)
-                if (!c.scene.textures.exists('bf_badge_red')) { const cv = document.createElement('canvas'); cv.width = cv.height = 96; const q = cv.getContext('2d')!; q.translate(48, 48);
-                    q.fillStyle = '#c4222d'; q.beginPath(); q.arc(0, 3, 44, 0, Math.PI * 2); q.fill(); q.fillStyle = '#ffffff'; q.beginPath(); q.arc(0, 0, 44, 0, Math.PI * 2); q.fill();
-                    const gr = q.createRadialGradient(-8, -12, 4, 0, 0, 36); gr.addColorStop(0, '#ff9aa0'); gr.addColorStop(0.5, '#ff4a52'); gr.addColorStop(1, '#f01f2d'); q.fillStyle = gr; q.beginPath(); q.arc(0, 0, 36, 0, Math.PI * 2); q.fill();
-                    q.fillStyle = 'rgba(255,255,255,0.35)'; q.beginPath(); q.ellipse(-9, -17, 17, 8, -0.4, 0, Math.PI * 2); q.fill(); c.scene.textures.addCanvas('bf_badge_red', cv); }
-                const rr = rad * 0.42, bx = cx + rad * 0.66, by = cy + dy + rad * 0.68;
-                L.pic('bbd' + id, 'bf_badge_red', { x: bx - rr, y: by - rr, w: rr * 2, h: rr * 2 }, { alpha: fade });
-                L.text('bcnt' + id, bx, by + 0.5, (el as HTMLElement).dataset.cnt ?? '', { size: rr * 1.18, color: '#ffffff', stroke: '#c4222d', sw: 3, alpha: fade }); } }
+                if (!c.scene.textures.exists('bf_badge_red')) { const cv = document.createElement('canvas'); cv.width = cv.height = 128; const q = cv.getContext('2d')!; q.translate(64, 64);   // like the reference: a dark red outline, a thick white rim, a glossy red disc
+                    q.fillStyle = 'rgba(60,0,10,0.35)'; q.beginPath(); q.arc(0, 5, 58, 0, Math.PI * 2); q.fill();
+                    q.fillStyle = '#8a0f1d'; q.beginPath(); q.arc(0, 0, 58, 0, Math.PI * 2); q.fill();
+                    const wr = q.createLinearGradient(0, -54, 0, 54); wr.addColorStop(0, '#ffffff'); wr.addColorStop(1, '#e3e8f2'); q.fillStyle = wr; q.beginPath(); q.arc(0, 0, 54, 0, Math.PI * 2); q.fill();
+                    q.fillStyle = '#b3162a'; q.beginPath(); q.arc(0, 0, 41, 0, Math.PI * 2); q.fill();
+                    const gr = q.createLinearGradient(0, -40, 0, 40); gr.addColorStop(0, '#ff6a70'); gr.addColorStop(0.55, '#e8222f'); gr.addColorStop(1, '#c5121f'); q.fillStyle = gr; q.beginPath(); q.arc(0, 0, 38, 0, Math.PI * 2); q.fill();
+                    q.fillStyle = 'rgba(255,255,255,0.4)'; q.beginPath(); q.ellipse(-8, -22, 22, 9, -0.35, 0, Math.PI * 2); q.fill(); c.scene.textures.addCanvas('bf_badge_red', cv); }
+                const rr = rad * 0.46, bx = cx + rad * 0.76, by = cy + dy + rad * 0.74;
+                L.pic('bbd' + id, 'bf_badge_red', { x: bx - rr, y: by - rr * 1.05, w: rr * 2, h: rr * 2.114 }, { alpha: fade });
+                L.text('bcnt' + id, bx, by + 0.5, String(cnt0), { size: rr * 1.3, color: '#ffffff', stroke: '#2a0006', sw: 4, alpha: fade }); } }
+        if (BG && BG.kind === kindOf) for (let i = 0; i < BG.n; i++) {   // all the boosters come out of the pop-up at once and stand apart in the middle; then they jump down into the button one at a time
+            const el0 = nowP - BG.t0, lt = landAt(i), ease = (u: number) => u * u * (3 - 2 * u), ix = IC[id], big = c.w * 0.2, base = r.w * 0.54, sx = BG.n === 1 ? c.w / 2 : i === 0 ? c.w / 2 - c.w * 0.115 : i === 1 ? c.w / 2 + c.w * 0.115 : c.w / 2, sy = (c.h * 0.5) + (BG.n === 1 ? 0 : i === 2 ? -c.w * 0.1 : c.w * 0.07), fromX = c.w / 2, fromY = c.h * 0.5, key = `bg${id}${i}`;
+            if (el0 < 0 || el0 >= lt + 360) continue;
+            if (el0 < lt) {
+                let x = sx, y = sy, sz = big, al = 1, rot = 0, sw0 = 1, sh0 = 1; const dir = i % 2 ? 1 : -1, tt = nowP / 1000;
+                if (el0 < 450) { const u = el0 / 450, k2 = 1 + 2.70158 * Math.pow(u - 1, 3) + 1.70158 * Math.pow(u - 1, 2), e2 = 1 - Math.pow(1 - u, 3); x = fromX + (sx - fromX) * e2; y = fromY + (sy - fromY) * e2 - Math.sin(Math.PI * u) * 40; sz = big * Math.max(0.01, k2); al = Math.min(1, u * 5); rot = (1 - e2) * 0.9 * dir; sw0 = 1 - 0.18 * Math.sin(u * Math.PI); sh0 = 1 + 0.2 * Math.sin(u * Math.PI);   /* it spins in and stretches as it pops out */
+                    const hs = big * (1.3 + 0.9 * u); L.pic(key + 'h', 'pn_glow', { x: x - hs / 2, y: y - hs / 2, w: hs, h: hs }, { alpha: 0.8 * (1 - u * 0.4) });
+                    for (let k = 0; k < 6; k++) { const an = (k / 6) * Math.PI * 2 + i, d = big * (0.4 + 0.7 * u), ss = big * 0.22 * (1 - u * 0.6); L.pic(`${key}s${k}`, 'pn_star', { x: x + Math.cos(an) * d - ss / 2, y: y + Math.sin(an) * d - ss / 2, w: ss, h: ss }, { alpha: 1 - u, rot: an + u * 2 }); } }
+                const fs = BG.t0 + HOLD + i * GAP;
+                if (el0 >= 450 && nowP < fs) { const ant = Math.max(0, 1 - (fs - nowP) / 160); x = sx + Math.sin(tt * 2.4 + i * 1.3) * 7; y = sy + Math.sin(tt * 3.2 + i) * 7 + ant * 10; rot = Math.sin(tt * 3 + i) * 0.1 * (1 - ant); sw0 = 1 + 0.06 * Math.sin(tt * 6 + i) + ant * 0.16; sh0 = 1 - 0.06 * Math.sin(tt * 6 + i) - ant * 0.16;   /* it floats and breathes, and squashes a little before it jumps */ const hs = big * 1.5; L.pic(key + 'h', 'pn_glow', { x: x - hs / 2, y: y - hs / 2, w: hs, h: hs }, { alpha: 0.4 }); }   // waits where it stands
+                if (nowP >= fs) { const u0 = (nowP - fs) / FLY, u = ease(Math.min(1, u0)), q = (uu: number) => ({ x: sx + (cx - sx) * ease(uu), y: sy + (cy - sy) * ease(uu) - Math.sin(Math.PI * uu) * 90 }), pos = q(u0 > 1 ? 1 : u0); x = pos.x; y = pos.y; sz = big + (base - big) * u; const pk = Math.sin(Math.PI * Math.min(1, u0)); rot = dir * pk * 0.55 + dir * u * 0.0; sw0 = 1 - 0.14 * pk; sh0 = 1 + 0.22 * pk;   // the jump down: it stretches along the way and tilts
+                    for (let k = 8; k >= 1; k--) { const uu = Math.max(0, u0 - k * 0.04); if (uu <= 0) continue; const tp = q(uu), ts = sz * (1.05 - k * 0.07); L.pic(`${key}t${k}`, 'pn_glow', { x: tp.x - ts / 2, y: tp.y - ts / 2, w: ts, h: ts }, { alpha: 0.5 * (1 - k / 9) }); } }
+                L.pic(key, ix, { x: x - (sz * sw0) / 2, y: y - (sz * sh0) / 2, w: sz * sw0, h: sz * sh0 }, { alpha: al, rot });
+            } else {   // the landing: a flash and a ring of sparks at the button, in time with its bounce
+                const u = (el0 - lt) / 360, hs = r.w * (1.4 + 1.4 * u); L.pic(key + 'h', 'pn_glow', { x: cx - hs / 2, y: cy - hs / 2, w: hs, h: hs }, { alpha: 0.9 * (1 - u) });
+                for (let k = 0; k < 6; k++) { const an = (k / 6) * Math.PI * 2 + i, d = r.w * (0.5 + 0.7 * u), ss = r.w * 0.3 * (1 - u); L.pic(`${key}k${k}`, 'pn_star', { x: cx + Math.cos(an) * d - ss / 2, y: cy + Math.sin(an) * d - ss / 2, w: ss, h: ss }, { alpha: 1 - u, rot: an + u * 3 }); }
+            }
+        }
         const cnt = el.querySelector('.cnt'), cr = rectOf(cnt, c.o);
         if (cnt && cr && id === 'bClear') {
             plate(g, cr, 9, T.coral, { border: T.foam, bw: 2, gloss: T.coralL });

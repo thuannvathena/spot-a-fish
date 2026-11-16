@@ -81,13 +81,13 @@ export class Layer {
     }
 
     /** A preloaded picture stretched to a box (the painted UI pieces). Returns false when the texture is not there. */
-    pic(key: string, tex: string, r: R, o: { alpha?: number; rot?: number; flipX?: boolean; fill?: number } = {}) {
+    pic(key: string, tex: string, r: R, o: { alpha?: number; rot?: number; flipX?: boolean; fill?: number; mul?: number; dz?: number } = {}) {
         if (!this.scene.textures.exists(tex)) return false;
         let im = this.imgs.get(key);
         if (!im) { im = this.scene.add.image(0, 0, tex).setDepth(this.depth + 0.2); this.onNew(im); this.imgs.set(key, im); }
         if (im.texture.key !== tex) im.setTexture(tex);   // the same slot can show another picture (a switch that is on or off)
-        im.setPosition(r.x + r.w / 2, r.y + r.h / 2).setDisplaySize(r.w, r.h).setRotation(o.rot ?? 0).setFlip(!!o.flipX, false).setAlpha(o.alpha ?? 1).setVisible(true);
-        if (o.fill !== undefined) { im.setTint(o.fill); im.tintMode = Phaser.TintModes.FILL; } else { im.clearTint(); im.tintMode = Phaser.TintModes.MULTIPLY; }   // a flat white copy (the trail)
+        im.setDepth(this.depth + 0.2 + (o.dz ?? 0)).setPosition(r.x + r.w / 2, r.y + r.h / 2).setDisplaySize(r.w, r.h).setRotation(o.rot ?? 0).setFlip(!!o.flipX, false).setAlpha(o.alpha ?? 1).setVisible(true);
+        if (o.fill !== undefined) { im.setTint(o.fill); im.tintMode = Phaser.TintModes.FILL; } else if (o.mul !== undefined) { im.setTint(o.mul); im.tintMode = Phaser.TintModes.MULTIPLY; } else { im.clearTint(); im.tintMode = Phaser.TintModes.MULTIPLY; }   // a flat white copy (the trail)
         this.used.add('i' + key);
         return true;
     }

@@ -3,7 +3,7 @@
 //
 //   node game/tools/wr-tune-plan.mjs [--tol 3] [--runs 2500] [--rounds 30] [--dry]
 //
-// Knobs, in the order they make a level harder: colour copies of a target (only from level 11, at most 4, never more than the decoy species), then urchins and jellyfish
+// Knobs, in the order they make a level harder: colour copies of a target (only from level 11, at most 4, never more than the decoy species), then jellyfish
 // (not on levels 1-7, not on a level that introduces something, not on Easy levels before L40; at most 2 of each). To make a level easier the order is reversed.
 // A level that cannot reach its target inside these rules is listed at the end.
 import fs from 'fs';
@@ -21,8 +21,8 @@ const INTRO = new Set([3, 4, 7, 9, 11, 16, 21, 31]);   // levels that introduce 
 const decoySp = lv => lv.fishKeys.length - lv.goal;
 function step(lv, L, harder) {
   const obstOK = L >= 8 && !INTRO.has(L) && (lv.difficulty !== 'Easy' || L >= 40), lookMax = L < 11 ? 0 : Math.min(4, decoySp(lv));
-  if (harder) { if (lv.look < lookMax) { lv.look++; return true; } if (obstOK && lv.urchin < 2) { lv.urchin++; return true; } if (obstOK && lv.jelly < 2) { lv.jelly++; return true; } return false; }
-  if (lv.jelly > 0) { lv.jelly--; return true; } if (lv.urchin > 0) { lv.urchin--; return true; } if (lv.look > 0) { lv.look--; return true; } return false;
+  if (harder) { if (lv.look < lookMax) { lv.look++; return true; } if (obstOK && lv.jelly < 4) { lv.jelly++; return true; } return false; }
+  if (lv.jelly > 0) { lv.jelly--; return true; } if (lv.look > 0) { lv.look--; return true; } return false;
 }
 let result = [];
 for (let round = 1; round <= ROUNDS; round++) {
@@ -36,6 +36,6 @@ for (let round = 1; round <= ROUNDS; round++) {
   if (!changed) break;
 }
 if (!DRY) { fs.writeFileSync(JSONF, JSON.stringify(levels, null, 1)); console.log('levels.json written'); }
-fs.writeFileSync(here('../../tune-result.json'), JSON.stringify(result.map(x => ({ L: x.L, target: x.target, sim: +x.sim.toFixed(1), look: levels[x.L - 1].look, urchin: levels[x.L - 1].urchin, jelly: levels[x.L - 1].jelly })), null, 1));
+fs.writeFileSync(here('../../tune-result.json'), JSON.stringify(result.map(x => ({ L: x.L, target: x.target, sim: +x.sim.toFixed(1), look: levels[x.L - 1].look, jelly: levels[x.L - 1].jelly })), null, 1));
 const bad = result.filter(x => Math.abs(x.d) > TOL);
 console.log(bad.length ? `Cannot reach the target inside the rules (${bad.length}):\n` + bad.map(x => `  L${x.L}: sim ${x.sim.toFixed(1)}% vs target ${x.target}% (${x.d >= 0 ? '+' : ''}${x.d.toFixed(1)})`).join('\n') : 'All levels are within the tolerance.');

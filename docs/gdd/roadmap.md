@@ -4,7 +4,7 @@
 
 - 15 playable levels, 5 themes, 23 3D fish models, 3D tank with glass and water lens.
 - Backup, Hint, Clear Backup, combo, stars, bounty tanks.
-- Obstacles (urchin, jellyfish, squid, clam, swarm), random events, feeding bucket, pump tube.
+- Obstacles (jellyfish, squid, clam, swarm), random events, feeding bucket, pump tube.
 - Collision between fish, obstacles, decorations and tube.
 - Progress saved in `localStorage`, Pause menu with Reset progress.
 - Painted UI (label plates, progress tube, tanks), combo words and hint arrow, 3D tap wave, glass-break and water-on-glass lose sequence.
@@ -27,7 +27,7 @@ Order of priority. Milestones are scope buckets, not dates.
 | Item | Chapter |
 |---|---|
 | Artist delivers 2 clips and 5 expressions, then integrate in game | [Art and audio](./art-audio#a-3-animation-and-expressions-wanted-from-the-artist) |
-| Real models for urchin, jellyfish, squid, clam, pearl, bucket; decoration sets | [Art and audio](./art-audio#a-4-other-art-to-consider) |
+| Real models for jellyfish, squid, clam, pearl, bucket; decoration sets | [Art and audio](./art-audio#a-4-other-art-to-consider) |
 | Real SFX set, background music, new sounds for missing events | [Art and audio](./art-audio#a-5-audio) |
 | Official UI kit, icon, store art | [Art and audio](./art-audio#a-4-other-art-to-consider) |
 

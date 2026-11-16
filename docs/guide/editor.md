@@ -29,7 +29,7 @@ Fishy Find levels are **parameter sets, not hand-placed layouts**. Fish position
 | Fish | `decoyFish` | Decoy fish | Extra non-target fish |
 | Fish | `look` | Look-alike level | 0, 1, 2 (how close decoys are to targets) |
 | Fish | `sizeK`, `speedK` | Fish size, Fish speed | Multipliers |
-| Obstacles | `urchin`, `jelly`, `squid`, `clam`, `swarm` | Obstacles | Counts; swarm is on/off |
+| Obstacles | `jelly`, `squid`, `clam`, `swarm` | Obstacles | Counts; swarm is on/off |
 | Pump tube | `tube.enabled` | Tube | On/off |
 | Pump tube | `tube.extraFish` | Extra fish | Fish waiting in the tube |
 | Pump tube | `tube.waves[]` | Waves | Each wave: `afterTanks` (pump after N target tanks are done) and `holdLast` (keep the last fish of a tank) |

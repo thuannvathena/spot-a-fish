@@ -8,7 +8,7 @@ seen=set(); newf={}
 for i,l in enumerate(L,1):
     ks=[k.replace('fish_','').replace('_',' ') for k in l['fishKeys']]; newf[i]=[k for k in ks if k not in seen]; seen|=set(ks)
 f2=next(i for i,l in enumerate(L,1) if max(l['tanks'])==2); f3=next(i for i,l in enumerate(L,1) if max(l['tanks'])==3)
-fu=next(i for i,l in enumerate(L,1) if l['urchin']>0); fj=next(i for i,l in enumerate(L,1) if l['jelly']>0)
+fj=next(i for i,l in enumerate(L,1) if l['jelly']>0)
 def notes(i,l):
     n=[]
     if i==1: n.append('Tutorial: camera guide (rotate, zoom, tilt) and "Tap a fish". Only target fish, no wrong fish')
@@ -27,7 +27,6 @@ def notes(i,l):
     elif i in (11,21,31,41,51): n.append('Tank shape: '+shape(i)+' + new theme')
     if i==f2: n.append('Fish per tank: 2 appears')
     if i==f3: n.append('Fish per tank: 3 appears')
-    if i==fu: n.append('First sea urchin')
     if i==fj: n.append('First jellyfish')
     if i==1: n.append('Colour noise: none in levels 1-10 (wrong fish look different from the targets)')
     if i==11: n.append('Colour noise starts: 1 colour copy of a target')
@@ -39,11 +38,11 @@ def notes(i,l):
     if nf: n.append('New fish: '+', '.join(nf))
     return n
 BG={'Easy':'#93c47d','Medium':'#f6b26b','Hard':'#e06666','Very Hard':'#ff0000'}
-hdr=["Difficulty","Level","Status","Feature/Note","Winrate (est)","est. Playtime (s)","Total Target Fish","Total Target Type","Total Type","Total Tanks","Start Fish","Pump","urchin","jelly","Squid","Shell","Fish Swarm","est time per tap (s)","Total Fish (with pump)","Decoy Fish","Colour copies","Pump waves","Bounty","Tank shape","Theme #","New fish"]
+hdr=["Difficulty","Level","Status","Feature/Note","Winrate (est)","est. Playtime (s)","Total Target Fish","Total Target Type","Total Type","Total Tanks","Start Fish","Pump","jelly","Squid","Shell","Fish Swarm","est time per tap (s)","Total Fish (with pump)","Decoy Fish","Colour copies","Pump waves","Bounty","Tank shape","Theme #","New fish"]
 rows=[]
 for i,l in enumerate(L,1):
     t=l['tanks']; n=len(t); pump=l['tube']['extraFish'] if l['tube']['enabled'] else 0; waves=len(l['tube']['waves']) if l['tube']['enabled'] else 0
-    rows.append([l['difficulty'],i,'W.I.P','\n'.join('• '+x for x in notes(i,l)),f"{wr[i]['sim']:.0f}%",sum(t)*5,sum(t),n,len(l['fishKeys'])+l['look'],n,l['startFish'],pump or '',l['urchin'] or '',l['jelly'] or '',l['squid'] or '',l['clam'] or '',1 if l['swarm'] else '',5 if i==1 else '',l['maxFish'],l['decoyFish'],l['look'] or '',waves or '',', '.join(l['bounty']),shape(i),l['theme']+1,', '.join(k+(' (decoy only)' if k in ('sea horse','shark','whale') else '') for k in newf[i])])
+    rows.append([l['difficulty'],i,'W.I.P','\n'.join('• '+x for x in notes(i,l)),f"{wr[i]['sim']:.0f}%",sum(t)*5,sum(t),n,len(l['fishKeys'])+l['look'],n,l['startFish'],pump or '',l['jelly'] or '',l['squid'] or '',l['clam'] or '',1 if l['swarm'] else '',5 if i==1 else '',l['maxFish'],l['decoyFish'],l['look'] or '',waves or '',', '.join(l['bounty']),shape(i),l['theme']+1,', '.join(k+(' (decoy only)' if k in ('sea horse','shark','whale') else '') for k in newf[i])])
 fix={11:lambda i:i<16,14:lambda i:i<11,15:lambda i:i<21,16:lambda i:i<31}   # Pump, Squid, Shell, Fish Swarm: black while the feature does not exist yet
 def td(v,bg='#ffffff',fg=None,bold=False,center=True):
     st=['background-color:'+bg]

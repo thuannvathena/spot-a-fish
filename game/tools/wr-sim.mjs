@@ -45,7 +45,7 @@ export function playOnce(lv, r, errScale) {
   const la = Array(k).fill(0);   // look-alike fish of each target species (a look-alike species is a decoy species that copies a target)
   const laOwner = shuffle(order.slice(), r).slice(0, lookSp); laOwner.forEach((s, i) => { la[s] = decoy[i]; });
   const camo = bKinds.indexOf('camo'); if (camo >= 0) la[bIdx[camo]] += 8;
-  let junk = { urchin: lv.urchin, jelly: lv.jelly, squid: lv.squid }, clam = lv.clam;
+  let junk = { jelly: lv.jelly, squid: lv.squid }, clam = lv.clam;
   const backup = []; // entries: {t: species | -1 for decoy | -2 junk, n: slots}
   let active = [null, null], qi = 0, done = 0, time = 0, wi = 0, tubeBusy = 0, lastWave = -99, dueAt = -1;
   const slots = () => backup.reduce((a, b) => a + b.n, 0);
@@ -71,9 +71,9 @@ export function playOnce(lv, r, errScale) {
     const vis = active.filter(a => a && a.got < need[a.s] && inTank[a.s] > 0);
     if (!vis.length) { time += 2.5 + 3; if (!waves.length || wi >= waves.length) { if (!active.some(a => a && a.got < need[a.s] && (inTank[a.s] > 0))) { for (const a of active) if (a && a.got < need[a.s] && inTank[a.s] === 0) { const b = backup.find(x => x.t === a.s); if (!b) inTank[a.s] = 1; } } } continue; }
     // how hard is this tap?
-    const F = tankFish() + junk.urchin + junk.jelly + junk.squid + clam, crowd = (F / FISH_CAP) ** 2, a0 = vis[(r() * vis.length) | 0], neededFish = vis.reduce((n, a) => n + inTank[a.s], 0);
+    const F = tankFish() + junk.jelly + junk.squid + clam, crowd = (F / FISH_CAP) ** 2, a0 = vis[(r() * vis.length) | 0], neededFish = vis.reduce((n, a) => n + inTank[a.s], 0);
     const lookN = vis.reduce((n, a) => n + la[a.s], 0), lookQ = Math.min(1.5, lookN / Math.max(1, neededFish));
-    const obst = (junk.urchin + junk.jelly + junk.squid + clam) / 8;
+    const obst = (junk.jelly + junk.squid + clam) / 8;
     let p = skill * errScale * ERR.scale * (ERR.base + ERR.crowd * crowd + ERR.look * lookQ + ERR.obst * obst);
     if (junk.squid && ((time % 16) < 4)) p *= ERR.ink;
     const sw = inSwarm(time); if (sw) { if (r() < ERR.swarmWait) { time += sw; continue; } p *= ERR.swarmTap; }
@@ -82,9 +82,9 @@ export function playOnce(lv, r, errScale) {
     time += 3 + 2.5 * crowd + 1.5 * lookQ;
     if (r() >= p) { inTank[a0.s]--; a0.got++; if (a0.got >= need[a0.s]) finish(active.indexOf(a0)); continue; }
     // a wrong tap: look-alike of a needed fish (confusion), an obstacle, a decoy or a target that is not wanted yet
-    const wOb = (junk.urchin + junk.jelly + junk.squid) * 0.5, wLA = lookN * 1.5, others = tankFish() - neededFish - lookN, wT = others > 0 ? others : 0, tot = wOb + wLA + wT;
+    const wOb = (junk.jelly + junk.squid) * 0.5, wLA = lookN * 1.5, others = tankFish() - neededFish - lookN, wT = others > 0 ? others : 0, tot = wOb + wLA + wT;
     if (tot <= 0) continue; let x = r() * tot;
-    if (x < wOb) { const kinds = ['urchin', 'jelly', 'squid'].filter(n => junk[n] > 0), kd = kinds[(r() * kinds.length) | 0]; backup.push({ t: -2, n: kd === 'squid' ? 3 : 1 }); }   // an obstacle stays in the Backup (squid takes 3 slots)
+    if (x < wOb) { const kinds = ['jelly', 'squid'].filter(n => junk[n] > 0), kd = kinds[(r() * kinds.length) | 0]; backup.push({ t: -2, n: kd === 'squid' ? 3 : 1 }); }   // an obstacle stays in the Backup (squid takes 3 slots)
     else if (x < wOb + wLA) { const cand = vis.filter(a => la[a.s] > 0); const a = cand[(r() * cand.length) | 0] || vis[0]; la[a.s]--; backup.push({ t: -1, n: 1 }); }
     else { const pool = []; inTank.forEach((n, s) => { if (n > 0 && !active.some(a => a && a.s === s && a.got < need[a.s])) pool.push([s, n]); }); const dsum = decoy.reduce((a, b) => a + b, 0), tsum = pool.reduce((a, b) => a + b[1], 0), pick = r() * (dsum + tsum);
       if (pick < dsum) { let c = pick, i = 0; while (i < decoySp - 1 && c >= decoy[i]) { c -= decoy[i]; i++; } if (decoy[i] > 0) decoy[i]--; backup.push({ t: -1, n: 1 }); }

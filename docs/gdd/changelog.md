@@ -7,12 +7,22 @@ Every published version stays playable at its own URL. The [landing page](https:
 Changes since v0.5.1. Not published as a demo yet; ads are not connected (the ad buttons grant the reward at once).
 
 - **Coins:** the player starts with 900; a win pays by difficulty (30 / 60 / 90); prices Hint 300, Clear Backup 900, Clear Tank 1500 (3 per pack); Play on costs 900. The coin pill shows only in Play on, the win screen and the purchase pop-up, with a count-up on gain and falling coins on spend.
+- **First Play on is FREE:** the pop-up shows one green "FREE" button (no price, no ad button) until the player has used that free one; from the second Play on it is 900 coins or an ad. The Out of space pop-up also got the Purchase pop-up's seaweed, shell and bubbles, the fish centred on the header, and a Backup tank whose water moves like the one in the game.
+- **Drag to turn:** the view turns only after the finger has moved 18 px, so a light tap no longer nudges it.
+- **Coin counter juice:** every coin that lands lights the pill with a golden glow, sends a ring and sparkles out of the coin icon; spending flashes the pill red, throws five real spinning coins with a golden trail out of the icon.
+- **Water when a fish lands (win and play):** the flat additive ring is gone; the surface itself now dips at the impact, rings outwards and slowly settles (8 ripples at a time instead of 4, so ten fish landing together all show), and the whole water rocks a little.
+- **Well Done waits for the player:** the screen no longer closes by itself after 60 s; it only goes on to the next level once the coins are taken (the timer stays as a safety net when the pop-up never opened).
+- **Win: the fish fall INTO the tank:** a fish thrown out of the burst was still drawn with the depth test off (as while it circled the bubble), so the glass and the far rim, drawn after it, covered it and it looked as if it fell behind the tank. The depth test is back on as it leaves the bubble. Its landing spot is also kept inside the wall of the current shape (heart, flower, box...), and it slides over its spot above the rim and then drops straight down.
+- **Well Done confetti:** the pieces are now the artist's curled-paper sheet (`Added Assets/Win Anim`, "confetti 6", 16 frames, copied to `public/ui/confetti6.png`); each piece flips through the frames as it falls, tinted by multiply so the paper shading stays (before, a flat fill tint made every piece a single flat colour). A few glossy dots remain.
+- **4 new sounds:** `sfx_coin_spend_earn` when the coins drain on a booster purchase; `sfx_booster_earn` once when the bought boosters appear in the middle; `sfx_booster_fly` as each booster lands on its button; `sfx_coin_fly` as each coin lands in the coin counter on the Well Done screen. (Converted to `public/sfx/*.m4a`.)
 - **Boosters:** one free use at their introduction, then 3 per pack; a count badge (red) or a Free tag on each button; a purchase pop-up (coins for 3, or an ad for 1) built like the artist's NET picture.
-- **Play on with coins** or by ad in the Out of space pop-up (taller now, so the ad icon no longer touches the panel).
+- **Play on** with coins (no limit per level) or by ad (at most 5 a day) in the Out of space pop-up (taller now, so the ad icon no longer touches the panel).
 - **Well Done win screen:** LEVEL COMPLETE docks to the top, the screen dims, a standing tank with the next feature floating inside fills with colour, a progress bar and UNLOCKED, x2 reward and coin buttons, coins fly. With no feature left the fish swims and the bar shows "Coming Soon".
 - **Water:** the target tanks and the Backup use the lighter cartoon water palette from the artist feedback.
 - **Praise words** (nice / great / super / wow) regenerated as text only, same style; the bubbles and sparkles that came with them are off.
 - **Purchase pop-up:** the game's own booster icons, the x3 badge and the pieces from the artist's popup file, a new rendered-3D background, the shell / starfish / seaweed / bubbles above it move gently.
+- **Design note (not built):** interstitial ads start at Level 15, with a spacing of 120 s (see [Rules 3.11](./rules#_3-11-coins-boosters-and-ads)).
+- **The sea urchin is out of the game:** where a level had one, a jellyfish takes its place (same number of obstacles); the urchin is gone from the level table, the editor, the tools and the docs.
 - **Decor export for the artist** (`Decor Export for Artist/`) is kept out of the repository for now.
 
 ## v0.5.1 <Badge type="tip" text="Live" />
