@@ -141,6 +141,14 @@ function hideOverflowDecor() {   /* last step of the layout: a decor piece that 
     if (worst > 0) m.visible = false; }
   tank.scale.copy(s0); tank.position.copy(p0); tank.updateMatrixWorld(true);
 }
+const decorModels = {};
+function loadDecorModel(dir) {   /* an artist's decor model (public/models/<dir>/model.fbx + tex.png), loaded once: scaled to a height of 1, standing on y = 0, centred; lit by its own texture so the water does not wash it out */
+  if (decorModels[dir]) return decorModels[dir];
+  return decorModels[dir] = (async () => { try { const base = document.baseURI, [obj, tex] = await Promise.all([new FBXLoader().loadAsync(new URL('models/' + dir + '/model.fbx', base).href), new THREE.TextureLoader().loadAsync(new URL('models/' + dir + '/tex.png', base).href)]);
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4; const mt = new THREE.MeshLambertMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: .5, fog: false, side: THREE.DoubleSide }); obj.traverse(m => { if (m.isMesh) { m.material = mt; smoothNormals(m.geometry); } });
+    const bb = new THREE.Box3().setFromObject(obj), sz = bb.getSize(new THREE.Vector3()); obj.scale.setScalar(1 / Math.max(sz.y, 1e-3)); const b2 = new THREE.Box3().setFromObject(obj); obj.position.set(-(b2.min.x + b2.max.x) / 2, -b2.min.y, -(b2.min.z + b2.max.z) / 2); const w = new THREE.Group(); w.add(obj); return w;
+  } catch (e) { console.warn(dir + ' not loaded', e); return null; } })();
+}
 function replaceDecor() {   // every decor piece keeps its polar place (radius, angle) and is set down again inside the new shape
   const Y = new THREE.Vector3(0, 1, 0);
   for (const g of themeG) { g.userData.cols = null; for (const m of g.children) { const pl = m.userData.pl; if (pl) { const r = pl[0] * shK(Math.cos(pl[1]), Math.sin(pl[1]), pl[2]); m.position.x = Math.cos(pl[1]) * r; m.position.z = Math.sin(pl[1]) * r; } }
@@ -1192,11 +1200,12 @@ const THEME_N = 5, themeG = [], themeEmit = [];
   cur = themeG[1];
   addRocks(8, [0x6a7a98, 0x7a6a98, 0x5a8a98]); addKelp(7, 1.1, 2.2, [0x2a9e6a, 0x1f8a5a]); addFans(2, [0xff9a3c, 0xff6a8a]); addStars(3); addCorals(2, [0x3ce0c4, 0xb05cff]);
   archOf(0xf0dcb4, 2.5, 1.2); archOf(0xd8e0f0, 5.6, .95);
-  for (let k = 0; k < 4; k++) { const g = new THREE.Group(), m = mat(0xeee6d4, .15, { shininess: 15 }), h = rand(.7, 1.5); const c = new THREE.Mesh(new THREE.CylinderGeometry(.17, .2, h, 10), m); c.position.y = h / 2; g.add(c);
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(.5, .1, .5), m); cap.position.y = h + .05; if (k < 3) g.add(cap); const base = new THREE.Mesh(new THREE.BoxGeometry(.5, .1, .5), m); base.position.y = .05; g.add(base); place(g, rand(1.6, 2.3), 0.4 + k * 1.4 + rand(-.2, .2)); if (k === 3) { g.rotation.z = 1.35; g.position.y = FLOOR_Y + .2; } }
-  { const g = new THREE.Group(), m = mat(0xc8d2dc, .2, { shininess: 20 }); const head = new THREE.Mesh(new THREE.IcosahedronGeometry(.5, 1), m); head.scale.set(.9, 1.2, .85); head.position.y = .62; g.add(head);
-    const eye = mat(0x0a2a50, 0); for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.09, 8, 6), eye); e.position.set(s * .17, .78, .38); g.add(e); } const nose = new THREE.Mesh(new THREE.BoxGeometry(.1, .3, .12), m); nose.position.set(0, .62, .45); g.add(nose);
-    const mouth = new THREE.Mesh(new THREE.BoxGeometry(.3, .05, .06), eye); mouth.position.set(0, .4, .42); g.add(mouth); const a = 3.9; place(g, 1.7, a); faceCenter(g, a); }
+  /* the stone pillars of the ruins are the artist's Stone_pillar (public/models/stone_pillar): 3 stand and 1 has fallen over; the stone head is the artist's Stone_statue (public/models/stone_statue), its carved face turned to the middle of the tank. They take their places at once and fill in when the models have loaded. */
+  for (let k = 0; k < 4; k++) { const g = new THREE.Group(), h = rand(.62, .95); place(g, rand(1.6, 2.3), 0.4 + k * 1.4 + rand(-.2, .2)); g.userData.pl2 = true;   /* (the artist's Stone_pillar is a short carved drum about as wide as it is tall, carved all the way round: so h is its size, and which way it faces does not matter) */ if (k === 3) { g.rotation.z = 1.35; g.position.y = FLOOR_Y + .2; }
+    loadDecorModel('stone_pillar').then(tpl => { if (!tpl) return; const o = tpl.clone(true); o.scale.setScalar(h); g.add(o); replaceDecor(); clearPotZone(); }); }
+  { const g = new THREE.Group(), a = 3.9; place(g, 1.7, a); faceCenter(g, a); g.userData.pl2 = true;   /* the carved face is on the model's +z side: faceCenter turns that side to the middle of the tank (never out to the glass) */
+    loadDecorModel('stone_statue').then(tpl => { if (!tpl) return; const o = tpl.clone(true); o.scale.setScalar(1.25); g.add(o); replaceDecor(); clearPotZone(); }); }
+
   { const g = new THREE.Group(), m = mat(0xe4d8bc, .15, { shininess: 15 }); for (let s = 0; s < 3; s++) { const st = new THREE.Mesh(new THREE.BoxGeometry(1.5 - s * .3, .12, .9 - s * .15), m); st.position.y = .06 + s * .12; g.add(st); } const a = 1.3; place(g, 1.7, a); faceCenter(g, a); }
 
   // ===== 2: shipwreck =====
@@ -2406,8 +2415,8 @@ function buildHand() {   // (kept under its old name) a cartoon food pail with a
     heap.add(im); }
   g.userData = { body, heap }; return g;
 }
-const feed = { mesh: null, hand: null, N: 48, pel: [], on: false, c: new THREE.Vector3(), t: 0, hx: 0, hz: 0, cd: 0 }, FEED_MAX = 22, EAT_GAP = .27, SURF = WATER_Y + .02;
-const HAND_Y = WATER_Y + .35, FEED_IN = .9, FEED_REL = 1.8, FEED_OUT = FEED_IN + FEED_REL + .5, PAIL_S = 1.05, PAIL_LIP = new THREE.Vector2(-.38, .33), PAIL_Y = WATER_Y + .15;
+const feed = { mesh: null, hand: null, N: 36, pel: [], on: false, c: new THREE.Vector3(), t: 0, hx: 0, hz: 0, cd: 0 }, FEED_MAX = 10.5, EAT_GAP = .2, SURF = WATER_Y + .02;
+const HAND_Y = WATER_Y + .35, FEED_IN = .8, FEED_REL = 1.4, FEED_OUT = FEED_IN + FEED_REL + .5, PAIL_S = 1.05, PAIL_LIP = new THREE.Vector2(-.38, .33), PAIL_Y = WATER_Y + .15;
 function feedInit() {
   if (feed.mesh) return; const fg = new THREE.SphereGeometry(.056, 16, 12); fg.scale(1, .66, 1);   // a rounded, slightly flattened pellet with smooth shading
   feed.mesh = new THREE.InstancedMesh(fg, new THREE.MeshStandardMaterial({ color: 0xffffff, fog: false, roughness: .22, metalness: .02, emissive: 0x4a2208, emissiveIntensity: .3 }), feed.N);
@@ -2449,11 +2458,11 @@ function feedUpdate(dt) {
         const rr = Math.hypot(p.x, p.z), lim = R - .45; if (rr > lim) { p.x *= lim / rr; p.z *= lim / rr; } p.y = SURF + .012 * Math.sin(feed.t * 3 + p.ph); for (const q of feed.pel) { if (q === p || !q.out || q.dead || q.y > SURF + .05) continue; const dx = p.x - q.x, dz = p.z - q.z, d2 = dx * dx + dz * dz; if (d2 < .09 && d2 > 1e-6) { const d = Math.sqrt(d2), f = (.3 - d) * 1.6 * dt / d; p.x += dx * f; p.z += dz * f; } }   // flakes keep a little room between them
         p.rx *= Math.exp(-dt * 6); p.rz *= Math.exp(-dt * 6); p.rx += Math.sin(feed.t * 2.2 + p.ph) * .004; p.ph += dt * .3;
         for (const o of G.things) { if (o.kind !== 'fish' || !o.alive || o.locked) continue; const dx = o.pos.x - p.x, dy = o.pos.y - p.y, dz = o.pos.z - p.z; if (dx * dx + dz * dz + dy * dy * .5 < .3) { p.eat += dt; break; } }
-        if (p.eat > .8 && feed.cd <= 0) { p.dead = true; feed.cd = EAT_GAP; burstFx.emit(_p3.set(p.x, WATER_Y - .05, p.z), 0xffd36a, 4, .6); addRipple(p.x, p.z, .025); }
+        if (p.eat > .6 && feed.cd <= 0) { p.dead = true; feed.cd = EAT_GAP; burstFx.emit(_p3.set(p.x, WATER_Y - .05, p.z), 0xffd36a, 4, .6); addRipple(p.x, p.z, .025); }
       }
       if (!p.dead) { live++; sx += p.x; sz += p.z; }
     }
-    _s3.setScalar(p.dead ? 0 : p.k); _eul.set(p.rx, p.ph, p.rz); _qf.setFromEuler(_eul); _m4.compose(_p3.set(p.x, p.y, p.z), _qf, _s3); feed.mesh.setMatrixAt(i, _m4);
+    _s3.setScalar(p.dead ? 0 : p.k * clamp(FEED_MAX - feed.t, 0, 1));   /* the last second: what is left shrinks away instead of vanishing at once */ _eul.set(p.rx, p.ph, p.rz); _qf.setFromEuler(_eul); _m4.compose(_p3.set(p.x, p.y, p.z), _qf, _s3); feed.mesh.setMatrixAt(i, _m4);
   });
   feed.mesh.instanceMatrix.needsUpdate = true;
   if (live) feed.c.set(sx / live, WATER_Y - .5, sz / live); else if (left) feed.c.set(feed.hx, WATER_Y - .5, feed.hz);
@@ -2510,9 +2519,9 @@ let evItem = null; function evItemClear() { if (evItem) { fishRoot.remove(evItem
 function evStart(kind) {
   const L = G.level, N = G.things.filter(evOk).length; let m = [], d = 7, st = {};
   const pairsOf = n => { const r = []; for (let i = 0; i < n; i++) { const a = evFish(1).filter(x => !m.includes(x))[0]; if (!a) break; const b = evFish(12, a.pos).find(x => x !== a && !m.includes(x)); if (!b) break; m.push(a, b); r.push({ flip: 0, cd: 0 }); } return r; };
-  if (kind === 'squabble') { st.pr = pairsOf(Math.min(4, 2 + (N / 22 | 0))); st.pr.forEach((pr, i) => { const a = m[i * 2], b = m[i * 2 + 1]; pr.c = a.pos.clone().add(b.pos).multiplyScalar(.5).clampLength(0, RF * .55); pr.c.y = clamp(pr.c.y, FLOOR_Y + 1, WATER_Y - 1); pr.th = rand(0, 6.28); pr.ph = rand(0, 6.28); pr.v = new THREE.Vector3(rand(-.25, .25), 0, rand(-.25, .25)); }); d = rand(6, 8); }
+  if (kind === 'squabble') { st.pr = pairsOf(Math.min(4, 2 + (N / 22 | 0))); st.pr.forEach((pr, i) => { const a = m[i * 2], b = m[i * 2 + 1]; pr.c = a.pos.clone().add(b.pos).multiplyScalar(.5).clampLength(0, RF * .55); pr.c.y = clamp(pr.c.y, FLOOR_Y + 1, WATER_Y - 1); pr.th = rand(0, 6.28); pr.ph = rand(0, 6.28); pr.v = new THREE.Vector3(rand(-.25, .25), 0, rand(-.25, .25)); }); d = rand(6.5, 7.5); }
   else if (kind === 'conga') {   /* a long line that snakes through the tank on one big smooth path: each fish has a slot on the path (the place the leader was a moment ago), so the spacing is even and every nose points along the line */
-    const n = Math.min(10, 7 + (L >> 2)); st.dly = .9; d = rand(22, 26); const mk = () => ({ th0: rand(0, 6.283), sgn: Math.random() < .5 ? 1 : -1, ph: [rand(0, 6.28), rand(0, 6.28), rand(0, 6.28)] });
+    const n = Math.min(10, 7 + (L >> 2)); st.dly = .9; d = rand(14, 16); const mk = () => ({ th0: rand(0, 6.283), sgn: Math.random() < .5 ? 1 : -1, ph: [rand(0, 6.28), rand(0, 6.28), rand(0, 6.28)] });
     st.P = (u, out) => { const th = st.th0 + st.sgn * .62 * u, r = RF * (.7 + .13 * Math.sin(.28 * u + st.ph[0])) + .3 * Math.sin(1.25 * u + st.ph[2]), y = (FLOOR_Y + WATER_Y) / 2 + .95 * Math.sin(.43 * u + st.ph[1]) + .25 * Math.sin(1.3 * u); out.set(Math.cos(th) * r, y, Math.sin(th) * r); clampXZ(out, RF * .92); out.y = clamp(out.y, FLOOR_Y + .7, WATER_Y - .6); return out; };
     { const boxes = themeBoxes(curTheme), pt = new THREE.Vector3(); let best = null;   /* of several paths take the one that runs clear of the decor (a line pushed out of a rock broke up) */
       for (let c = 0; c < 14; c++) { const cand = mk(); Object.assign(st, cand); let hits = 0; for (let u = -n * st.dly; u < d - 2; u += .4) { st.P(u, pt); for (const b of boxes) if (b.min.y < 4.2 && pt.x > b.min.x - .55 && pt.x < b.max.x + .55 && pt.y > b.min.y - .55 && pt.y < b.max.y + .55 && pt.z > b.min.z - .55 && pt.z < b.max.z + .55) { hits++; break; } } if (!best || hits < best.hits) best = { hits, cand }; if (hits === 0) break; }
@@ -2520,8 +2529,8 @@ function evStart(kind) {
     const pool = evFish(40).slice(0, Math.max(n, 6)), slot = new THREE.Vector3(); m = [];
     for (let i = 0; i < n && pool.length; i++) { st.P(-i * st.dly, slot); let bi = 0; pool.forEach((o, k) => { if (o.pos.distanceTo(slot) < pool[bi].pos.distanceTo(slot)) bi = k; }); m.push(pool.splice(bi, 1)[0]); }   /* the fish nearest to each slot takes it, so they hardly have to cross the tank to join the line */
   }
-  else if (kind === 'swirl') { m = evFish(Math.min(44, 12 + L * 3)); m = m.concat(evObsPick(m)); st.ang = rand(0, 6.28); st.dir = Math.random() < .5 ? 1 : -1; d = rand(9, 11); st.my = (FLOOR_Y + WATER_Y) / 2 + .1; d = rand(13, 15); }   /* the wheel sits in the middle of the room it has: as high as it can go without touching the surface or the sand */
-  else if (kind === 'waltz') { st.pr = pairsOf(Math.min(4, 2 + (N / 25 | 0))); st.c = []; for (let i = 0; i < m.length; i += 2) { const c = m[i].pos.clone().add(m[i + 1].pos).multiplyScalar(.5).clampLength(0, RF * .6); c.y = clamp(c.y, FLOOR_Y + 1, WATER_Y - 1); st.c.push(c); } st.th = 0; st.ph = rand(0, 6.28); d = rand(13, 15); }
+  else if (kind === 'swirl') { m = evFish(Math.min(44, 12 + L * 3)); m = m.concat(evObsPick(m)); st.ang = rand(0, 6.28); st.dir = Math.random() < .5 ? 1 : -1;  st.my = (FLOOR_Y + WATER_Y) / 2 + .1; d = rand(7.5, 8.5); }   /* the wheel sits in the middle of the room it has: as high as it can go without touching the surface or the sand */
+  else if (kind === 'waltz') { st.pr = pairsOf(Math.min(4, 2 + (N / 25 | 0))); st.c = []; for (let i = 0; i < m.length; i += 2) { const c = m[i].pos.clone().add(m[i + 1].pos).multiplyScalar(.5).clampLength(0, RF * .6); c.y = clamp(c.y, FLOOR_Y + 1, WATER_Y - 1); st.c.push(c); } st.th = 0; st.ph = rand(0, 6.28); d = rand(7.5, 8.5); }
   else if (kind === 'hide') { if (!HOUSES.length) return false; m = evFish(Math.min(HOUSES.length * 5, 12, 8 + L)); d = 4; }
   else if (kind === 'drop') { if (rock) return false; m = evFish(46); m = m.concat(evObsPick(m)); st.ph = 0; st.vy = 0; st.t1 = 0;
     evItemClear(); evItem = new THREE.Mesh(new THREE.SphereGeometry(.3, 20, 14), new THREE.MeshPhongMaterial({ color: 0xfff1c8, emissive: 0xd9a040, shininess: 90, specular: 0xffffff, fog: false }));
@@ -2550,7 +2559,7 @@ function dropUpdate(e, dt) {   // something is thrown in: the school bolts away,
     j.tt += dt; const k = Math.min(1, j.tt / j.dur), to = j.ring[j.n];
     me.position.set(j.from.x + (to.x - j.from.x) * k, SURF + .1 + 1.5 * 4 * k * (1 - k), j.from.z + (to.z - j.from.z) * k);
     if (k >= 1) { const r = j.part[j.n]; r.hit = .4; j.cnt++; burstFx.emit(new THREE.Vector3(to.x, SURF, to.z), 0xffffff, 8, .7); Snd.play('pearl'); surfaceSplash(to.x, to.z, .35, true);
-      if (j.cnt >= 8 || g > 17) { burstFx.emit(me.position, 0xfff1c8, 24, 1.5); surfaceSplash(me.position.x, me.position.z, .9); scatter(me.position.clone().setY(WATER_Y - 1), 1, true); for (const o of e.m) { o.evOn = false; o.evPin = null; } evEnd(); return; }
+      if (j.cnt >= 8 || g > 11.5) { burstFx.emit(me.position, 0xfff1c8, 24, 1.5); surfaceSplash(me.position.x, me.position.z, .9); scatter(me.position.clone().setY(WATER_Y - 1), 1, true); for (const o of e.m) { o.evOn = false; o.evPin = null; } evEnd(); return; }
       j.h = j.n; j.part[j.h].hit = .4; j.from.copy(me.position); do { j.n = (Math.random() * j.part.length) | 0; } while (j.n === j.h); j.tt = 0; }
   }
   e.bt -= dt; if (!j && e.bt <= 0) { e.bt = 1.1; evBubble(me.position.clone().setY(me.position.y + .5), '❓'); }
