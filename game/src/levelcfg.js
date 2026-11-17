@@ -23,7 +23,7 @@ export function defaultsFor(L) {
     squid: L < 11 ? 0 : 1, clams: L < 21 ? 0 : 1, clamTaps: 1, feed: L >= EVENT_UNLOCK.feed, feedGap: [24, 34], tanks: null };
   const only = { 11: 'squid', 16: 'tube', 21: 'clam', 31: 'swarm' }[L];   // the level that introduces an obstacle shows that obstacle alone
   if (only) { C.obstacles = 0; C.squid = only === 'squid' ? 1 : 0; C.clams = only === 'clam' ? 1 : 0; C.swarm = only === 'swarm'; }
-  C.jelly = C.obstacles;   // every obstacle of the table is a jellyfish (the sea urchin is out of the game)
+  C.jelly = C.obstacles;   // every obstacle of the table is a jellyfish
   C.autoPump = true; C.stuckDelay = 2.5; C.theme = null; C.tubeExtra = null; C.tubeWaves = null;
   return C;
 }

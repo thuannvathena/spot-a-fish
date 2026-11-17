@@ -26,9 +26,9 @@ text = f"""## L.2 Level table <Badge type="tip" text="Live" />
 - **New fish are met a few at a time:** 4 species at L1, 9 by L3, 24 by L10, 34 by L20, 41 by L30 and all 49 by L45 (the whale, the shark and the sea horse are wrong fish only). A level uses at most 30 species including colour copies.
 - **Fish look and speed:** every fish is size 1.4 and speed 0.85 (bounty fish excepted).
 - **Bounty tanks** (tiny / camo / fast, 1 fish each) only from L25: L25 tiny, L35 camo, L45 fast, L55 tiny + camo, L60 fast + camo.
-- **Jellyfish:** first jellyfish in L8 (the sea urchin is out of the game); none in a level that introduces a feature.
+- **Jellyfish:** first jellyfish in L8; none in a level that introduces a feature.
 - **Themes and tank shapes:** 6 themes and 6 tank shapes (cylinder, bowl, rounded box, hexagon, flower, heart), 10 levels each.
-- **Win rate:** the bot (`node game/tools/wr-sim.mjs`) plays each level thousands of times with a model of a player and reports the first-try win rate (no boosters, no Play On). It is a guess until real players are measured: it says about 100% up to L30 and about 69% at L60. The target win rates of the old design sheet are NOT met for about 30 levels: the ramp has far fewer fish in the middle levels. `game/tools/wr-tune-plan.mjs` can nudge colour copies, urchins and jellyfish towards those targets but it cannot close the gap.
+- **Win rate:** the bot (`node game/tools/wr-sim.mjs`) plays each level thousands of times with a model of a player and reports the first-try win rate (no boosters, no Play On). It is a guess until real players are measured: it says about 100% up to L30 and about 69% at L60. The target win rates of the old design sheet are NOT met for about 30 levels: the ramp has far fewer fish in the middle levels. `game/tools/wr-tune-plan.mjs` can nudge colour copies and jellyfish towards those targets but it cannot close the gap.
 - **Lose position:** the bot reports where in the level a lost run ended (`lossAt`, `lateShare` in `--json`); in the Hard levels it does not lose late, so the choke point at the end is not confirmed by the bot.
 
 {head}
