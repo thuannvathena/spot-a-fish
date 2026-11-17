@@ -254,10 +254,10 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         text('pL', cap, 540, capY, 780, { fill: '#ffffff', stroke: '#0d2a5c', sw: 9, sh: 4 }, Math.min(64, fit(cap, 780 - 9)));
         const poCost = ((ff() as unknown as { coin?: { COIN?: { playOn?: number } } }).coin?.COIN?.playOn) ?? 900, poShake = (window as unknown as { __poShake?: number }).__poShake ?? 0;
         coinHeader();
-        const poFree = !!(window as unknown as { __poFree?: () => boolean }).__poFree?.();   // the player's first Play On is FREE: one button, "FREE", until it has been used
+        const poHold = (window as unknown as { __poHold?: { free: boolean; afford: boolean } | null }).__poHold, poFree = poHold ? poHold.free : !!(window as unknown as { __poFree?: () => boolean }).__poFree?.();   // the player's first Play On is FREE: one button, "FREE", until it has been used
         const adLeft = ((window as unknown as { __rvLeft?: (k: string) => number }).__rvLeft?.('playon') ?? 5), single = poFree || adLeft <= 0;   // the ad Play On is capped at 5 a day: when it is used up the advertisement button is gone and the coin button stands alone in the middle
         if (poFree) wordBtn('pA', 'green', D(325, 1110, 430, 170), 'FREE', click('bPlayOn'));
-        else coinBtn('pA', coinsNow() >= poCost ? 'green' : 'grey', D(single ? 325 : 100, 1110, 430, 170), String(poCost), click('bPlayOn'), poShake);   // pay with coins ...
+        else coinBtn('pA', (poHold ? poHold.afford : coinsNow() >= poCost) ? 'green' : 'grey', D(single ? 325 : 100, 1110, 430, 170), String(poCost), click('bPlayOn'), poShake);   // pay with coins ...
         if (!single) { wordBtn('pAd', 'orange', D(550, 1110, 430, 170), 'Play on', click('bPlayOnAd')); P.pic('pAdI', 'bf_ic_ad', D(878, 1072, 96, 104)); }   // ... or watch an advertisement
         text('pN', 'No thanks', 540, 1340, 220, { fill: '#e8f4ff', stroke: '#0d3d7a', sw: 8, sh: 3 }); add('pNo', D(400, 1305, 280, 70), click('bNoPlayOn'));
         return;
@@ -418,7 +418,7 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         }
         const open = !Wn.claimed, pulse = 1 + 0.03 * Math.sin(t * 3.4), u2 = cl((age - 1.85) / 0.6), u1 = cl((age - 2.2) / 0.6), v2 = Math.min(1, u2 * 4), v1 = Math.min(1, u1 * 4);
         const offR = (1 - backOut(u2)) * 640, offL = -(1 - backOut(u1)) * 640;   // the x2 reward slides in from the right first, then the plain coin button from the left (with a small settle)
-        const x2Left = ((window as unknown as { __rvLeft?: (k: string) => number }).__rvLeft?.('x2') ?? 5), GY = 1520, GX = x2Left > 0 ? 56 : 330, GW = 420, XX = 584, XW0 = 440;   // lower than before, and a wide gap between the two buttons (x2 used up for the day: the coin button alone, in the middle)
+        const x2Left = (Wn as unknown as { x2Hold?: number }).x2Hold ?? ((window as unknown as { __rvLeft?: (k: string) => number }).__rvLeft?.('x2') ?? 5), GY = 1520, GX = x2Left > 0 ? 56 : 330, GW = 420, XX = 584, XW0 = 440;   // lower than before, and a wide gap between the two buttons (x2 used up for the day: the coin button alone, in the middle)
         if (u2 > 0 && x2Left > 0) {   // the x2 button: the picture, the coin, the number and the advertisement icon are ONE group that bounces together about its centre
             const XH0 = (XW0 * 254) / 466, BR = D(XX + offR, GY - 24 + (240 - XH0) / 2, XW0, XH0), pdy = z.pressed === 'wA' && open ? 6 * s : 0, px = BR.x + BR.w / 2, py = BR.y + BR.h / 2 + pdy;
             const G = (r: R): R => ({ x: px + (r.x - px) * pulse, y: py + (r.y + pdy - py) * pulse, w: r.w * pulse, h: r.h * pulse });
@@ -482,8 +482,8 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         P.pic('bX3b', 'bf_badge_count', D(622, 895, 146, 166));   // the "x3" badge from the artist's popup file
         text('bX3', 'x' + (bw?.pack ?? 3), 695, 970, 120, { fill: '#ffffff', stroke: '#6b3a00', sw: 9, sh: 4 }, 70);
         text('bD', info.txt, 540, 1170, 780, WHITE, Math.min(62, fit(info.txt, 780 - 9)));
-        const bAdLeft = ((window as unknown as { __rvLeft?: (k: string) => number }).__rvLeft?.(kind) ?? 5);   // 5 ads a day for each booster: when they are used up only the coin button is left, in the middle
-        coinBtn('bBc', coinsNow() >= price ? 'green' : 'grey', D(bAdLeft > 0 ? 110 : 340, 1232, 400, 180), String(price), click('bBuyCoin'), shakeAt);
+        const bHold = (window as unknown as { __buyHold?: { afford: boolean; adLeft: number } | null }).__buyHold, bAdLeft = bHold ? bHold.adLeft : ((window as unknown as { __rvLeft?: (k: string) => number }).__rvLeft?.(kind) ?? 5);   // 5 ads a day for each booster: when they are used up only the coin button is left, in the middle
+        coinBtn('bBc', (bHold ? bHold.afford : coinsNow() >= price) ? 'green' : 'grey', D(bAdLeft > 0 ? 110 : 340, 1232, 400, 180), String(price), click('bBuyCoin'), shakeAt);
         if (bAdLeft > 0) { wordBtn('bBa', 'orange', D(570, 1232, 400, 180), 'GET 1', click('bBuyAd')); P.pic('bAd', 'bf_ic_ad', D(880, 1194, 96, 104)); }
         return;
     }
