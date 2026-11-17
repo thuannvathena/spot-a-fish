@@ -1680,7 +1680,7 @@ canvas.addEventListener('pointerdown', e => {
   if (window.__uiHit && window.__uiHit(e.clientX, e.clientY)) return;   // tap belongs to the Phaser HUD (see src/scenes/Hud.ts)
   canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); camTween.on = false; camIntro = null;
   if (ptrs.size === 1) { downInfo = { x: e.clientX, y: e.clientY, t: performance.now(), moved: 0 }; if (!paused) setHover(pickAt(e.clientX, e.clientY, 0)); }
-  else { downInfo = null; setHover(null); const [a, b] = [...ptrs.values()]; pinch0 = { d: Math.hypot(a.x - b.x, a.y - b.y), dist: orbit.dist, my: (a.y + b.y) / 2 }; }
+  else { downInfo = null; setHover(null); const [a, b] = [...ptrs.values()]; pinch0 = { dl: Math.hypot(a.x - b.x, a.y - b.y), ml: (a.y + b.y) / 2, tl: performance.now(), az: 0, am: 0, mode: null, wz: 0, wp: 0 }; }
   orbit.azV = 0; orbit.elV = 0; $('hint').classList.add('gone');
 });
 let camAct = 0, camDrag = false;   // last time the player moved the camera (drag, pinch, wheel): the booster buttons fade while it is moving
@@ -1689,8 +1689,18 @@ canvas.addEventListener('pointermove', e => {
   if (!p && window.__uiHit && window.__uiHit(e.clientX, e.clientY)) { setHover(null); return; }
   if (!p) { if (e.pointerType === 'mouse' && !paused) setHover(pickAt(e.clientX, e.clientY, 160)); return; }
   const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
-  if (ptrs.size === 2 && pinch0) { camAct = performance.now(); camDrag = true; const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y), my = (a.y + b.y) / 2; orbit.dist = clamp(pinch0.dist * pinch0.d / d, orbit.fit * .5, orbit.fit * 1.15); if (camTut.step === 'tilt') { camTut.panAcc = (camTut.panAcc || 0) + Math.abs(my - (pinch0.my ?? my)); if (camTut.panAcc > 70) camTut.pressed = 1; }   // tutorial: two fingers dragged up / down
-    orbit.target.y += (my - (pinch0.my ?? my)) * .011 * orbit.dist / orbit.fit; pinch0.my = my; applyCam(); return; }
+  if (ptrs.size === 2 && pinch0) {   /* two fingers: zoom (the distance changes) or move up / down (both fingers go the same way) - never both at once. The gesture picks one after a few pixels, can change its mind (with hysteresis, so a wobble does not flip it), and the two are cross-faded by weights that move smoothly, so a change from one to the other has no jump. Everything is incremental: it works from what changed since the last event. */
+    const nowT2 = performance.now(), P0 = pinch0; (P0.seen = P0.seen || new Set()).add(e.pointerId);   /* the two fingers report one after the other: judging after only one of them has moved would read a plain move up / down as a pinch (the gap between the fingers changes for a moment), so the gesture is judged once both have reported (or after 50 ms) */
+    if (P0.seen.size < 2 && nowT2 - P0.tl < 50) return; P0.seen.clear();
+    const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y), my = (a.y + b.y) / 2, dd = d - P0.dl, dm = my - P0.ml, dts = Math.min(.05, Math.max(.001, (nowT2 - P0.tl) / 1000)); P0.tl = nowT2; camAct = nowT2; camDrag = true;
+    P0.az = P0.az * .85 + Math.abs(dd); P0.am = P0.am * .85 + Math.abs(dm);   /* recent travel of each kind, fading */
+    if (!P0.mode) { if (P0.az > 8 || P0.am > 8) P0.mode = P0.am > P0.az * .8 ? 'pan' : 'zoom'; }   /* (a pinch moves the fingers in opposite ways, so the middle hardly moves: any real common movement is a move up / down. Two fingers of one hand, one above the other, move unevenly - the gap between them changes a lot - so the distance alone must not win.) */
+    else if (P0.mode === 'zoom' && P0.am > P0.az * 1.1 && P0.am > 12) P0.mode = 'pan';
+    else if (P0.mode === 'pan' && P0.az > P0.am * 1.8 && P0.az > 14) P0.mode = 'zoom';
+    const k = 1 - Math.exp(-dts * 14); P0.wz += ((P0.mode === 'zoom' ? 1 : 0) - P0.wz) * k; P0.wp += ((P0.mode === 'pan' ? 1 : 0) - P0.wp) * k;
+    if (d > 1 && P0.dl > 1) orbit.dist = clamp(orbit.dist * Math.pow(P0.dl / d, P0.wz), orbit.fit * .5, orbit.fit * 1.15);
+    if (camTut.step === 'tilt') { camTut.panAcc = (camTut.panAcc || 0) + Math.abs(dm) * P0.wp; if (camTut.panAcc > 70) camTut.pressed = 1; }   // tutorial: two fingers dragged up / down
+    orbit.target.y += dm * P0.wp * .011 * orbit.dist / orbit.fit; P0.dl = d; P0.ml = my; applyCam(); return; }
   if (downInfo) { downInfo.moved += Math.abs(dx) + Math.abs(dy); if (downInfo.moved > 18) setHover(null); }
   if (e.shiftKey || (e.buttons & 2)) { camAct = performance.now(); camDrag = true; if (camTut.step === 'tilt') { camTut.panAcc = (camTut.panAcc || 0) + Math.abs(dy); if (camTut.panAcc > 70) camTut.pressed = 1; } orbit.target.y += dy * .011 * orbit.dist / orbit.fit; applyCam(); return; }   // desktop: shift-drag or right-drag moves the camera up / down
   if (downInfo && !downInfo.drag) { if (downInfo.moved <= 18) return; downInfo.drag = 1; }   /* a dead zone: the finger must travel 18 px before the tank turns at all, so a light tap no longer nudges the view (the first 18 px are not replayed, so there is no jump) */
