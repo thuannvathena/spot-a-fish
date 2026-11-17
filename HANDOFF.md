@@ -22,7 +22,7 @@ Mục đích: dán/đọc file này ở account mới (hoặc máy mới) để 
 3. **Hai thư mục Unity KHÔNG được đăng lên repo:** `SpotAFish_PrimaryContent/` và `SpotAFish_UnityProject/` (đã ở `.gitignore`), nhưng được dùng để phát triển. Cũng không đăng clip `Lose Anim.mov` (đã xoá) và `win animation idea.mov` (đã gitignore). `New Win Anim.mov` (clip tham chiếu animation win, ở gốc dự án) hiện **chưa được theo dõi** (untracked) — không nên commit.
 4. **Được commit:** `Added Assets/` và `Fish Asset 3D/`.
 5. **Đã chấp nhận publish** cá/âm thanh có nguồn gốc từ Unity (model đã convert sang `.glb`, `.m4a`).
-6. **Không dùng ChatGPT để tạo asset nữa** (Gemini là lựa chọn nếu cần).
+6. ChatGPT để tạo asset thì được (trước đây tạm tránh vì dùng chung account, không phải lệnh cấm; Gemini cũng là lựa chọn).
 7. Làm trên **GitHub cá nhân** (`thuannvathena`), không phải GitHub công ty.
 8. Trước khi release phải chạy `node scripts/check-public.mjs` (kiểm tra không lộ file không được đăng). Release cần **cây git sạch**.
 9. Báo cáo trung thực: cái gì đã kiểm tra bằng số liệu/ảnh, cái gì chưa. Người dùng rất khó chịu khi tôi báo "ổn" dựa trên ảnh chụp thưa. Với animation, **đo vị trí/độ mờ bằng số theo từng frame** thay vì chỉ nhìn vài ảnh.
