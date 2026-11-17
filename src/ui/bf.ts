@@ -377,7 +377,7 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         }
         if (Wn.kind || Wn.soon) {
             const pN = pop(1.5, 0.45), pU = pop(1.7, 0.5), pr = Wn.soon ? 1 : (Wn.pr ?? Wn.p0), BX = 540 - 260, BY = 1318;
-            text('wN', Wn.title, 540, 1286, 460, WHITE, 60 * pN.sc);
+            if (pN.u > 0.03) text('wN', Wn.title, 540, 1286, 460, WHITE, 60 * pN.sc);   /* (before it pops in the text is 0.06 px tall, but its outline keeps its width: that left a dark dot under the tank) */
             if (!c.scene.textures.exists('bf_pbar_frame')) {   // the progress bar, drawn with depth: a drop shadow, a white rim with a dark outline, a dark trough with an inner shadow
                 const cv = document.createElement('canvas'); cv.width = 540; cv.height = 112; const q = cv.getContext('2d')!;
                 q.fillStyle = 'rgba(0,10,40,0.45)'; q.beginPath(); q.roundRect(10, 16, 520, 90, 45); q.fill();
@@ -412,7 +412,7 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
                 const moving = Wn.pr !== undefined && Wn.pr > Wn.p0 + 0.002 && Wn.pr < Wn.p1 - 0.002, fw = Math.max(64, (504 - 8) * pr);
                 P.pic('wPf', 'bf_pbar_frame', sd(BX, BY, 540, 112, pU.sc), { alpha: pU.a });
                 P.nine('wPi', 'bf_pbar_fill', sd(BX + 22, BY + 22, fw, 68, pU.sc), [33, 33, 33, 33], { alpha: pU.a, k: 0.98 * s });
-                                if (Wn.soon) text('wPp', 'Coming Soon', 540, BY + 57, 330, { fill: '#ffffff', stroke: '#0a3a8e', sw: 8, sh: 3 }, 44 * pU.sc);
+                                if (pU.u <= 0.03) { /* not yet: the percent text would show as a dot of its blue outline */ } else if (Wn.soon) text('wPp', 'Coming Soon', 540, BY + 57, 330, { fill: '#ffffff', stroke: '#0a3a8e', sw: 8, sh: 3 }, 44 * pU.sc);
                 else text('wPp', `${Math.round(pr * 100)}%`, 540, BY + 57, 140, { fill: '#ffffff', stroke: '#0a3a8e', sw: 8, sh: 3 }, 46 * pU.sc * (moving ? 1 + 0.07 * Math.sin(t * 14) : 1));
             }
         }
