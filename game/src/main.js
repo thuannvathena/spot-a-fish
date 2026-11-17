@@ -4303,7 +4303,7 @@ function pickThing(o, booster = false) {   // booster: the Clear Tank booster ca
 }
 
 /* ============================== overlays ============================== */
-const OVS = ['ovPause', 'ovWin', 'ovLose', 'ovLevels', 'ovIntro', 'ovPlayOn', 'ovBuy', 'ovWell'];
+const OVS = ['ovPause', 'ovLose', 'ovLevels', 'ovIntro', 'ovPlayOn', 'ovBuy', 'ovWell'];
 function devWin() {   // developer tool (Settings): finish the level now
   if (!G || G.status !== 'play') return; closePause(); const i = G.targets.findIndex(t => t && !t.done); if (i < 0) return; G.completed = G.cfg.goal - 1; const t = G.targets[i]; t.count = t.shown = perOf(t.type); t.done = true; completeTarget(i);
 }
@@ -4313,7 +4313,7 @@ function devLose() {   // developer tool (Settings): lose the level the way a fu
 function loseNow() { G.status = 'lost'; tankFx.breakBackup(); setTimeout(showLose, 3700); }
 let popupOn = false;   // a pop-up is open: the music ducks, the open / close sounds play
 function hideOverlays() { document.querySelectorAll('.spotlit').forEach(e => e.classList.remove('spotlit')); const was = OVS.some(id => $(id).classList.contains('show')) || $('spotOv').classList.contains('show'); for (const id of OVS) $(id).classList.remove('show'); $('spotOv').classList.remove('show'); if (was && popupOn) { popupOn = false; Snd.bgmDuckTo(1); if (!introOn || true) Snd.play('popclose'); } }
-function showOnly(id) { hideOverlays(); $(id).classList.add('show'); if (id !== 'ovWin' && id !== 'ovLose' && id !== 'ovWell') { popupOn = true; Snd.bgmDuckTo(.5); Snd.play(id === 'ovPlayOn' ? 'playon' : id === 'ovIntro' ? 'winpop' : 'popopen'); } }   /* (the New Feature / FTUE pop-up opens with the bubble pop) */
+function showOnly(id) { hideOverlays(); $(id).classList.add('show'); if (id !== 'ovLose' && id !== 'ovWell') { popupOn = true; Snd.bgmDuckTo(.5); Snd.play(id === 'ovPlayOn' ? 'playon' : id === 'ovIntro' ? 'winpop' : 'popopen'); } }   /* (the New Feature / FTUE pop-up opens with the bubble pop) */
 function saveWin() {   // stars and the next level are saved when the level is won (the win pop-up with the stars is gone: the win sequence flows straight into the next level)
   for (const k of Object.keys(BOOST_LV)) if (G && G.free && G.free[k]) giftBoost(k);   /* the free one was not used: the 3 are given when the level is won */
   const m = G.mistakes, st = m <= 3 ? 3 : m <= 6 ? 2 : 1;
@@ -4467,8 +4467,6 @@ $('bMus').onclick = () => { Snd.init(); Snd.setMusic(!!save.noMusic); if (!save.
 $('bVib').onclick = () => { save.noVib = !save.noVib; persist(); if (!save.noVib) vib(30); };
 $('bReset').onclick = () => { resetting = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) { } location.reload(); };   // developer tool: one tap wipes the saved progress and the first-time pop-up flags
 $('bRestart1').onclick = () => { if (G) newLevel(G.level); };   // one tap restarts (no "tap again" confirm)
-$('bNext').onclick = () => newLevel(G.level + 1);
-$('bReplay').onclick = () => newLevel(G.level);
 $('bRetry').onclick = () => newLevel(G.level);
 const dayKey = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
 function rvLeft(k) { const r = save.rv; return !r || r.d !== dayKey() ? COIN.adCap : Math.max(0, COIN.adCap - (r[k] || 0)); }   /* rewarded ads a day, each kind on its own (k = playon / hint / tank / clear / x2): at most 5 of each */
@@ -4490,7 +4488,7 @@ function openLevels(from) {
   }
   showOnly('ovLevels'); const cur = g.querySelector('.cur'); if (cur) cur.scrollIntoView({ block: 'nearest' });
 }
-$('bLevels1').onclick = () => openLevels('ovPause'); $('bLevels2').onclick = () => openLevels('ovWin'); $('bLevels3').onclick = () => openLevels('ovLose');
+$('bLevels1').onclick = () => openLevels('ovPause'); $('bLevels3').onclick = () => openLevels('ovLose');
 $('bLvBack').onclick = () => { showOnly(lvReturn); };
 
 /* ---- tools: sound / camera / hint ---- */
