@@ -2271,6 +2271,7 @@ function randomPoint0(o) {
 const sepV = new THREE.Vector3(), dd = new THREE.Vector3();
 const pushV = new THREE.Vector3();
 function separate(o, dt) {
+  if (dt <= 0) return;   /* paused (the window lost focus, a pop-up is open): the smoothed push below is added to the fish EVERY frame, so with no time passing it carried on shoving the fish out of the tank and, with the clamp to the wall weaker than the push, through the glass */
   sepV.set(0, 0, 0); pushV.set(0, 0, 0);
   for (const q of G.things) {
     if (q === o || !q.alive || q.scale < .5) continue;
