@@ -233,7 +233,7 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
         P.nine('pf', 'bf_pop_base', D(58, top, 965, bottom - top), [80, 80, 80, 80], { k: 0.9 * s });
         P.pic('pFish', 'bf_fish_think', D(360, 110 + Math.sin(t * 1.8) * 8, 360, 285));   // the puzzled fish over the ribbon
         P.pic('pr', 'bf_rib_blue', D(97, 390, 878, 222));   // placed so the ribbon's inner band lands on the fake's band
-        arcText('pT', 'Out of space!', 543, 500, 600, TITLE, 878, 52);
+        arcText('pT', 'Out of space!', 543, 486, 600, TITLE, 878, 52);
         const xr = D(921, 454, 114, 120); P.pic('pX', 'bf_btn_x', { ...xr, y: xr.y + (z.pressed === 'pX' ? 2 : 0) }); add('pX', xr, click('bNoPlayOn'));
         P.nine('pPan', 'bf_panel_in', D(100, 650, 880, 380), [60, 60, 60, 60], { k: 0.9 * s });   // the inner frame sits evenly between the ribbon above and the Play on button below
         // the Backup as it looks in the game: the murky cell behind, the fish, then the steel frame and the bars in front (both pictures are drawn once from the same pieces as the game)
