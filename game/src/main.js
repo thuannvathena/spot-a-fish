@@ -1627,9 +1627,11 @@ hall.traverse(o => o.layers.set(1));
 const EL_MIN = .02, EL_MAX = 1.1;   // vertical tilt is limited: a bit below eye level up to a steep look-down, no full 360 flipping
 let camIntro = null;   /* the opening shot of a level: the camera swings round the tank while it comes in from far away, so the player sees the whole tank first */
 const orbit = { az: .65, el: .3, dist: 10, fit: 10, azV: 0, elV: 0, panV: 0, target: new THREE.Vector3(0, 2.05, 0) };
-const PAN_Y0 = 2.05;
+const PAN_Y0 = 2.05, PAN_SLACK = .45;
+const panLim = () => Math.max(0, 1 - orbit.dist / orbit.fit) * 2.6;   /* how far the view can rest off-centre: nothing when the whole tank is in view */
+const panDamp = () => { const ex = Math.abs(orbit.target.y - PAN_Y0) - panLim(); return ex > 0 ? Math.max(.12, 1 - ex / PAN_SLACK) : 1; };   /* past the resting range the drag gets heavier, like a rubber band */
 function applyCam() {
-  const lim = Math.max(0, 1 - orbit.dist / orbit.fit) * 2.6; orbit.target.y = clamp(orbit.target.y, PAN_Y0 - lim, PAN_Y0 + lim);   // moving up/down is only possible when zoomed in
+  const lim = Math.max(panLim(), PAN_SLACK); orbit.target.y = clamp(orbit.target.y, PAN_Y0 - lim, PAN_Y0 + lim);   /* moving up/down: far when zoomed in; zoomed out it still gives a little (PAN_SLACK) so the player feels the gesture work, and the view springs back to the middle when the finger lifts */
   const ce = Math.cos(orbit.el);
   cam.position.set(orbit.target.x + orbit.dist * ce * Math.sin(orbit.az), orbit.target.y + orbit.dist * Math.sin(orbit.el), orbit.target.z + orbit.dist * ce * Math.cos(orbit.az));
   cam.lookAt(orbit.target); cam.updateMatrixWorld();
@@ -1719,9 +1721,9 @@ canvas.addEventListener('pointermove', e => {
     const k = 1 - Math.exp(-dts * 14); P0.wz += ((P0.mode === 'zoom' ? 1 : 0) - P0.wz) * k; P0.wp += ((P0.mode === 'pan' ? 1 : 0) - P0.wp) * k;
     if (d > 1 && P0.dl > 1) orbit.dist = clamp(orbit.dist * Math.pow(P0.dl / d, P0.wz), orbit.fit * .5, orbit.fit * 1.15);
     if (camTut.step === 'tilt') { camTut.panAcc = (camTut.panAcc || 0) + Math.abs(dm) * P0.wp; if (camTut.panAcc > 70) camTut.pressed = 1; }   // tutorial: two fingers dragged up / down
-    orbit.target.y += dm * P0.wp * .011 * orbit.dist / orbit.fit; P0.dl = d; P0.ml = my; applyCam(); return; }
+    orbit.target.y += dm * P0.wp * .011 * orbit.dist / orbit.fit * panDamp(); P0.dl = d; P0.ml = my; applyCam(); return; }
   if (downInfo) { downInfo.moved += Math.abs(dx) + Math.abs(dy); if (downInfo.moved > 18) setHover(null); }
-  if (e.shiftKey || (e.buttons & 2)) { camAct = performance.now(); camDrag = true; if (camTut.step === 'tilt') { camTut.panAcc = (camTut.panAcc || 0) + Math.abs(dy); if (camTut.panAcc > 70) camTut.pressed = 1; } orbit.target.y += dy * .011 * orbit.dist / orbit.fit; applyCam(); return; }   // desktop: shift-drag or right-drag moves the camera up / down
+  if (e.shiftKey || (e.buttons & 2)) { camAct = performance.now(); camDrag = true; if (camTut.step === 'tilt') { camTut.panAcc = (camTut.panAcc || 0) + Math.abs(dy); if (camTut.panAcc > 70) camTut.pressed = 1; } orbit.target.y += dy * .011 * orbit.dist / orbit.fit * panDamp(); applyCam(); return; }   // desktop: shift-drag or right-drag moves the camera up / down
   if (downInfo && !downInfo.drag) { if (downInfo.moved <= 18) return; downInfo.drag = 1; }   /* a dead zone: the finger must travel 18 px before the tank turns at all, so a light tap no longer nudges the view (the first 18 px are not replayed, so there is no jump) */
   camAct = performance.now(); camDrag = true;
   const dAz = -dx * .0075; orbit.az += dAz; if (camTut.step === 'rot') camTut.acc += Math.abs(dAz);
@@ -4868,6 +4870,7 @@ function frame(now) {
     if (u >= 1) { camIntro = null; orbit.az = eAz; orbit.dist = eDist; orbit.el = eEl; orbit.target.y = eTy; }
   }
   { const mv = camDrag || performance.now() - camAct < 110 || !!panHold; window.__toolA = window.__toolA ?? 1; window.__toolA += ((mv ? 0 : 1) - window.__toolA) * (1 - Math.exp(-dtp * (mv ? 14 : 16))); const bkBusy = ov.flights.some(f => f.mode === 'backup'); window.__bkA = window.__bkA ?? 1; window.__bkA += ((bkBusy ? 1 : window.__toolA) - window.__bkA) * (1 - Math.exp(-dtp * 14)); }   // the Backup tank fades with the boosters, but stays while a fish is still flying into it   // fade out quickly while the camera moves, and straight back when the finger lifts
+  if (!ptrs.size && !panHold && !camTween.on && !camIntro && !(G && G.win)) { const l0 = panLim(), ty = clamp(orbit.target.y, PAN_Y0 - l0, PAN_Y0 + l0); if (ty !== orbit.target.y) orbit.target.y += (ty - orbit.target.y) * (1 - Math.exp(-dtp * 6)); }   /* let go beyond the resting range and the view eases back */
   if (panHold) orbit.target.y -= panHold * 1.7 * dtp; panBtns.classList.toggle('show', orbit.dist < orbit.fit * .96);
   applyCam();
   // slosh spring driven by rotation
