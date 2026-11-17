@@ -152,7 +152,8 @@ export function paintTools(L: Layer, c: Ctx) {
             c.hits.push(rl); continue;
         }
         const r = rectOf(el, c.o); if (!r || r.w < 4 || !shown(el)) continue;
-        const cx = r.x + r.w / 2, cy = r.y + r.h / 2, rad = (r.w / 2) * kb, press = c.zones.pressed === id, dy = press ? 3 : 0, off = el.classList.contains('off');
+        const BSK = (window as unknown as { __boostShake?: { kind: string; t0: number } }).__boostShake, skU = BSK && BSK.kind === kindOf ? (performance.now() - BSK.t0) / 480 : 2, shakeX = skU < 1 ? Math.sin(skU * Math.PI * 7) * (1 - skU) * (r.w / 2) * 0.17 : 0;   // a refused tap: the button shakes sideways a little and settles
+        const cx = r.x + r.w / 2 + shakeX, cy = r.y + r.h / 2, rad = (r.w / 2) * kb, press = c.zones.pressed === id, dy = press ? 3 : 0, off = el.classList.contains('off');
         const IC: Record<string, string> = { bHint: 'nw_ic_hint', bTank: 'nw_ic_net', bClear: 'nw_ic_back' }, shade = off ? 0.55 : 1;
         if (L.pic('bt' + id, 'nw_btn_round', { x: cx - rad, y: cy + dy - rad, w: rad * 2, h: rad * 2 }, { alpha: fade * shade })) {   // the painted round button and its icon (public/ui/new); drawn as before when the pictures are missing
             const isz = rad * 2 * 0.54; L.pic('bi' + id, IC[id], { x: cx - isz / 2, y: cy + dy - isz / 2, w: isz, h: isz }, { alpha: fade * shade });

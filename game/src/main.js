@@ -4614,12 +4614,14 @@ function buyBoost(viaAd) {
   if (save.coins < COIN.price[k]) { window.__buyShake = performance.now(); return; }
   if (buyBusy) return; buyBusy = true; addCoins(-COIN.price[k]); Snd.play('coinspend'); save.bst[k] += COIN.pack; giveBoosters(k, COIN.pack, 1030); persist(); boostRefresh(); setTimeout(() => { buyBusy = false; closeBuy(); }, 950);   /* the coins drain out of the counter first */
 }
-function hintUseful() { if (!G) return false; const need = new Set(G.targets.filter(t => t && !t.done && t.count < perOf(t.type)).map(t => t.type)); return G.things.some(o => o.alive && o.kind === 'fish' && !o.locked && need.has(o.type)) || G.things.some(c => c.kind === 'clam' && c.state === 'closed' && c.fish && need.has(c.fish.type)); }
+function boostNo(k, msg) { window.__boostShake = { kind: k, t0: performance.now() }; toast(msg); }   /* a booster that cannot be used right now: a short message and the button shakes (nothing is spent) */
+function hintUseful() { if (!G) return false; const need = new Set(G.targets.filter(t => t && !t.done && t.count < perOf(t.type)).map(t => t.type)); return G.things.some(o => o.alive && o.kind === 'fish' && !o.locked && !o.hinted && need.has(o.type)) || G.things.some(c => c.kind === 'clam' && c.state === 'closed' && c.fish && need.has(c.fish.type) && (c.glowUntil || 0) < U.uTime.value); }   /* worth a Hint: there is a fish you need that is not marked yet (or a shell holding one that is not glowing) */
+function hintAnyNeeded() { if (!G) return false; const need = new Set(G.targets.filter(t => t && !t.done && t.count < perOf(t.type)).map(t => t.type)); return G.things.some(o => o.alive && o.kind === 'fish' && !o.locked && need.has(o.type)) || G.things.some(c => c.kind === 'clam' && c.state === 'closed' && c.fish && need.has(c.fish.type)); }
 function hint() {
   if (!G || G.status !== 'play' || paused || U.uTime.value < hintReady) return;
   const need = new Set(G.targets.filter(t => t && !t.done && t.count < perOf(t.type)).map(t => t.type));
-  const cands = G.things.filter(o => o.alive && o.kind === 'fish' && !o.locked && need.has(o.type)).sort((a, b) => a.group.position.distanceTo(cam.position) - b.group.position.distanceTo(cam.position)).slice(0, 3);
-  let clamHint = false; for (const c of G.things) if (c.kind === 'clam' && c.state === 'closed' && c.fish && need.has(c.fish.type)) { c.glowUntil = U.uTime.value + HINT_DUR; clamHint = true; }
+  const cands = G.things.filter(o => o.alive && o.kind === 'fish' && !o.locked && !o.hinted && need.has(o.type)).sort((a, b) => a.group.position.distanceTo(cam.position) - b.group.position.distanceTo(cam.position)).slice(0, 3);
+  let clamHint = false; for (const c of G.things) if (c.kind === 'clam' && c.state === 'closed' && c.fish && need.has(c.fish.type) && (c.glowUntil || 0) < U.uTime.value) { c.glowUntil = U.uTime.value + HINT_DUR; clamHint = true; }
   if (!cands.length && !clamHint) { hintReady = U.uTime.value + HINT_CD; Snd.play('hint'); return; }
   for (const o of cands) {
     if (!o.outline) { // crisp gold rim around the body + a bobbing arrow above the fish
@@ -4677,7 +4679,7 @@ function clearBackup(win) {   // booster: everything sitting in the backup strip
     }, k * 110);
   });
 }
-$('bClear').onclick = () => { if ($('bClear').dataset.locked === '1' || $('bClear').dataset.lockLv) return; boostUse('clear', () => G.backup.length > 0, clearBackup); };
+$('bClear').onclick = () => { if ($('bClear').dataset.locked === '1' || $('bClear').dataset.lockLv) return; if (G && G.status === 'play' && !paused && boostLeft('clear') !== 'plus' && !G.backup.length) { boostNo('clear', 'Backup is empty'); return; } boostUse('clear', () => G.backup.length > 0, clearBackup); };
 function clearTank() {   // booster: one target tank is filled at once: the fish it still needs fly in from the booster button
   if (!G || G.status !== 'play' || paused) return; const i = tankPick(); if (i < 0) return;
   const t = G.targets[i]; pullFromBackup(i);   // fish of that kind waiting in the Backup go first
@@ -4688,9 +4690,9 @@ function clearTank() {   // booster: one target tank is filled at once: the fish
     const c = projectToClient(CENTER); for (let k = 0; k < rest; k++) giveToTarget(i, { x: c.x + rand(-40, 40), y: c.y + 40 }, (live.length + k) * 230, 54); }   // fewer in the water than needed (some wait in the tube or a clam): the rest rise out of the middle of the tank
   refreshClearBtn();
 }
-$('bTank').onclick = () => { if ($('bTank').dataset.locked === '1' || $('bTank').dataset.lockLv) return; boostUse('tank', () => tankPick() >= 0, clearTank); };
+$('bTank').onclick = () => { if ($('bTank').dataset.locked === '1' || $('bTank').dataset.lockLv) return; if (G && G.status === 'play' && !paused && boostLeft('tank') !== 'plus' && tankPick() < 0) { boostNo('tank', 'Nothing to collect'); return; } boostUse('tank', () => tankPick() >= 0, clearTank); };
 function refreshHintBtn() { hintReady = 0; $('bHint').style.setProperty('--p', '0%'); refreshClearBtn(); boostRefresh(); }
-$('bHint').onclick = () => { if ($('bHint').dataset.locked === '1' || $('bHint').dataset.lockLv) return; boostUse('hint', () => U.uTime.value >= hintReady && hintUseful(), hint); };
+$('bHint').onclick = () => { if ($('bHint').dataset.locked === '1' || $('bHint').dataset.lockLv) return; if (G && G.status === 'play' && !paused && boostLeft('hint') !== 'plus' && !hintUseful()) { boostNo('hint', hintAnyNeeded() ? 'Already marked!' : 'No fish to show'); return; }   /* nothing new to show: no Hint is spent */ boostUse('hint', () => U.uTime.value >= hintReady && hintUseful(), hint); };
 function updateHint() {
   const rem = Math.max(0, hintReady - U.uTime.value); $('bHint').style.setProperty('--p', HINT_CD ? (rem / HINT_CD * 100).toFixed(1) + '%' : '0%');
   if (!G) return; const need = new Set(G.targets.filter(t => t && !t.done && t.count < perOf(t.type)).map(t => t.type));
