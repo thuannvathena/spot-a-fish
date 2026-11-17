@@ -306,14 +306,14 @@ const SPECIES = []; let BASE_N = 0; const BASE = [];   // the species are the 3D
 const FISHART = {};   // id -> { tex, geo, hx, hy, hz }
 /* Fish are the supplied illustrations, "inflated" into real 3D: the alpha silhouette is turned into a puffy volume (thick in the middle,
    thin at fins and tail), the painting is mapped on both faces, and it is lit like any 3D model. */
-function hueRGB(c, deg) {   // the same colour turn as hueRotate, for one colour (0-1 values)
+function hueRGBOld(c, deg) {   // the same colour turn as hueRotate, for one colour (0-1 values)
   const rad = deg * Math.PI / 180, k = Math.cos(rad), n = Math.sin(rad), [r, g, b] = c, m = [.213 + k * .787 - n * .213, .715 - k * .715 - n * .715, .072 - k * .072 + n * .928, .213 - k * .213 + n * .143, .715 + k * .285 + n * .140, .072 - k * .072 - n * .283, .213 - k * .213 - n * .787, .715 - k * .715 + n * .715, .072 + k * .928 + n * .072];
   return [0, 1, 2].map(o => Math.max(0, Math.min(1, m[o * 3] * r + m[o * 3 + 1] * g + m[o * 3 + 2] * b)));
 }
-function hueRotate(cnv, deg) {   /* recolour a canvas: every hue is turned, AND the parts with almost no colour (a white or silver fish, grey stripes) are washed with a little of the new hue - turning the hue alone leaves a grey fish exactly as it was, so two copies of a white species stayed identical */
+function hueRotateOld(cnv, deg) {   /* recolour a canvas: every hue is turned, AND the parts with almost no colour (a white or silver fish, grey stripes) are washed with a little of the new hue - turning the hue alone leaves a grey fish exactly as it was, so two copies of a white species stayed identical */
   const g = cnv.getContext('2d', { willReadFrequently: true }), d = g.getImageData(0, 0, cnv.width, cnv.height), p = d.data, rad = deg * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad);
   const a0 = .213 + c * .787 - s * .213, a1 = .715 - c * .715 - s * .715, a2 = .072 - c * .072 + s * .928, b0 = .213 - c * .213 + s * .143, b1 = .715 + c * .285 + s * .140, b2 = .072 - c * .072 - s * .283, c0 = .213 - c * .213 - s * .787, c1 = .715 - c * .715 + s * .715, c2 = .072 + c * .928 + s * .072;
-  const T = hueRGB([1, 0, 0], deg), Tl = Math.max(.05, .213 * T[0] + .715 * T[1] + .072 * T[2]), Tn = T.map(v => v / Tl), W = Math.min(.62, Math.abs(((deg % 360) + 360) % 360 - 180) / 180 * 0 + .62);   // the wash colour of this hue, at the brightness of the pixel it tints
+  const T = hueRGBOld([1, 0, 0], deg), Tl = Math.max(.05, .213 * T[0] + .715 * T[1] + .072 * T[2]), Tn = T.map(v => v / Tl), W = Math.min(.62, Math.abs(((deg % 360) + 360) % 360 - 180) / 180 * 0 + .62);   // the wash colour of this hue, at the brightness of the pixel it tints
   for (let i = 0; i < p.length; i += 4) { const r = p[i], g2 = p[i + 1], b = p[i + 2];
     let R = Math.max(0, Math.min(255, a0 * r + a1 * g2 + a2 * b)), G = Math.max(0, Math.min(255, b0 * r + b1 * g2 + b2 * b)), B = Math.max(0, Math.min(255, c0 * r + c1 * g2 + c2 * b));
     if (p[i + 3] > 8) { const mx = Math.max(R, G, B), mn = Math.min(R, G, B), sat = mx ? (mx - mn) / mx : 0, w = W * Math.max(0, 1 - sat / .3);   // only what has little colour of its own is washed; a bright red fin keeps its own turned hue
@@ -321,6 +321,55 @@ function hueRotate(cnv, deg) {   /* recolour a canvas: every hue is turned, AND 
     p[i] = R; p[i + 1] = G; p[i + 2] = B; }
   g.putImageData(d, 0, 0);
 }
+/* RECOLOURING a fish (a look-alike species): the colours are turned in OKLab, where the lightness stays exactly what the artist painted and only the hue turns, so a pale belly stays pale and a dark fin stays dark; the colours are held back from the garish end (chroma is eased above 0.17) and from falling out of gamut (chroma is reduced, not clipped, so a colour does not turn muddy or neon); a pixel with almost no colour (white, silver, grey) is washed with a little of the new hue. The old RGB hue-rotate is kept as hueRotateOld (?oldhue=1 uses it) to compare. */
+const OKL_S2L = new Float32Array(256).map((_, i) => { const v = i / 255; return v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }), OKL_L2S = new Uint8Array(4097).map((_, i) => { const v = i / 4096; return Math.round(255 * (v <= .0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - .055)); });
+const OLD_HUE = /[?&]oldhue=1/.test(location.search), _ok = [0, 0, 0];
+function oklabTurn(r, g, b, deg, out) {   /* r, g, b in 0..255 -> the same colour with its hue turned by deg, in 0..255 */
+  const lr = OKL_S2L[r | 0], lg = OKL_S2L[g | 0], lb = OKL_S2L[b | 0];
+  const l_ = Math.cbrt(.4122214708 * lr + .5363325363 * lg + .0514459929 * lb), m_ = Math.cbrt(.2119034982 * lr + .6806995451 * lg + .1073969566 * lb), s_ = Math.cbrt(.0883024619 * lr + .2817188376 * lg + .6299787005 * lb);
+  const L = .2104542553 * l_ + .7936177850 * m_ - .0040720468 * s_, A0 = 1.9779984951 * l_ - 2.4285922050 * m_ + .4505937099 * s_, B0 = .0259040371 * l_ + .7827717662 * m_ - .8086757660 * s_;
+  const rad = deg * Math.PI / 180, ca = Math.cos(rad), sa = Math.sin(rad), C0 = Math.hypot(A0, B0);
+  let A = A0 * ca - B0 * sa, B = A0 * sa + B0 * ca;
+  if (C0 < .05) { const w = .62 * (1 - C0 / .05) * Math.min(1, L / .3), th = (29 + deg) * Math.PI / 180; A += Math.cos(th) * .07 * w; B += Math.sin(th) * .07 * w; }   /* (29 degrees: the hue of the red the old turn started from) */
+  const C1 = Math.hypot(A, B); if (C1 > .17) { const k = (.17 + (C1 - .17) * .4) / C1; A *= k; B *= k; }
+  for (let it = 0; it < 7; it++) {
+    const l2 = L + .3963377774 * A + .2158037573 * B, m2 = L - .1055613458 * A - .0638541728 * B, s2 = L - .0894841775 * A - 1.2914855480 * B, l3 = l2 * l2 * l2, m3 = m2 * m2 * m2, s3 = s2 * s2 * s2;
+    const R = 4.0767416621 * l3 - 3.3077115913 * m3 + .2309699292 * s3, G = -1.2684380046 * l3 + 2.6097574011 * m3 - .3413193965 * s3, Bl = -.0041960863 * l3 - .7034186147 * m3 + 1.7076147010 * s3;
+    if ((R >= -.002 && R <= 1.002 && G >= -.002 && G <= 1.002 && Bl >= -.002 && Bl <= 1.002) || it === 6) { out[0] = OKL_L2S[Math.max(0, Math.min(4096, Math.round(R * 4096)))]; out[1] = OKL_L2S[Math.max(0, Math.min(4096, Math.round(G * 4096)))]; out[2] = OKL_L2S[Math.max(0, Math.min(4096, Math.round(Bl * 4096)))]; return out; }
+    A *= .85; B *= .85;   /* out of gamut: less chroma at the same lightness and hue */
+  }
+  return out;
+}
+function hueRGB(c, deg) { if (OLD_HUE) return hueRGBOld(c, deg); oklabTurn(c[0] * 255, c[1] * 255, c[2] * 255, deg, _ok); return [_ok[0] / 255, _ok[1] / 255, _ok[2] / 255]; }
+function hueRotate(cnv, deg) {
+  if (OLD_HUE) return hueRotateOld(cnv, deg);
+  const g = cnv.getContext('2d', { willReadFrequently: true }), d = g.getImageData(0, 0, cnv.width, cnv.height), p = d.data, o = [0, 0, 0];
+  for (let i = 0; i < p.length; i += 4) { if (p[i + 3] <= 8) continue; oklabTurn(p[i], p[i + 1], p[i + 2], deg, o); p[i] = o[0]; p[i + 1] = o[1]; p[i + 2] = o[2]; }
+  g.putImageData(d, 0, 0);
+}
+window.__hue = { turn: oklabTurn, rotate: hueRotate, rotateOld: hueRotateOld };
+/* WHICH TURNS A LOOK-ALIKE MAY USE. Turning every colour of a fish by the same angle gives some bad combinations (the designer marked them on the contact sheet): a list of turns that are known bad for a species, plus a check of the new colours themselves: pink / purple and green on one fish (a sickly, poisonous look). A turn that fails is moved by a few degrees (the same direction first, then the other one) to the nearest one that passes. */
+const HUE_BAD = { fish_violet_stripe: [90, 130], fish_pink_stripe: [-90, 130], fish_blue_chunker: [62, 90, -90] };
+function hueSample(M) {   /* the OKLab hue (degrees) of every clearly coloured pixel of the base picture, sampled on a 160 x 160 grid; cached */
+  if (M.hs) return M.hs; const im = M.tex && M.tex.image; if (!im || !im.width) return new Float32Array(0);
+  const c = document.createElement('canvas'); c.width = c.height = 160; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0, 160, 160); const p = g.getImageData(0, 0, 160, 160).data, out = [];
+  for (let i = 0; i < p.length; i += 4) { if (p[i + 3] < 200) continue; const lr = OKL_S2L[p[i]], lg = OKL_S2L[p[i + 1]], lb = OKL_S2L[p[i + 2]], l_ = Math.cbrt(.4122214708 * lr + .5363325363 * lg + .0514459929 * lb), m_ = Math.cbrt(.2119034982 * lr + .6806995451 * lg + .1073969566 * lb), s_ = Math.cbrt(.0883024619 * lr + .2817188376 * lg + .6299787005 * lb), A = 1.9779984951 * l_ - 2.4285922050 * m_ + .4505937099 * s_, B = .0259040371 * l_ + .7827717662 * m_ - .8086757660 * s_;
+    if (Math.hypot(A, B) > .06) out.push((Math.atan2(B, A) * 180 / Math.PI + 360) % 360); }
+  return M.hs = Float32Array.from(out);
+}
+function hueToxic(M, deg) {   /* the smaller of the share of green and the share of pink / purple among the coloured pixels, after turning by deg: both present = toxic */
+  const hs = hueSample(M); if (hs.length < 40) return 0; let gr = 0, pk = 0;
+  for (let i = 0; i < hs.length; i++) { const x = (hs[i] + deg + 720) % 360; if (x >= 105 && x <= 170) gr++; else if (x >= 290 || x <= 15) pk++; }
+  return Math.min(gr, pk) / hs.length;
+}
+function hueOk(M, key, deg) { const bad = HUE_BAD[key] || []; return !bad.some(b => Math.abs(((deg - b + 540) % 360) - 180) <= 20) && hueToxic(M, deg) < .06; }
+function pickHue(M, key, deg) {
+  const sg = deg < 0 ? -1 : 1, mag = Math.abs(deg), off = [0, 8, -8, 16, -16, 24, -24, 32, -32, 40, -40, 50, -50], cand = [];
+  for (const o of off) cand.push(sg * (mag + o)); for (const o of off) cand.push(-sg * (mag + o));
+  let best = null, bt = 9; for (const a of cand) { if (Math.abs(a) < 48 || Math.abs(a) > 150) continue; if (hueOk(M, key, a)) return a; const t = hueToxic(M, a); if (t < bt) { bt = t; best = a; } }
+  return best === null ? deg : best;
+}
+window.__hue.toxic = (key, deg) => hueToxic(MODEL3D[key], deg); window.__hue.pick = (key, deg) => pickHue(MODEL3D[key], key, deg);
 function findEye(px, W, H, bw, bh) {   // the big white, round blob with a dark pupil
   const white = new Uint8Array(W * H), lab = new Int32Array(W * H);
   for (let k = 0; k < W * H; k++) { const r = px[k * 4], g = px[k * 4 + 1], b = px[k * 4 + 2], a = px[k * 4 + 3]; white[k] = a > 230 && r > 200 && g > 200 && b > 200 && Math.max(r, g, b) - Math.min(r, g, b) < 40 ? 1 : 0; }
@@ -710,7 +759,7 @@ function buildStaticFish(sp) {   // same interface as buildModelFish (swim pose,
 }
 const buildAnyModel = sp => (MODEL3D[sp.model3d].static ? buildStaticFish(sp) : buildModelFish(sp));
 function modelVariant(baseIdx, deg) {   // the same 3D model with its colours turned by `deg` degrees: a species of its own, created on demand
-  const b = SPECIES[baseIdx], key = b.model3d, hue = (((Math.round((b.hue || 0) + deg)) % 360) + 360) % 360, id = 'm_' + key + (hue ? '_h' + hue : ''), k = SPECIES.findIndex(q => q.id === id); if (k >= 0) return k;
+  const b = SPECIES[baseIdx], key = b.model3d, hue = (((Math.round((b.hue || 0) + (b.hue ? deg : pickHue(MODEL3D[key], key, deg)))) % 360) + 360) % 360, id = 'm_' + key + (hue ? '_h' + hue : ''), k = SPECIES.findIndex(q => q.id === id); if (k >= 0) return k;
   const sp = { id, model3d: key, len: b.len, hue }; SPECIES.push(sp); makeModelThumb(sp); return SPECIES.length - 1;
 }
 function buildModelFish(sp) {
@@ -2573,7 +2622,8 @@ function feedUpdate(dt) {
 /* ---- startle: from level 10 a rock now and then plops into the tank and the whole school bolts - fast chaos is an event, not the normal state ---- */
 // only one big event at a time: random event (pearl, conga...), feeding, falling rock, swarm, tube wave, tutorial
 // after ANY event (random event, feeding, the falling rock, the swarm) ends, nothing else starts for 8-10 s
-function evCool() { if (G) G.evFree = U.uTime.value - G.t0 + rand(8, 10); }
+const EV_COOL = 20;   /* seconds of quiet after any event (events, feeding, rock, swarm) before the next one may start */
+function evCool() { if (G) G.evFree = U.uTime.value - G.t0 + EV_COOL; }
 const evFreeNow = () => U.uTime.value - G.t0 >= (G.evFree || 0);
 function eventsIdle() { return evFreeNow() && !EVT.cur && !feed.on && !rock && !swarm.on && tube.state !== 'rumble' && tube.state !== 'emit' && tube.state !== 'out' && !introOn && !guide.on; }
 let rock = null;
@@ -4877,10 +4927,19 @@ function fpsTick(raw) {
       FPS.el.innerHTML = FPS.fps.toFixed(0) + ' fps · worst ' + FPS.worst.toFixed(0) + ' ms · res ' + prFor().toFixed(2) + '<br>cpu: update ' + FPS.u.toFixed(1) + ' draw ' + FPS.r.toFixed(1) + ' ui ' + ((window.__hudMs || 0)).toFixed(1) + ' ms<br>calls ' + FPS.calls + ' · tris ' + (FPS.tris / 1000).toFixed(0) + 'k · gpu ' + (GT.ms >= 0 ? GT.ms.toFixed(1) + ' ms' : 'n/a') + (FPS.spike && performance.now() - FPS.spike.at < 6000 ? '<br>spike ' + FPS.spike.ms.toFixed(0) + ' ms (our js ' + FPS.spike.js.toFixed(1) + ')' : ''); FPS.el.style.color = FPS.fps >= 50 ? '#9dffb0' : FPS.fps >= 30 ? '#ffe27a' : '#ff8a80'; } }
 }
 let stillN = 0, lastCamKey = '';
+let ffShown = false, ffFast = false;
+function ffHintTick() {   /* the "tap to fast forward" line: shown under the tank from the start of the win animation (level 2 and up) until the animation is over and LEVEL COMPLETE starts; after a tap it reads FAST FORWARD with three triangles, and that stays until the WELL DONE screen has built up completely (1.75 s after it opens). It waits until the boosters and the top row have faded out (450 ms), so they never overlap, and it keeps its last wording while it fades out. */
+  const el = $('ffHint'); if (!el) return; const now = performance.now(), W = G && G.win, hudGone = !!window.__hudFadeT0 && now - window.__hudFadeT0 >= 450, wl = window.__well, wellBuilt = !!wl && now - wl.t0 >= 1750;
+  const base = !!W && W.gid === gid && !W.rinse && !PLAYTEST && G.level >= 2 && hudGone, want = base && (W.ff ? !wellBuilt : (!W.textOn && !wl));
+  el.classList.toggle('low', !!wl);
+  if (want !== ffShown) { ffShown = want; if (want) { ffFast = false; el.classList.remove('fast'); el.firstChild.textContent = 'TAP TO FAST FORWARD'; } el.classList.toggle('on', want); }
+  if (want) { const f = !!W.ff; if (f !== ffFast) { ffFast = f; el.classList.toggle('fast', f); el.firstChild.textContent = f ? 'FAST FORWARD' : 'TAP TO FAST FORWARD'; } }
+}
 function frame(now) {
   requestAnimationFrame(frame);
   const raw = (now - last) / 1000, dt = Math.min(.05, raw); last = now; fpsTick(raw); const tf0 = performance.now(); renderer.info.reset();
   if (!paused) { time += dt; U.uTime.value = time; }
+  ffHintTick();
   if (!paused && typeof curTheme === 'number' && themeG[curTheme]) for (const m of themeG[curTheme].children) { const f = m.userData.fx; if (!f || !m.visible) continue; const ph = m.userData.ph !== undefined ? m.userData.ph : (m.userData.bob || 0);
     if (f === 'crystal') { for (const c of m.children) if (c.material && c.material.emissiveIntensity !== undefined) c.material.emissiveIntensity = .75 + .55 * Math.sin(time * 1.5 + ph + c.position.x * 9); }   /* the crystals glimmer slowly, each in its own phase (they do not lean: a leaning tip came out through the glass by 0.02) */
     else if (f === 'orb') { const y0 = m.userData.pl ? m.userData.pl[2] : m.position.y; m.position.y = y0 + Math.sin(time * .7 + ph) * .14; m.position.x += Math.cos(time * .5 + ph) * .0006; }   /* the glowing seeds drift up and down */
@@ -5076,7 +5135,7 @@ window.__qa = {   /* automatic checks (see docs/qa.md): each returns a report wi
 };
 window.__rvLeft = rvLeft; window.__poFree = () => !save.poFreeUsed;
 window.__sfx = k => Snd.play(k);   /* the Phaser UI plays a game sound by its short name */
-window.__ff = { get G() { return G; }, get feed() { return feed; }, newLevel, clamCapture, ripples, orbit, coin: { COIN, wellOpen, wellClaim, wellProgress, addCoins, boostRefresh, giftBoost, boostUse, openBuy, closeBuy, watchAd, boostLeft }, uiReady, guide, lvTitle: () => CHEER.lv && { gy: +CHEER.lv.g.position.y.toFixed(1), meshY: +CHEER.lv.mesh.position.y.toFixed(1), h: +CHEER.lv.mesh.geometry.parameters.height.toFixed(1), tier: window.__lvTier | 0, screenY: +(ov.H / 2 - CHEER.lv.g.position.y).toFixed(1) }, why: () => ({ paused, introOn, tutI, camIntro: !!camIntro, lvShown: window.__lvShown, lid: (window.__lid || []).map(v => +v.toFixed(2)), hud: performance.now() - (window.__hudInT0 || 0), status: G.status, tgtAlive: !!(guide.tgt && guide.tgt.alive), locked: !!(guide.tgt && guide.tgt.locked) }), clam: { loadClam, buildClam, CLAM }, ovScene: () => { const out = []; ov.scene.traverse(m => { if (m.isMesh && m.visible) { let go = 0, q = m.parent; const chain = []; while (q && q !== ov.scene) { chain.push(q.renderOrder); q = q.parent; } out.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' chain=[' + chain.join(',') + '] tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' z=' + +m.getWorldPosition(new THREE.Vector3()).z.toFixed(0) + ' ' + (m.material && m.material.type)); } }); return out; }, ovInfo: () => [...ov.sprites].map(sp => { const r = []; sp.holder.traverse(m => { if (m.isMesh) r.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' op=' + (m.material && +m.material.opacity.toFixed(2))); }); return { id: sp.id, zTop: sp.zTop, z: sp.holder.position.z, px: Math.round(sp.holder.position.x + ov.W / 2), py: Math.round(ov.H / 2 - sp.holder.position.y), meshes: r }; }), U, buildJelly, loadJelly, tapThing: id => { const o = G.things.find(x => x.id === id && x.alive); if (o) pickThing(o); return !!o; }, evInfo: () => { const e = EVT.cur; if (!e) return null; return { kind: e.kind, t: +e.t.toFixed(1), d: +e.d.toFixed(1), n: e.m.length, pinned: e.m.filter(o => o.evPin).length, fish: G.things.filter(o => o.kind === 'fish' && o.alive && !o.big).length, p: e.m.slice(0, 4).map(o => [+o.pos.x.toFixed(1), +o.pos.y.toFixed(1), +o.pos.z.toFixed(1), !!o.evPin]) }; }, devEvents: ['conga', 'waltz', 'swirl', 'squabble', 'drop', 'feed', 'startle', 'swarm', 'octo ink', 'octo floor', 'octo swim', 'pump'], devEvent: (n) => {   /* developer tool (Settings): start one event now, to test it */
+window.__ff = { get G() { return G; }, get feed() { return feed; }, modelVariant, evFreeIn: () => G.evFree - (U.uTime.value - G.t0), newLevel, clamCapture, ripples, orbit, coin: { COIN, wellOpen, wellClaim, wellProgress, addCoins, boostRefresh, giftBoost, boostUse, openBuy, closeBuy, watchAd, boostLeft }, uiReady, guide, lvTitle: () => CHEER.lv && { gy: +CHEER.lv.g.position.y.toFixed(1), meshY: +CHEER.lv.mesh.position.y.toFixed(1), h: +CHEER.lv.mesh.geometry.parameters.height.toFixed(1), tier: window.__lvTier | 0, screenY: +(ov.H / 2 - CHEER.lv.g.position.y).toFixed(1) }, why: () => ({ paused, introOn, tutI, camIntro: !!camIntro, lvShown: window.__lvShown, lid: (window.__lid || []).map(v => +v.toFixed(2)), hud: performance.now() - (window.__hudInT0 || 0), status: G.status, tgtAlive: !!(guide.tgt && guide.tgt.alive), locked: !!(guide.tgt && guide.tgt.locked) }), clam: { loadClam, buildClam, CLAM }, ovScene: () => { const out = []; ov.scene.traverse(m => { if (m.isMesh && m.visible) { let go = 0, q = m.parent; const chain = []; while (q && q !== ov.scene) { chain.push(q.renderOrder); q = q.parent; } out.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' chain=[' + chain.join(',') + '] tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' z=' + +m.getWorldPosition(new THREE.Vector3()).z.toFixed(0) + ' ' + (m.material && m.material.type)); } }); return out; }, ovInfo: () => [...ov.sprites].map(sp => { const r = []; sp.holder.traverse(m => { if (m.isMesh) r.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' op=' + (m.material && +m.material.opacity.toFixed(2))); }); return { id: sp.id, zTop: sp.zTop, z: sp.holder.position.z, px: Math.round(sp.holder.position.x + ov.W / 2), py: Math.round(ov.H / 2 - sp.holder.position.y), meshes: r }; }), U, buildJelly, loadJelly, tapThing: id => { const o = G.things.find(x => x.id === id && x.alive); if (o) pickThing(o); return !!o; }, evInfo: () => { const e = EVT.cur; if (!e) return null; return { kind: e.kind, t: +e.t.toFixed(1), d: +e.d.toFixed(1), n: e.m.length, pinned: e.m.filter(o => o.evPin).length, fish: G.things.filter(o => o.kind === 'fish' && o.alive && !o.big).length, p: e.m.slice(0, 4).map(o => [+o.pos.x.toFixed(1), +o.pos.y.toFixed(1), +o.pos.z.toFixed(1), !!o.evPin]) }; }, devEvents: ['conga', 'waltz', 'swirl', 'squabble', 'drop', 'feed', 'startle', 'swarm', 'octo ink', 'octo floor', 'octo swim', 'pump'], devEvent: (n) => {   /* developer tool (Settings): start one event now, to test it */
   if (!G || G.status !== 'play') return; hideOverlays(); paused = false;
   if (EVT.cur) { for (const o of EVT.cur.m) { o.evOn = false; o.evTight = false; o.evPin = null; } EVT.cur = null; }
   if (n === 'conga' || n === 'waltz' || n === 'swirl' || n === 'squabble' || n === 'drop') evStart(n);

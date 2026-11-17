@@ -145,8 +145,8 @@ export function paintBF(L: Layer, c: Ctx, ov: HTMLElement, K = 1, A = 1, out = f
                 if (su >= 0 && su < 1) {
                     const gs = 330 * (0.9 + 0.2 * su); P.pic('cgSG', 'bf_goldglow', H(cx - gs / 2 - 20, cy - gs * 0.28, gs, gs * 0.56), { alpha: 0.75 * (1 - su), fill: 0xff4040 });
                     for (let i = 0; i < 5; i++) {
-                        const u = (now - an.t0 - i * 90) / 640; if (u <= 0 || u >= 1) continue; const dir = (i - 2) * 0.55, e = u * u, x = ix + Math.sin(dir) * 190 * u + 30 * u, y = iy - Math.sin(Math.PI * Math.min(1, u * 1.6)) * 50 + e * 520, spin = u * Math.PI * 5 + i, cs2 = Math.cos(spin), w2 = 66 * (0.2 + 0.8 * Math.abs(cs2)) * (1 - 0.25 * u), h2 = 70 * (1 - 0.25 * u);
-                        for (let k = 8; k >= 1; k--) { const uu = Math.max(0, u - k * 0.02), ee = uu * uu, tx = ix + Math.sin(dir) * 190 * uu + 30 * uu, ty = iy - Math.sin(Math.PI * Math.min(1, uu * 1.6)) * 50 + ee * 520, tsz = 46 * (1 - k / 9); P.pic(`cgT${i}_${k}`, 'bf_goldglow', D(tx - tsz / 2, ty - tsz / 2, tsz, tsz), { alpha: 0.5 * (1 - u) * (1 - k / 9) }); }   // a short golden trail
+                        const u = (now - an.t0 - i * 90) / 640; if (u <= 0 || u >= 1) continue; const dir = (i - 2) * 0.4, e = u * u, x = ix + Math.sin(dir) * 95 * u + 30 * u, y = iy - Math.sin(Math.PI * Math.min(1, u * 1.6)) * 50 + e * 300, spin = u * Math.PI * 5 + i, cs2 = Math.cos(spin), w2 = 66 * (0.2 + 0.8 * Math.abs(cs2)) * (1 - 0.25 * u), h2 = 70 * (1 - 0.25 * u);
+                        for (let k = 8; k >= 1; k--) { const uu = Math.max(0, u - k * 0.02), ee = uu * uu, tx = ix + Math.sin(dir) * 95 * uu + 30 * uu, ty = iy - Math.sin(Math.PI * Math.min(1, uu * 1.6)) * 50 + ee * 300, tsz = 46 * (1 - k / 9); P.pic(`cgT${i}_${k}`, 'bf_goldglow', D(tx - tsz / 2, ty - tsz / 2, tsz, tsz), { alpha: 0.5 * (1 - u) * (1 - k / 9) }); }   // a short golden trail
                         P.pic('cgC' + i, 'bf_ic_coin', D(x - w2 / 2, y - h2 / 2, w2, h2), { alpha: 1 - u * u, flipX: cs2 < 0 });
                     }
                 }
