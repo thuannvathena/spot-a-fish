@@ -142,10 +142,16 @@ function hideOverflowDecor() {   /* last step of the layout: a decor piece that 
   tank.scale.copy(s0); tank.position.copy(p0); tank.updateMatrixWorld(true);
 }
 const decorModels = {};
-function loadDecorModel(dir) {   /* an artist's decor model (public/models/<dir>/model.fbx + tex.png), loaded once: scaled to a height of 1, standing on y = 0, centred; lit by its own texture so the water does not wash it out */
+function loadDecorModel(dir, sway = 0) {   /* an artist's decor model (public/models/<dir>/model.fbx + tex.png), loaded once: scaled to a height of 1, standing on y = 0, centred; lit by its own texture so the water does not wash it out */
   if (decorModels[dir]) return decorModels[dir];
   return decorModels[dir] = (async () => { try { const base = document.baseURI, [obj, tex] = await Promise.all([new FBXLoader().loadAsync(new URL('models/' + dir + '/model.fbx', base).href), new THREE.TextureLoader().loadAsync(new URL('models/' + dir + '/tex.png', base).href)]);
     tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4; const mt = new THREE.MeshLambertMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: .5, fog: false, side: THREE.DoubleSide }); obj.traverse(m => { if (m.isMesh) { m.material = mt; smoothNormals(m.geometry); } });
+    if (sway) { /* a living piece (coral) bends gently in the current: every vertex gets a weight that grows with its height (0 at the foot, so the foot stays planted), the slow sway and a quicker shimmer run in the vertex shader, each piece in its own phase */
+      obj.updateMatrixWorld(true); const bx = new THREE.Box3().setFromObject(obj), H = Math.max(bx.max.y - bx.min.y, 1e-3), v = new THREE.Vector3();
+      obj.traverse(m => { if (!m.isMesh) return; const P = m.geometry.attributes.position, ms = Math.max(m.matrixWorld.getMaxScaleOnAxis(), 1e-6), w = new Float32Array(P.count);
+        for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld); const hn = Math.min(1, Math.max(0, (v.y - bx.min.y) / H)); w[i] = hn * hn * H / ms * sway; }
+        m.geometry.setAttribute('swayW', new THREE.BufferAttribute(w, 1)); });
+      mt.onBeforeCompile = sh => { sh.uniforms.uTime = U.uTime; sh.vertexShader = 'uniform float uTime; attribute float swayW;\n' + sh.vertexShader.replace('#include <begin_vertex>', 'vec3 transformed = position; float ph = modelMatrix[3].x * 1.9 + modelMatrix[3].z * 1.3; transformed.x += (sin(uTime * 1.1 + ph) + .35 * sin(uTime * 2.3 + ph * 1.7 + position.y * .02)) * swayW; transformed.z += (cos(uTime * .9 + ph * 1.2) + .3 * sin(uTime * 2.0 + ph)) * swayW * .7;'); }; }
     const bb = new THREE.Box3().setFromObject(obj), sz = bb.getSize(new THREE.Vector3()); obj.scale.setScalar(1 / Math.max(sz.y, 1e-3)); const b2 = new THREE.Box3().setFromObject(obj); obj.position.set(-(b2.min.x + b2.max.x) / 2, -b2.min.y, -(b2.min.z + b2.max.z) / 2); const w = new THREE.Group(); w.add(obj); return w;
   } catch (e) { console.warn(dir + ' not loaded', e); return null; } })();
 }
@@ -1172,7 +1178,7 @@ const THEME_N = 5, themeG = [], themeEmit = [];
   const addRocks = (n, cols) => { for (let i = 0; i < n; i++) { const s = rand(.22, .5), m = new THREE.Mesh(new THREE.IcosahedronGeometry(s, 1), mat(pick(cols), .15, { shininess: 25 })); m.scale.set(rand(1, 1.5), rand(.5, .8), rand(1, 1.4)); m.rotation.y = rand(0, 6); place(m, rand(1.3, 2.3), rand(0, 6.28), FLOOR_Y + s * .25); } };
   const addCorals = (n, cols) => { for (let k = 0; k < n; k++) { const grp = new THREE.Group(), ang = k / n * 6.28 + rand(-.3, .3), h = rand(.75, 1.15), dir = 'coral_' + (1 + (k + (n > 3 ? 0 : (themeG.indexOf(cur) & 1))) % 2);   /* the artist's Coral1 (green) and Coral2 (gold), one after the other (public/models/coral_1, coral_2); they stand at once and fill in when the model has loaded */
     place(grp, rand(1.75, 2.25), ang); grp.rotation.y = rand(0, 6.28); grp.userData.pl2 = true;
-    loadDecorModel(dir).then(tpl => { if (!tpl) return; const o = tpl.clone(true); o.scale.setScalar(h); grp.add(o); replaceDecor(); clearPotZone(); }); } };
+    loadDecorModel(dir, .07).then(tpl => { if (!tpl) return; const o = tpl.clone(true); o.scale.setScalar(h); grp.add(o); replaceDecor(); clearPotZone(); }); } };
   const addKelp = (n, h0, h1, cols) => { for (let i = 0; i < n; i++) { const h = rand(h0, h1), geo = new THREE.CylinderGeometry(.02, .08, h, 8, 14); geo.translate(0, h / 2, 0); geo.scale(1.8, 1, .75); const m = new THREE.Mesh(geo, wm(pick(cols))); m.rotation.y = rand(0, 3.14); place(m, rand(1.5, 2.15), rand(0, 6.28)); } };   /* kept inside the glass: the leaning blades must not reach the wall */
   const addAnemones = n => { for (let k = 0; k < n; k++) { const col = pick([0xff6ac8, 0xb07cff, 0x4af0c8]), mt = wm(col); mt.emissive = new THREE.Color(col).multiplyScalar(.45); const ag = new THREE.Group();
     for (let b = 0; b < 16; b++) { const h = rand(.4, .7), geo = new THREE.CylinderGeometry(.012, .035, h, 5); geo.translate(0, h / 2, 0); const tn = new THREE.Mesh(geo, mt); const aa = rand(0, 6.28), rr = rand(0, .2); tn.position.set(Math.cos(aa) * rr, 0, Math.sin(aa) * rr); tn.rotation.set(rand(-.3, .3), 0, rand(-.3, .3)); ag.add(tn); }
@@ -1233,7 +1239,7 @@ const THEME_N = 5, themeG = [], themeEmit = [];
     const heap = new THREE.Mesh(new THREE.SphereGeometry(.28, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), gold); heap.scale.set(1, .5, .65); heap.position.y = .3; g.add(heap);
     for (let c = 0; c < 6; c++) { const coin = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .015, 10), gold); coin.position.set(rand(-.25, .25), .32 + rand(0, .08), rand(-.1, .15)); coin.rotation.set(rand(0, 1), 0, rand(0, 1)); g.add(coin); }
     const a = 5.3; place(g, 1.7, a); faceCenter(g, a); g.scale.setScalar(1.1); emitAt(g.position.x, FLOOR_Y + .55, g.position.z); }
-  { const g = new THREE.Group(), a = 3.9; place(g, 1.25, a); faceCenter(g, a); g.rotation.z = .1; g.userData.pl2 = true;   /* the artist's Anchor (public/models/anchor): an iron anchor with a rope round it, standing a little askew by the wreck, its flat side turned to the middle of the tank */
+  { const g = new THREE.Group(), a = 3.9; place(g, 1.25, a); faceCenter(g, a); g.rotation.z = .1; g.userData.pl2 = true; g.userData.fx = 'sway'; g.userData.rz0 = .1; g.userData.ph = rand(0, 6.28);   /* the artist's Anchor (public/models/anchor): an iron anchor with a rope round it, standing a little askew by the wreck, its flat side turned to the middle of the tank */
     loadDecorModel('anchor').then(tpl => { if (!tpl) return; const o = tpl.clone(true); o.scale.setScalar(.72); g.add(o); replaceDecor(); clearPotZone(); }); }
   for (let k = 0; k < 2; k++) { const br = new THREE.Mesh(new THREE.CylinderGeometry(.2, .2, .38, 12), mat(0x9a6a3a, .2)); place(br, rand(1.2, 2.2), 0.3 + k * .5, FLOOR_Y + .19); }   /* (two barrels, not three: the anchor needs the room in the heart tank) */
 
@@ -1245,13 +1251,13 @@ const THEME_N = 5, themeG = [], themeEmit = [];
     const top = new THREE.Mesh(new THREE.IcosahedronGeometry(.5, 1), rm); top.scale.set(1.9, .55, .8); top.position.set(0, 1.15, 0); g.add(top); const a = 3.3; place(g, 1.6, a); faceCenter(g, a); g.scale.setScalar(1.1); reg(g, V(0, .6, 0), V(0, 0, 1)); }
   { const g = new THREE.Group(), rm = mat(0x6a7a68, .15); for (let s = 0; s < 3; s++) { const b = new THREE.Mesh(new THREE.IcosahedronGeometry(.4 - s * .06, 1), rm); b.position.set(s * .3 - .3, .3 + s * .22, 0); g.add(b); } const hole = new THREE.Mesh(new THREE.CircleGeometry(.17, 12), new THREE.MeshBasicMaterial({ color: 0x0a3a30 })); hole.position.set(0, .5, .33); g.add(hole);
     const a = 0.5; place(g, 1.8, a); faceCenter(g, a); g.scale.setScalar(1.1); reg(g, V(0, .35, .2), V(0, 0, 1), true); }
-  for (let k = 0; k < 5; k++) { const orb = new THREE.Mesh(new THREE.SphereGeometry(.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xc8ffb0 })); place(orb, rand(1.3, 2.3), rand(0, 6.28), FLOOR_Y + rand(.3, 2.6)); orb.userData.bob = rand(0, 6); }
+  for (let k = 0; k < 5; k++) { const orb = new THREE.Mesh(new THREE.SphereGeometry(.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xc8ffb0 })); place(orb, rand(1.3, 2.3), rand(0, 6.28), FLOOR_Y + rand(.3, 2.6)); orb.userData.bob = rand(0, 6); orb.userData.fx = 'orb'; }
 
   // ===== 4: atlantis =====
   cur = themeG[4];
   addRocks(5, [0x8a7ac0, 0x7a8ac8]); addFans(4, [0xff8ad8, 0xb08aff, 0x8ad8ff]); addStars(3); addAnemones(3);
   for (let k = 0; k < 7; k++) { const col = pick([0xb06cff, 0x4af0ff, 0xff6ad8]); const g = new THREE.Group(); const n = 2 + (k % 3); for (let c = 0; c < n; c++) { const h = rand(.45, 1.1), cr = new THREE.Mesh(new THREE.ConeGeometry(.12, h, 6), mat(col, .9, { transparent: true, opacity: .88, shininess: 120 })); cr.position.set(rand(-.2, .2), h / 2, rand(-.2, .2)); cr.rotation.set(rand(-.3, .3), 0, rand(-.3, .3)); g.add(cr); }
-    place(g, rand(1.5, 2.3), k / 7 * 6.28 + rand(-.2, .2)); }
+    g.userData.fx = 'crystal'; g.userData.ph = rand(0, 6.28); place(g, rand(1.5, 2.3), k / 7 * 6.28 + rand(-.2, .2)); }
   for (let k = 0; k < 3; k++) { const g = new THREE.Group(), sh = mat(0xffe8f4, .4, { shininess: 90, side: THREE.DoubleSide }); for (const s of [0, 1]) { const half = new THREE.Mesh(new THREE.SphereGeometry(.3, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), sh); half.scale.set(1, .5, 1); half.rotation.x = s ? Math.PI - .5 : 0; half.position.y = s ? .13 : 0; g.add(half); }
     const pearl = new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff })); pearl.position.y = .12; g.add(pearl); place(g, rand(1.3, 2.2), 1 + k * 2.1, FLOOR_Y + .02); }
   for (let k = 0; k < 4; k++) { const g = new THREE.Group(), m = mat(0xf4f0ff, .35, { shininess: 80 }), h = rand(1.0, 1.8); const c = new THREE.Mesh(new THREE.CylinderGeometry(.14, .17, h, 12), m); c.position.y = h / 2; g.add(c);
@@ -4838,6 +4844,10 @@ function frame(now) {
   requestAnimationFrame(frame);
   const raw = (now - last) / 1000, dt = Math.min(.05, raw); last = now; fpsTick(raw); const tf0 = performance.now(); renderer.info.reset();
   if (!paused) { time += dt; U.uTime.value = time; }
+  if (!paused && typeof curTheme === 'number' && themeG[curTheme]) for (const m of themeG[curTheme].children) { const f = m.userData.fx; if (!f || !m.visible) continue; const ph = m.userData.ph !== undefined ? m.userData.ph : (m.userData.bob || 0);
+    if (f === 'crystal') { m.rotation.z = Math.sin(time * .8 + ph) * .035; m.rotation.x = Math.cos(time * .65 + ph) * .03; for (const c of m.children) if (c.material && c.material.emissiveIntensity !== undefined) c.material.emissiveIntensity = .75 + .55 * Math.sin(time * 1.5 + ph + c.position.x * 9); }   /* the crystals glimmer slowly, each in its own phase, and lean a hair */
+    else if (f === 'orb') { const y0 = m.userData.pl ? m.userData.pl[2] : m.position.y; m.position.y = y0 + Math.sin(time * .7 + ph) * .14; m.position.x += Math.cos(time * .5 + ph) * .0006; }   /* the glowing seeds drift up and down */
+    else if (f === 'sway') m.rotation.z = m.userData.rz0 + Math.sin(time * .6 + ph) * .03; }   /* the anchor rocks a few degrees on its rope's weight */
   const dtp = paused ? 0 : dt; frameN++; fvTick(dt); if (frameN % 6 === 0) refreshClearBtn();   // the grey state of Clear Tank / Clear Backup follows the game all the time (it was only updated at a few moments, so it could stay grey while a tank needed fish)
   // inertia
   if (!ptrs.size) { orbit.az += orbit.azV * dtp; orbit.azV *= Math.exp(-dtp * 2.6); if (Math.abs(orbit.azV) < .01) orbit.azV = 0; orbit.el = clamp(orbit.el + orbit.elV * dtp, EL_MIN, EL_MAX); orbit.elV *= Math.exp(-dtp * 3.2); if (Math.abs(orbit.elV) < .01) orbit.elV = 0; }
