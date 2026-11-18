@@ -20,7 +20,7 @@ features:
   - title: Three.js
     details: A 3D tank with glass and water lens, bundled by esbuild into one HTML file.
   - title: Game Design Document
-    details: Rules, 15 levels, events and art needs, kept next to the game.
+    details: Rules, 60 levels, events and art needs, kept next to the game.
   - title: Versioned releases
     details: Built locally and pushed to GitHub Pages, with every released version kept online.
 ---

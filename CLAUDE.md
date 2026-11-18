@@ -5,7 +5,7 @@ Ngữ cảnh đầy đủ: `HANDOFF.md`. Nhật ký tính năng: `docs/gdd/chang
 - Người dùng nói tiếng Việt → trả lời tiếng Việt, văn bản thường.
 - **Hỏi trước** khi commit, push, release, xoá. Chỉ commit/release khi người dùng yêu cầu.
 - `public/ui/bf/` (art UI hiện tại, cùng một nhà) được phép commit và push, kể cả saola; chỉ chặn các thư mục cá Unity dưới đây.
-- Không bao giờ đăng: `SpotAFish_PrimaryContent/`, `SpotAFish_UnityProject/`, `fish-packs/`, `fish-assets/`, `*.mov`. Được phép commit: `Added Assets/`, `Fish Asset 3D/`, cá/âm thanh Unity đã convert (`public/models/unity`, `public/sfx`).
+- Không bao giờ đăng: `SpotAFish_PrimaryContent/`, `SpotAFish_UnityProject/`, `fish-packs/`, `fish-assets/`, `*.mov`. Được phép commit: `Added Assets/`, `Fish Asset 3D/`, cá đã convert (`public/models/fish`) và âm thanh (`public/sfx`).
 - Dùng ChatGPT để tạo asset thì được (trước đây tạm tránh vì dùng chung account, không phải lệnh cấm). Làm trên GitHub cá nhân `thuannvathena`.
 - Trước release: `npx tsc --noEmit`, `node scripts/check-public.mjs`, cập nhật changelog, cây git sạch.
 - Báo cáo trung thực cái đã đo/kiểm và cái chưa; animation phải đo bằng số theo từng frame, không chỉ nhìn vài ảnh.

@@ -1,152 +1,123 @@
-# Spot A Fish — tài liệu bàn giao (handoff)
+# Fishy Find (Spot A Fish): tài liệu bàn giao
 
-Mục đích: dán/đọc file này ở account mới (hoặc máy mới) để tiếp tục dev game mà không mất ngữ cảnh. Viết ngày 2026-11-10, tổng hợp toàn bộ các phiên làm việc đến thời điểm này.
+Mục đích: đọc file này ở máy mới / account mới (hoặc khi port sang Unity) để nắm game đang như thế nào mà không mất ngữ cảnh. **Cập nhật lần cuối 2026-11-18** theo bản `latest`. Quy tắc làm việc ngắn gọn nằm ở `CLAUDE.md`; nhật ký chi tiết từng tính năng nằm ở `docs/gdd/changelog.md`; luật chơi và số liệu nằm ở `docs/gdd/` (đã đối chiếu với code ngày 18/11).
 
-> **Câu mở đầu gợi ý cho Claude ở account mới:** "Đọc `HANDOFF.md` ở gốc repo spot-a-fish rồi làm tiếp theo đó. Trả lời tôi bằng tiếng Việt, hỏi trước khi làm việc không thể hoàn tác (commit/release/xoá)."
+> **Câu mở đầu gợi ý cho Claude ở account mới:** "Đọc `CLAUDE.md` rồi `HANDOFF.md` ở gốc repo spot-a-fish rồi làm tiếp. Trả lời tôi bằng tiếng Việt, hỏi trước khi làm việc không thể hoàn tác (commit / push / release / xoá)."
 
 ---
 
 ## 1. Dự án là gì
 
-- **Spot A Fish**: game prototype, bể cá 3D (Three.js) + giao diện Phaser 4 (HUD), có level editor và tài liệu VitePress (GDD).
-- Người chơi tap vào đúng cá giống hai tank mục tiêu; cá sai vào Backup (7 ô); đầy Backup thì thua (có Play On). Xong đủ tank thì thắng và có animation win.
-- Repo (public, tài khoản **cá nhân**): https://github.com/thuannvathena/spot-a-fish
-- Trang (GitHub Pages): https://thuannvathena.github.io/spot-a-fish/ (gồm play, editor, docs; mỗi version release có URL riêng)
-- Thư mục làm việc: thư mục `spot-a-fish` (clone của repo trên).
-- Nhánh: `main`. Commit gần nhất: `7942420 Blur the top row and target plates on the lose screen`.
+- **Fishy Find** (tên cũ Spot A Fish): game prototype, bể cá 3D (Three.js) + giao diện Phaser 4, có level editor và tài liệu VitePress (GDD).
+- Người chơi tap đúng cá giống hai tank mục tiêu; cá sai (hoặc sứa, bạch tuộc) vào Backup (7 ô); đầy Backup thì thua (có Play On). Xong đủ tank thì thắng, có animation win, màn WELL DONE (coin) rồi sang level mới. 60 level.
+- Repo: GitHub cá nhân `thuannvathena/spot-a-fish` (origin) và `x-saola/fishy-find` (remote `saola`, riêng tư, chỉ để push). Cả hai luôn nhận cùng nhánh `main`.
+- Trang (GitHub Pages): https://thuannvathena.github.io/spot-a-fish/ (`/demo/` là game, `/docs/` là tài liệu, `/editor/` là level editor; mỗi version release có URL riêng). `Play Now` trỏ `/demo/`, nên sau khi push phải chạy `npm run release:latest` thì bản chơi mới cập nhật.
 
-## 2. Quy tắc làm việc mà người dùng đã đặt ra (giữ nguyên ở account mới)
+## 2. Quy tắc làm việc (xem `CLAUDE.md`)
 
-1. **Ngôn ngữ:** người dùng nói tiếng Việt → trả lời tiếng Việt, văn bản thường (không cần format nặng).
-2. **Hỏi trước khi làm việc không hoàn tác hoặc đưa ra ngoài:** commit, push, release, xoá, đăng lên GitHub. **Chỉ commit/release khi người dùng yêu cầu.**
-3. **Hai thư mục Unity KHÔNG được đăng lên repo:** `SpotAFish_PrimaryContent/` và `SpotAFish_UnityProject/` (đã ở `.gitignore`), nhưng được dùng để phát triển. Cũng không đăng clip `Lose Anim.mov` (đã xoá) và `win animation idea.mov` (đã gitignore). `New Win Anim.mov` (clip tham chiếu animation win, ở gốc dự án) hiện **chưa được theo dõi** (untracked) — không nên commit.
-4. **Được commit:** `Added Assets/` và `Fish Asset 3D/`.
-5. **Đã chấp nhận publish** cá/âm thanh có nguồn gốc từ Unity (model đã convert sang `.glb`, `.m4a`).
-6. ChatGPT để tạo asset thì được (trước đây tạm tránh vì dùng chung account, không phải lệnh cấm; Gemini cũng là lựa chọn).
-7. Làm trên **GitHub cá nhân** (`thuannvathena`), không phải GitHub công ty.
-8. Trước khi release phải chạy `node scripts/check-public.mjs` (kiểm tra không lộ file không được đăng). Release cần **cây git sạch**.
-9. Báo cáo trung thực: cái gì đã kiểm tra bằng số liệu/ảnh, cái gì chưa. Người dùng rất khó chịu khi tôi báo "ổn" dựa trên ảnh chụp thưa. Với animation, **đo vị trí/độ mờ bằng số theo từng frame** thay vì chỉ nhìn vài ảnh.
-10. Cảnh báo trong phiên: đừng tự đổi những thứ đã được xác nhận là ổn (ví dụ camera win đã đúng, đừng "cải tiến" lại).
+- Người dùng nói tiếng Việt: trả lời tiếng Việt, văn bản thường.
+- **Hỏi trước** khi commit, push, release, xoá. Chỉ commit / release khi người dùng yêu cầu.
+- **Không bao giờ đăng:** `SpotAFish_PrimaryContent/`, `SpotAFish_UnityProject/`, `fish-packs/`, `fish-assets/`, `*.mov`. Được commit: `Added Assets/`, `Fish Asset 3D/`, `public/ui/bf/` (art UI hiện tại, cùng một nhà), cá và âm thanh đã convert.
+- ChatGPT để tạo asset thì được.
+- Trước release: `npx tsc --noEmit`, `node scripts/check-public.mjs` (hoặc `--tracked`), cập nhật changelog, cây git sạch.
+- Báo cáo trung thực cái đã đo và cái chưa; animation phải đo bằng số theo từng frame. Đừng đổi lại những thứ đã được xác nhận ổn (camera win, easing bay cung của cá...). Đừng làm xuất hiện lại lỗi cũ đã sửa (cá giật teleport, cá/decor chồng nhau).
 
-## 3. Chạy lại trên máy/account mới
+## 3. Chạy lại
 
 ```bash
 git clone https://github.com/thuannvathena/spot-a-fish.git
 cd spot-a-fish
 npm install
 cd game && npm install && cd ..
-npm run dev          # build game + mở vite ở http://localhost:8080
+npm run dev          # build game + vite ở http://localhost:8080
 ```
-
-Lệnh hữu ích (`package.json`):
 
 | Lệnh | Việc |
 |---|---|
-| `npm run dev` | build game rồi chạy dev server (cổng 8080) |
-| `npm run spike:prepare` | chỉ build lại `game` (dùng sau khi sửa `game/src/main.js`) |
-| `npx tsc --noEmit` | kiểm tra TypeScript (HUD Phaser: `src/`) |
+| `npm run dev` | build game rồi chạy dev server (cổng 8080); thêm `-- --host` để thử trên điện thoại cùng Wi-Fi |
+| `npm run spike:prepare` | chỉ build lại game (dùng sau **mỗi lần** sửa `game/src/main.js`; thêm `?v=N` vào URL để tránh cache) |
+| `npx tsc --noEmit` | kiểm tra TypeScript (phần UI Phaser trong `src/`) |
 | `npm run check:public` | kiểm tra file nào sẽ lộ ra khi đăng |
-| `npm run release:latest` | đăng bản `latest` lên Pages |
-| `npm run release` | release có version (dùng cùng plugin prototype-builder) |
+| `npm run release:latest` | đăng bản `latest` lên Pages (cần đang ở `main`, đồng bộ với origin, cây sạch) |
+| `npm run release` | release có version |
 | `npm run docs:dev` / `docs:build` | tài liệu VitePress |
 
-**Cần cài ở account mới:** plugin **prototype-builder** (các lệnh `/prototype-builder ...`, ví dụ `release_demo`) và các skill Phaser trong `.claude/skills` (có sẵn trong repo). Cần đăng nhập `gh` bằng tài khoản `thuannvathena`.
-
-### Việc phải làm TRƯỚC khi chuyển máy
-
-- **Có rất nhiều thay đổi chưa commit** (xem mục 9). Nếu chuyển sang máy khác, phải commit + push trước, nếu không sẽ mất. Chuyển account trên cùng máy thì cây làm việc vẫn còn nguyên.
-- Các file không có trên GitHub, phải copy tay nếu cần: `SpotAFish_PrimaryContent/`, `SpotAFish_UnityProject/`, `New Win Anim.mov`, `win animation idea.mov`, `Added Assets/Sound/` (chưa commit nhưng được phép commit; bản `.m4a` đã convert nằm ở `public/sfx/`), `fish-packs/` (gitignore, tạo lại bằng `scripts/unity-fish-pack.py`).
-- Bộ nhớ của Claude Code nằm cục bộ ở `~/.claude/projects/-Users-thuannv-prototypes-spot-a-fish/` — không theo account. Vì vậy file này là nguồn ngữ cảnh chính. Gợi ý: sao chép mục 2 vào một `CLAUDE.md` ở gốc repo để mọi phiên đọc tự động.
+Memory của Claude Code nằm cục bộ (`~/.claude/projects/.../memory`), không theo account: file này và `CLAUDE.md` là nguồn ngữ cảnh chính. Không có trên GitHub (copy tay nếu cần): hai thư mục Unity ở mục 2, `*.mov`, `Added Assets/Assets from Bubble Fish/` (khoảng 1 GB, art tham khảo của dự án chị em, vẫn bị `.gitignore` chặn).
 
 ## 4. Cấu trúc repo
 
 ```
-game/src/main.js        ← ~3200 dòng: toàn bộ game 3D (Three.js). File chính.
-game/src/template.html  ← HTML + CSS của HUD DOM (backup/target là điểm neo layout, ẩn)
-game/src/levelcfg.js    ← cấu hình level (tank: L>=5, clear: L>=6 ...)
-game/src/levels.json    ← 15 level (L16/L17 đã xoá)
-game/editor/            ← level editor (có xem trước game trực tiếp, bảng cá)
-src/scenes/Hud.ts       ← HUD Phaser: 2 camera, blur, mờ dần giao diện trên
-src/ui/panels.ts        ← vẽ panel: level intro, win text + confetti, booster, overlay
-src/ui/kit.ts           ← Layer, vật liệu UI
-public/models/unity/    ← 22 cá Unity (fish_NN.glb) + list.json + eyes.json + swarm_fish.glb
-public/sfx/             ← âm thanh .m4a
-public/ui/tanks/        ← ảnh bể/bong bóng
-scripts/                ← release.sh, check-public.mjs, unity-fish-*.py, ...
-docs/gdd/               ← GDD (changelog.md luôn cập nhật; overview/rules/art-audio/roadmap/levels)
+game/src/main.js        ← ~5.200 dòng: toàn bộ game 3D (Three.js), AI cá, sự kiện, win, âm thanh. File chính
+game/src/template.html  ← HTML + CSS vỏ game; các phần tử ẩn mà UI Phaser đọc trạng thái từ đó
+game/src/levelcfg.js    ← luật mở khoá + mặc định (UNLOCK, EVENT_UNLOCK)
+game/src/levels.json    ← 60 level (sinh từ bảng thiết kế bằng game/tools/csv-to-levels.mjs)
+game/editor/            ← level editor (xem trước game trực tiếp)
+game/tools/             ← wr-sim.mjs (bot ước tính tỉ lệ thắng), csv-to-levels, export-levels
+src/scenes/Hud.ts       ← HUD Phaser (2 camera, mờ dần UI)
+src/ui/bf.ts            ← các pop-up (Pause, Out of space, Buy, Well Done, Level failed...), confetti, coin
+src/ui/panels.ts        ← intro level, chữ thắng, booster, chữ khen
+src/ui/kit.ts           ← lớp vẽ UI, vật liệu
+public/models/fish/     ← 49 cá 3D (model.fbx + tex.jpg) + list.json
+public/models/<name>/   ← model của artist: octopus, jelly, clam, clay_pot, stone_pillar, stone_statue, anchor, coral_1..3, glass_bottle
+public/ui/bf/           ← art UI hiện tại của các pop-up và nút (91 file)
+public/ui/new/          ← nút tròn booster, huy hiệu level, ổ khoá
+public/ui/tanks/        ← bể đích, Backup, lồng, bong bóng
+public/ui/load/         ← logo và màn loading
+public/sfx/             ← âm thanh .m4a (39 file)
+Fish Asset 3D/          ← file nguồn của artist (cá, decor)
+Added Assets/           ← art / âm thanh nguồn do artist giao
+scripts/                ← release.sh, check-public.mjs, prep-fish.py, plan-levels.py, make-levels-doc.py...
+docs/gdd/               ← GDD (changelog.md luôn cập nhật)
 docs/guide/             ← hướng dẫn editor, deploy, asset workflow
 ```
 
-`docs/gdd/changelog.md`, mục **latest (main)**, là nhật ký chi tiết từng tính năng — luôn cập nhật khi thêm tính năng.
+## 5. Kiến trúc và điểm vào trong `game/src/main.js`
 
-## 5. Kiến trúc & điểm vào trong `game/src/main.js`
+- Cảnh Three.js chính + renderer **overlay ortho `ov`** (tank backup/target 3D, sprite cá bay, bong bóng, confetti) + canvas Phaser HUD (2 camera: lớp nền có blur và `setAlpha`, pop-up ở camera thứ hai).
+- **Cá:** `MODEL3D`, `buildStaticFish`, `modelVariant` (bản đổi màu: xoay màu trong OKLab `oklabTurn`, danh sách góc xấu `HUE_BAD`, lọc hồng/tím + xanh lá `hueToxic`), `makeModelThumb` (thumbnail lưu `THUMB`). AI: `updateThing`, `randomPoint0`, `separate` (đẩy tách mềm, bị giới hạn), `colBodies` / `themeBoxes` (hộp va chạm của decor, mỗi bộ phận một hộp với tàu đắm), `COL_STEP` = 0,045.
+- **Decor:** mỗi bộ theme trong `themeG[0..4]`; `place`, `replaceDecor` → `decorOverflow`, `separateDecor`, `clearPotZone`, `hideOverflowDecor`, `randomizeDecor` (mỗi level xếp lại ngẫu nhiên); `loadDecorModel(dir, sway)` nạp model của artist (san hô đung đưa bằng shader).
+- **Sự kiện:** `evStart`, `evUpdate`, `evPin` (kéo cá theo quỹ đạo), `evCool` (`EV_COOL` = 20 s yên lặng sau mỗi sự kiện), cho ăn `feedStart` / `feedUpdate` / `feedPick` (mỗi cá chọn một viên và cắn), `swarmStart` (600 cá, 18 s), `startle`.
+- **Bạch tuộc / mực:** `squidUpdate`, `octoAnim`, `sprayInk` (`INK_N` 10 đốm, `INK_DUR` 9 s), `inkOpenWater` (chỉ phun ở nước thoáng).
+- **Pipe:** `tubeStart`, `tubeUpdate`, `FISH_CAP` = 40.
+- **Win:** `vortexStep`, `winPrep`, `winTitleUpdate`, `wellOpen` / `wellClaim` (màn WELL DONE), `COIN_FLY`, `ffHintTick` (dòng "tap to fast forward"), `startRinse`, `makeCurtain`, `nextLevel`.
+- **Booster:** `boostUse` (miễn phí lần đầu, rồi đếm, hết thì mở pop-up mua), `hint`, `clearTank`, `clearBackup`, `boostNo` (không dùng được: thông báo + nút lắc).
+- **Âm thanh:** `Snd`, `SFX_MAP`, `SAMPLES` (xem `docs/gdd/sounds.md`).
+- **Nước:** `glassWater`, `surfU` / `VORT`, `scatter` (gợn sóng chỉ khi bấm ở/ gần mặt nước), lens.
+- **Hook kiểm tra:** `window.__qa` (`decorFit`, `fishClip`, `overlapAudit`, `jitter`, `octRelease`, `fishRelease`; xem `docs/qa.md`) và `window.__ff` (`newLevel`, `devWin`, `devEvent`, `showPlayOn`, `showLose`, `sprayInk`, `modelVariant`, `feed`, `THUMB`, `SPECIES`, `G`, `orbit`, ...).
 
-- Cảnh chính Three.js + renderer **overlay ortho `ov`** (tank backup/target 3D, sprite cá bay, bong bóng, confetti) + canvas Phaser HUD (2 camera: lớp base trên camera chính có blur và `setAlpha`; popup ở camera thứ hai).
-- **Cá:** tất cả là model 3D (22 cá Unity + `blue_white_babe`). `buildModelFish`, `registerUnity`, `loadUnity`, `makeModelThumb` (thumbnail một lần mỗi loài/biến thể màu, lưu `THUMB`). Cá Unity có mắt là hình trên texture; chớp mắt bằng shader `uBlink`.
-- **Pipe/tube:** `tubeStart`, `tubeUpdate`, `tubeStarved`, `FISH_CAP = 40`. Đợt cá 7–11 con; chỉ bơm khi tank đã thưa, hoặc quá hạn (8 s hoặc xong thêm 1 tank), hoặc thật sự kẹt.
-- **Booster (vô hạn):** Hint → Clear Tank (tank cần nhiều cá nhất, cá thật nhảy ra từ nước) → Clear Backup (`clearBackup(win)`).
-- **Win:** `celebrate()`, `celUpdate`, `vortexStep`, `winCam`, `makeVortex`, `startRinse`, `makeCurtain`, `nextLevel`.
-- **Swarm (L9+):** `swarmStart/Update`, `makeSwarmHouse` (hang đá 3D), `SWARM` (cá Unity 414 tam giác tô xám).
-- **Âm thanh:** `Snd` (Web Audio, `SFX_MAP`, BGM duck/fade).
-- **Nước:** `glassWater` (nước chảy trên kính), `surfU`/`VORT` (mặt nước), pass lens `lensMat` (bẻ cong qua kính, chỉ ở desktop).
-- **Hook debug:** `window.__ff` (có `celebrate`, `newLevel`, `feed`, `feedStart`, `swarmStart`, `swarm`, `tube`, `THUMB`, `SPECIES`, `MODEL3D`, `UNITY`, `ov`, `cam`, `G`, ...), `window.__winScale` (hệ số thời gian cho win; đặt ~0 để đóng băng), `window.__fps`, `window.__blink`.
+## 6. Số liệu và quyết định thiết kế cần nhớ
 
-## 6. Đã làm xong (tóm tắt theo chủ đề)
+- **Mở khoá:** Backup L3, Hint L4, Clear Tank L7, Clear Backup L9, bạch tuộc L11, pipe L16, sò L21, bầy cá L31; sứa từ L8; tank bounty từ L25.
+- **Sự kiện theo level:** conga L1, waltz L3, swirl L6, ngọc trai L9, squabble L12, cho ăn L15, đá rơi L21; 20 s yên lặng sau mỗi sự kiện.
+- **Mỗi 10 level đổi** theme (6 kiểu hall), hình bể (cylinder, bowl, box, hex, flower, heart) và bộ decor (5 bộ).
+- **Cá:** 49 loài, kích thước 1,4, tốc độ 0,85 × 0,85 (`FISH_SLOW`); trần 40 cá trong bể một lúc.
+- **Coin:** bắt đầu 900; thắng +30/60/90; giá Hint 300, Clear Backup 900, Clear Tank 1500 (3 lượt mỗi gói); Play On lần đầu miễn phí, sau đó 900 coin hoặc quảng cáo (tối đa 5 lần/ngày mỗi loại). Quảng cáo chưa nối (bấm là nhận thưởng ngay).
+- **Va chạm:** không thứ gì nhìn thấy được trong bể được chồng lên nhau; cá bị đẩy ra khỏi vật đặc tối đa 0,045 mỗi khung hình; khi tạm dừng không gì di chuyển.
+- Win: camera win và easing bay cung đã được chốt (đừng đổi).
+- Tự hạ độ phân giải: mặc định 2.0 → 1.5 khi tụt FPS; `?res=2` hoặc `?hq=1` giữ nét; `?fps=1` hiện FPS.
 
-- Toàn bộ cá thành model 3D; bỏ cá 2D, cá voi, cá mập, level 16/17. Âm thanh tích hợp theo danh sách của người dùng (quy tắc BGM).
-- Ba booster vô hạn, popup Play On khi Backup đầy, nước chảy trên kính khi thua (đã được khen "đẹp"), hiệu ứng vỡ tank.
-- Intro level (bong bóng + chữ, không hiện ở level 1), camera tutorial, chỉ giữ emoji 💢/👆/❓, blur hàng trên/plate khi thua, booster mờ khi camera chuyển động, mắt chớp chậm hơn, decor nằm trong kính.
-- **Animation win (đã chốt, người dùng báo "ok ổn rồi"):** tối đa 10 cá xoắn ốc 2–3 sợi (hình nón, rộng đáy hẹp đỉnh), camera rộng rồi tiến gần dần lên miệng bể, cá nhảy cung ra quanh bong bóng 3D, bong bóng nổ, cá văng và rơi xuống nước, "LEVEL COMPLETE" + confetti + nhạc; rèm hồ cá **đóng sau chữ 2 s**, level mới dựng sau rèm, chạm để bỏ qua; sau level cuối quay về level 1. Không hiện sao. Khi thắng: cá còn trong Backup nhảy về bể trước; giao diện trên, hai tank đích và Backup cùng mờ dần. Cá win bao quanh bằng xoáy nước (bong bóng + hạt cát quay quanh trục, lõi khí, phễu lõm trên mặt) và bắn nước khi trồi lên.
-- Xô thức ăn (feed) bay lên và biến mất gọn.
-- **Swarm:** cá 3D tô xám (từ `Fish_2` Unity, ~414 tam giác), cố định **500 con**, cùng chiều xoáy, chui ra/vào hang đá 3D. Thời lượng mỗi con 18 s ở level 9 → tối đa 26 s, cộng ≤3 s so le (tổng ~21–29 s).
-- **Sửa lỗi pipe:** không tự bơm ngay khi vào level; toast "New fish are coming out" chỉ hiện khi cá thật sự ra; bơm quá hạn để không bị khoá khi dùng booster liên tục.
-- Script phụ: `scripts/unity-fish-pack.py` (gom mọi file của một con cá Unity vào `fish-packs/Fish_N/`, thư mục đó gitignore).
+## 7. Cạm bẫy đã gặp (đừng lặp lại)
 
-## 7. Con số & quyết định thiết kế cần nhớ
+1. **Comment `//` cuối dòng nuốt phần còn lại của câu lệnh một dòng** trong `game/src/main.js` (đã làm hỏng build nhiều lần). Dùng `/* */` hoặc đặt comment trên dòng riêng.
+2. Additive blending trong three.js nhân màu với alpha một lần nữa: xuất `vec4(màu, alpha)`.
+3. Khi kiểm thử win bằng cách đóng băng thời gian (`__winScale` ≈ 0), vệt cá bị kéo thành khối đen: đó là do đóng băng.
+4. Cửa sổ preview mất focus (hoặc tab bị ẩn) thì game **tự pause** và mở pop-up Pause; bấm Resume trước khi đo. Khi kiểm thử, bấm vào mép ngoài của trang để lấy focus.
+5. Cache trình duyệt: thêm `?v=N` vào URL.
+6. **Hộp va chạm của một vật nhiều phần có thể phình rất to** (tàu đắm với cột buồm nghiêng từng thành một hộp 3 × 2,3 × 2,4 giữa bể nhỏ và làm cá giật). Với vật mới, kiểm ở hình bể nhỏ nhất.
+7. Một hàm vẽ trung gian làm rơi mất tham số (`__ff.cageCanvas` từng bỏ `t` và canvas đích, nên nước trong pop-up đứng im). Khi bọc một hàm, truyền đủ tham số.
+8. Lỗi "Page build failed" của Pages thỉnh thoảng thoáng qua: chạy lại bản build bằng `gh api -X POST repos/thuannvathena/spot-a-fish/pages/builds`.
 
-- Level 1: 4 tank, không Backup/Hint; tank 3D từ level 5; Clear Backup từ level 6; tube từ level 7; swarm từ level 9.
-- Pipe đợt đầu **không được tới sau tank đầu tiên**. Điều kiện bơm: `due` (đủ số tank) và (`sparse` ≤ 58% × 40 con, hoặc `overdue`), hoặc `tubeStarved` (không còn cá cần bắt). Tank đầy 40 → nắp pipe `hold`, nhưng cá mục tiêu vẫn ra.
-- Win: `WIN = { brk: 1.0, burst: 4.6, cover: 5.6 }`, rèm +2 s sau chữ. Camera `dist = base * (1 + .3*out - .52*inn)` (đừng đổi — bản "lùi xa quá" đã bị người dùng chê).
-- `rOrb`/quỹ đạo cá quanh bong bóng giữ gọn trong khung; easing bay cung phải là smoothstep chuẩn (bản `*.55` từng làm cá vọt ra ngoài rồi giật về).
-- Tự hạ độ phân giải: mặc định 2.0 → 1.5 khi tụt FPS; `?res=2` hoặc `?hq=1` giữ nét; `?fps=1` hiện FPS/res.
-- Số liệu ước (chỉ là đoán): người chơi quen mất ~3–5 s để thấy và tap trúng 1 con; lần đầu 8–15 s. Chưa có analytics.
+## 8. Trạng thái còn lại / chưa kiểm chứng
 
-## 8. Cạm bẫy đã gặp (đừng lặp lại)
+- **Chưa chơi trên điện thoại thật:** cảm giác chạm, camera hai ngón, hiệu năng (nhất là các level nhiều cá 55-60), âm thanh.
+- Ở level rất đông cá (55-60) vẫn còn một vài cặp cá đè nhau thoáng qua trong sự kiện; chưa truy hết các cú nhảy vị trí lớn lúc có sự kiện hoặc giờ ăn.
+- Màu cá đổi (look-alike): đã lọc các góc bạn khoanh và cặp hồng/tím + xanh lá, nhưng `blue_chunker` chỉ còn rất ít màu tốt; cá nhiều màu vẫn bị xoay mọi màu cùng một góc.
+- Popup **Levels** (lưới chọn level) vẫn là HTML kiểu cũ; các khung HTML cũ của Pause, Lose, Play On, Buy vẫn nằm trong `template.html` dưới lớp Phaser (làm vùng bấm).
+- Chưa có analytics; số liệu tỉ lệ thắng của bot (`wr-sim.mjs`) chỉ là ước đoán.
 
-1. **Comment `//` cuối dòng nuốt phần còn lại của câu lệnh một dòng** (đã xảy ra nhiều lần, làm hỏng build hoặc vô hiệu hoá camera win). Luôn đặt comment ở cuối dòng sau toàn bộ lệnh, hoặc dùng dòng riêng.
-2. **Additive blending trong three.js nhân màu với alpha một lần nữa** → nếu đã nhân sẵn alpha vào màu thì hiệu ứng gần như vô hình. Xuất `vec4(màu, alpha)`.
-3. Khi kiểm thử win bằng cách đóng băng thời gian (`__winScale≈0`), dải vệt cá bị kéo dài thành khối đen — đó là hiện tượng do đóng băng, không có khi chạy thật.
-4. Cửa sổ preview mất focus thì game **tự pause** (popup "Paused"); bấm Resume trước khi đo.
-5. Cache trình duyệt: thêm `?v=N` vào URL. Cmd+Shift+R bị app chụp màn hình chiếm.
-6. TypeScript/Phaser 4: `addBlur(quality, x, y, strength, color, steps)`; `fillPoints` cần `Phaser.Math.Vector2`.
-7. Sandbox từng chặn `npx gltfpack`/`pip install meshoptimizer`; dùng bộ giảm tam giác tự viết trong `scripts/unity-fish-to-glb.py` (`--ratio`, tối thiểu ~414 tam giác cho mỗi con vì bảo vệ đường nối UV).
-8. Lỗi "Page build failed" của Pages từng xuất hiện thoáng qua; chạy lại `gh api -X POST repos/thuannvathena/spot-a-fish/pages/builds`.
-9. Thumbnail cá FBX (`blue_white_babe`) có thể bị chụp lúc clip bơi đang chớp mắt; đã thêm `openEyes()` nhưng **chưa xác nhận đó là nguyên nhân** của ảnh "mắt nhắm" người dùng gặp.
-
-## 9. Trạng thái chưa commit / chưa kiểm chứng / việc còn lại
-
-**Chưa commit (tất cả từ sau `7942420`):** thay đổi ở `.gitignore`, `docs/gdd/changelog.md`, `game/editor/main.js`, `game/src/levelcfg.js`, `game/src/levels.json`, `game/src/main.js`, `game/src/template.html`, `src/scenes/Hud.ts`, `src/ui/panels.ts`; file mới `.claude/launch.json`, `public/sfx/`, `Added Assets/Sound/`, `scripts/unity-fish-pack.py`, `public/models/unity/swarm_fish.glb`. Cũng có `fish-assets/` và `fish-assets.zip` (không phải do tôi tạo trong các phiên này — kiểm tra trước khi commit) và `New Win Anim.mov` (không commit).
-
-**Chưa kiểm chứng:**
-- Hiệu năng **trên điện thoại thật**: swarm 500 con × ~414 tam giác (~319k tam giác/khung hình, desktop 60 fps), 40 cá ~64k tam giác, hạt xoáy nước.
-- Chuyển động thật của xoáy nước, hang swarm (cửa hang có nhìn rõ không), cá chui vào hang lúc kết thúc. Mới xem ảnh tĩnh.
-- Âm thanh trên điện thoại.
-- Chuỗi "No thanks" của Play On.
-- Pipe trong một lượt chơi thật liên tục (đã mô phỏng, chưa chơi trọn level 8 với booster).
-- Ảnh "cá mắt nhắm" ở plate mục tiêu: chưa tái hiện được; cần biết level nào.
-- Xử lý khi Backup đầy 7 con ở thời điểm thắng.
-
-**Còn mở / đề xuất:**
-- Làm rong/đồ trang trí nghiêng theo chiều dòng xoáy (đã đề xuất, chưa làm).
-- Tắt tự hạ độ phân giải trên desktop (đã đề xuất, chưa được trả lời).
-- Hai tank đích đã mờ cùng giao diện khi thắng (người dùng chỉ nhắc Backup; nếu muốn giữ hai tank đích thì đảo một dòng `hudAl()` trong `tankFx.update`).
-- Thêm log "thời gian đến lần tap đúng" nếu muốn số liệu thật (người dùng nói "ước chừng trước").
-- Giảm số/tam giác swarm cho máy yếu nếu giật.
-
-## 10. Quy trình release (khi người dùng yêu cầu)
+## 9. Quy trình release (khi người dùng yêu cầu)
 
 1. `npx tsc --noEmit` và `node scripts/check-public.mjs` phải sạch.
-2. Cập nhật `docs/gdd/changelog.md`.
-3. Cây git sạch (commit trước — chỉ khi người dùng bảo).
-4. `npm run release:latest` (bản latest) hoặc `/prototype-builder release_demo` (bản có version, ví dụ `v0.1.0`).
-5. Kiểm tra Pages build; nếu lỗi thoáng qua thì chạy lại build.
+2. Cập nhật `docs/gdd/changelog.md` (và các trang GDD nếu luật chơi đổi).
+3. Cây git sạch (commit trước, chỉ khi người dùng bảo), `main` đồng bộ với origin.
+4. `npm run release:latest` (bản latest) hoặc `npm run release` (bản có version). Đợi khoảng một phút cho Pages cập nhật.

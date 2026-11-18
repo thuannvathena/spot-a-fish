@@ -2,7 +2,7 @@
 
 **Fishy Find** · Game Design Document · tracks build `latest` (see [Changelog](./changelog))
 
-This document describes what Fishy Find is, how it plays, and why it is built the way it is. Every number in it (timings, formulas, sizes, colours) comes from the current code. If the two disagree, the code is right and this document has a bug.
+This document describes what Fishy Find is, how it plays, and why it is built the way it is. Every number in it (timings, formulas, sizes, colours) comes from the current code and was last checked against it on 18 Nov 2026. If the two disagree, the code is right and this document has a bug.
 
 ## How to read this document
 
@@ -20,9 +20,9 @@ The game is **3D (Three.js)**, so sizes are in scene units, not canvas pixels. L
 | Part | Chapters |
 |---|---|
 | **I. Vision** | [1. Overview](./overview) |
-| **II. Gameplay** | [2. Core loop](./core-loop) · [3. Rules & mechanics](./rules) · [Levels](./levels) · [Art and audio](./art-audio) |
-| **III. Production** | [4. Roadmap & open questions](./roadmap) · [5. Changelog](./changelog) |
+| **II. Gameplay** | [2. Core loop](./core-loop) · [3. Rules & mechanics](./rules) · [Levels](./levels) · [Art and audio](./art-audio) · [Sounds](./sounds) |
+| **III. Production** | [4. Roadmap & open questions](./roadmap) · [5. Changelog](./changelog) · [QA checks](../qa) |
 
 ## One-paragraph summary
 
-A 3D aquarium puzzle: a round tank is full of fish, two target tanks ask for species, and the player taps the right fish before a 7-slot Backup tray fills up. 15 levels, each teaching one new mechanic.
+A 3D aquarium puzzle: a round tank is full of fish, two target tanks ask for species, and the player taps the right fish before a 7-slot Backup tray fills up. 60 levels in 6 themes, each new mechanic taught in its own level.

@@ -45,14 +45,16 @@ export default defineConfig({
                         { text: '2. Core loop', link: '/gdd/core-loop' },
                         { text: '3. Rules & mechanics', link: '/gdd/rules' },
                         { text: 'Levels', link: '/gdd/levels' },
-                        { text: 'Art and audio', link: '/gdd/art-audio' }
+                        { text: 'Art and audio', link: '/gdd/art-audio' },
+                        { text: 'Sounds', link: '/gdd/sounds' }
                     ]
                 },
                 {
                     text: 'III. Production',
                     items: [
                         { text: '4. Roadmap & open questions', link: '/gdd/roadmap' },
-                        { text: '5. Changelog', link: '/gdd/changelog' }
+                        { text: '5. Changelog', link: '/gdd/changelog' },
+                        { text: 'QA checks', link: '/qa' }
                     ]
                 }
             ],

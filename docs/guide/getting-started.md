@@ -26,8 +26,8 @@ npm install
 
 ## Testing on a phone
 
-Build the game, then serve `game/` on your network (for example `cd game && npx http-server -a 0.0.0.0`) and open the printed network URL on a phone on the same Wi‑Fi.
+Run `npm run dev -- --host` (the full game with the Phaser UI) and open the printed network URL on a phone on the same Wi‑Fi. (The standalone `game/index.html` has no Phaser UI, so it is only good for the 3D part.)
 
 ## Game source
 
-The game is plain JavaScript on Three.js: logic in `game/src/main.js`, UI in `game/src/template.html`, fish images in `game/assets/fishes/`. After editing, run `npm run build` (or `cd game && node build.mjs`) and open `game/index.html`. Level data lives in `game/src/levels.json` (edit with the [level editor](/guide/editor)); see the GDD chapter [Levels](/gdd/levels).
+The game is JavaScript on Three.js (the 3D tank) with Phaser 4 for the UI: the logic and the 3D scene are in `game/src/main.js`, the HTML shell (and the hidden elements the UI reads) in `game/src/template.html`, the Phaser UI in `src/ui/` and `src/scenes/`, and the 3D models, UI pictures and sounds in `public/` (`models/`, `ui/`, `sfx/`). After editing `game/src/main.js`, run `npm run spike:prepare` (it rebuilds the game page) and reload with a new `?v=N` so the browser does not use its cache. Level data lives in `game/src/levels.json` (edit with the [level editor](/guide/editor)); see the GDD chapter [Levels](/gdd/levels).

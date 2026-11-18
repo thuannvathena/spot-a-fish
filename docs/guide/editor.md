@@ -4,7 +4,7 @@ Status: **first version built** (levels A and B: warnings and Play). Written fro
 
 The editor lives in the same repo as its own page, served next to the game at `<pagesUrl>/editor/` (beside `/demo/` and `/docs/`). It is a Three.js-era custom addition; the Phaser template does not cover it.
 
-Source: `game/editor/` (`main.js`, `template.html`, `build.mjs`). `npm run build` builds the game and the editor; `npm run build:site` copies the editor to `/editor/`. Level rules shared with the game live in `game/src/levelcfg.js`; the built-in 15 levels are `game/src/levels.json` (regenerate with `node game/tools/export-levels.mjs`).
+Source: `game/editor/` (`main.js`, `template.html`, `build.mjs`). `npm run build` builds the game and the editor; `npm run build:site` copies the editor to `/editor/`. Level rules shared with the game live in `game/src/levelcfg.js`; the built-in 60 levels are `game/src/levels.json` (made from the design sheet by `node game/tools/csv-to-levels.mjs`; `node game/tools/export-levels.mjs` exports the same).
 
 ## 0. How it works in practice
 
@@ -12,7 +12,7 @@ Source: `game/editor/` (`main.js`, `template.html`, `build.mjs`). `npm run build
 - Edit a level, press **Save** (Ctrl/Cmd+S). Each save keeps the last 10 versions.
 - **Play** opens the game over the editor with the open level. Back and Restart are in the top bar. **Seed**: the same seed gives the same fish layout at the start; after that fish move with real time, so a run is not frame-for-frame identical.
 - **Collections** (Organiser tab) order levels. **Export levels.json** downloads the collection as one file; put it at `game/src/levels.json` and rebuild to ship those levels in the game. The published game does not read the editor's folder by itself.
-- **Reference level (1-15)** (`refLevel`): a few internal rules are not level fields yet (which random events appear, how many big fish swim around, how far look-alike colours are shifted). The level borrows them from the built-in level with that number. Auto-fill sets it from Difficulty (Easy 3, Medium 8, Hard 13).
+- **Reference level** (`refLevel`): a few internal rules are not level fields yet (how many big fish swim around, how far look-alike colours are shifted). The level borrows them from the built-in rule table of that number (the table has 15 rows; a higher number uses row 15). Which random events appear is a level field (`events`). The level borrows them from the built-in level with that number. Auto-fill sets it from Difficulty (Easy 3, Medium 8, Hard 13).
 - The preview is a 3D sketch (cylinder tank, dots for fish) and does not show real fish positions.
 - Known limits of this version: a level can have at most 2 bounty tanks (one of each kind); the logo is a text placeholder until the official Athena asset is added; no simulation (level C).
 
@@ -34,22 +34,22 @@ Fishy Find levels are **parameter sets, not hand-placed layouts**. Fish position
 | Pump tube | `tube.extraFish` | Extra fish | Fish waiting in the tube |
 | Pump tube | `tube.waves[]` | Waves | Each wave: `afterTanks` (pump after N target tanks are done) and `holdLast` (keep the last fish of a tank) |
 | Pump tube | `tube.autoPumpWhenStuck`, `tube.stuckDelaySec` | Auto-pump | Default on, 2.5 s |
-| Boosters | `backup`, `hint`, `clear` | Backup / Hint / Clear Backup | On/off |
+| Boosters | `backup`, `hint`, `tank`, `clear` | Backup / Hint / Clear Tank / Clear Backup | On/off |
 | Events | `eventGap`, `feed`, `feedGap`, `swarmGap`, `startle`, `startleGap` | Events | Seconds ranges |
-| Look | `theme` | Theme | Default `floor((level-1)/3)`; can be set by hand |
+| Look | `theme` | Theme | Auto = one look per 10 levels (`floor((level-1)/10)` in the order Aquarium hall, Sunset reef, Kelp forest, Atlantis, Lagoon, Deep sea); can be set by hand to any of the 6 looks. The tank shape also follows the level number in blocks of 10 |
 
 Defaults for every field come from the game's current `levelConfig()`. A level file may leave a field out to use the default.
 
 **Level file:** JSON with `schema: "spot-a-fish-level"` and `version: 1` (required), `id` and `name` (required), then the fields above. Level info (not gameplay): `status`, `difficulty`, `category`.
 
-**Out of editor scope:** progress, stars and tutorial flags (`localStorage`), shop or currency (none exists), fish art and sounds.
+**Out of editor scope:** progress, stars and tutorial flags (`localStorage`), coins, boosters and prices (they live in the game, see Rules 3.11), fish art and sounds.
 
 ## 2. Validation (warnings, level 1)
 
 The editor shows a warning for each of these:
 
 - Total fish in the tank at start is more than `FISH_CAP` (40), or more than `TUBE_INIT` (40) when the tube is on.
-- `species` is less than `2 × goal`, or more than the 23 species available.
+- `species` is less than `2 × goal`, or more than the 49 fish models of the game (`SPECIES_MAX`); `goal` is more than the 46 species that can be a target (`CATCHABLE`: the shark, the whale and the sea horse are only ever wrong fish).
 - Fish needed (`goal × per` plus bounty tanks) is more than the fish available (tank plus tube).
 - A tube wave has `afterTanks` larger than the number of target tanks.
 - A bounty tank is set but fewer than 2 normal tanks exist.
@@ -73,7 +73,7 @@ The editor shows a warning for each of these:
 ## 5. Level management
 
 - Per level: **Name**, **Id**, **Status** (Draft / Ready / Retired), **Difficulty** (Easy / Medium / Hard, set by hand), **Category** (for example Tutorial, Normal, Bounty, Boss).
-- Levels are ordered into **collections** in the Organiser tab (for example "Main 1–15"). Organiser behaviour and the Add level dialog follow the fixed defaults below.
+- Levels are ordered into **collections** in the Organiser tab (for example "Main 1–60"). Organiser behaviour and the Add level dialog follow the fixed defaults below.
 
 ## 6. Checking a level
 
@@ -84,7 +84,7 @@ The editor shows a warning for each of these:
 ## 7. Play test
 
 - Play opens the game over the editor, with **Back** and **Restart**.
-- The game reads the editor's level JSON **directly**; no conversion step. `game/src/main.js` will load levels from JSON; the current 15 levels are exported to JSON as the default data, so the game runs as before without the editor.
+- The game reads the editor's level JSON **directly**; no conversion step. `game/src/main.js` will load levels from JSON; the built-in 60 levels are the default data (`game/src/levels.json`), so the game runs without the editor.
 - Play test does not write `localStorage` progress and does not award stars.
 - A **Seed** box (optional, empty = random) makes fish layout repeatable. This needs the game to use a seeded random generator in place of `Math.random` for level setup.
 

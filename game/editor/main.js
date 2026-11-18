@@ -4,7 +4,7 @@ import { FISH_ICONS } from '../src/fishicons.js';
 import FISH_LIST from '../../public/models/fish/list.json';
 
 /* ---------- constants and helpers ---------- */
-const FISH_CAP = 40, TUBE_INIT = 40, SPECIES_MAX = 23, CATCHABLE = 23, HISTORY_KEEP = 10;
+const FISH_CAP = 40, TUBE_INIT = 40, SPECIES_MAX = 49, CATCHABLE = 46, HISTORY_KEEP = 10;
 const $ = id => document.getElementById(id);
 const clone = o => JSON.parse(JSON.stringify(o));
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -83,7 +83,7 @@ function checks(lv) {
   if (num(lv.species) && !noDecoys && lv.species < lv.goal + 1) w.push(`Species ${lv.species} is less than target tanks + 1 (${lv.goal + 1}): there is no wrong fish species`);
   if (num(lv.species) && noDecoys && lv.species > lv.goal) w.push(`Species ${lv.species} is more than target tanks (${lv.goal}) but the level has no wrong fish`);
   if (num(lv.species) && lv.species > SPECIES_MAX) w.push(`Species ${lv.species} is more than the ${SPECIES_MAX} available`);
-  if (lv.goal > CATCHABLE) w.push(`Target tanks ${lv.goal} is more than the ${CATCHABLE} catchable species`);
+  if (lv.goal > CATCHABLE) w.push(`Target tanks ${lv.goal} is more than the ${CATCHABLE} species that can be a target`);
   const waves = (lv.tube && lv.tube.waves) || [];
   waves.forEach((v, i) => { if (v.afterTanks > lv.goal) w.push(`Wave ${i + 1}: after ${v.afterTanks} tanks, but the level has only ${lv.goal}`); });
   if (waves.length && !s.tube) w.push('Waves are set but the tube is off');
