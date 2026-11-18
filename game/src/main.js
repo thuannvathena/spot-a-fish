@@ -2176,7 +2176,7 @@ function newLevel(L) {
   const intro = [[cfg.backup, 'iBackup', 'backup'], [cfg.hint, 'iHint', 'hint'], [cfg.tank, 'iTank', 'tank'], [cfg.clear, 'iClear', 'clear'], [cfg.squid, 'iSquid', 'squid'], [cfg.swarm, 'iSwarm', 'swarm'], [cfg.clams, 'iClam', 'clam'], [cfg.tube, 'iPump', 'pump']].find(x => x[0] && !save[x[1]]);
   introOn = false; paused = false; hideOverlays(); kick(-4); Snd.bgmStart(); Snd.play('levelstart'); lvPending = 0; if (!window.__noIntro && !(G && G.cfg && G.cfg.noCamIntro)) camIntro = { t0: performance.now(), dur: 2300, turns: 1.2, az1: .65, el0: .62, far: 1.85 }   /* never farther or higher than the player may zoom: beyond that the edge of the hall (its rim and the sky above it) shows as a white flash */; window.__noIntro = false; if (L >= 2) { window.__lvShown = false; window.__lvPop = 0; window.__lvIntro = { t0: performance.now(), n: L }; } else { window.__lvIntro = undefined; window.__lvShown = true; }   // (level 1 has none: the camera tutorial is enough) Snd.play('start');   // (painted by the Phaser UI: paintLevelIntro in src/ui/panels.ts)
   save.last = L; persist(); refreshHintBtn();
-  if (intro) { save[intro[1]] = 1; persist(); const gi = gid; const t0i = performance.now(), tryShow = () => { if (gi !== gid || !G || G.status !== 'play') return; if (performance.now() - t0i > 20000) return; if (!paused && !introOn && uiReady()) showIntro(intro[2]); else setTimeout(tryShow, 120); }; setTimeout(tryShow, 600); }   // the first-time pop-up comes last: it waits until the LEVEL words, the bubble, the whole UI and the lids of the target tanks are done
+  G.introWant = intro ? intro[2] : ''; if (intro && intro[2] === 'clear' && !G.backup.length) seedBackup(2); if (intro) { save[intro[1]] = 1; persist(); const gi = gid; const t0i = performance.now(), tryShow = () => { if (gi !== gid || !G || G.status !== 'play') return; if (performance.now() - t0i > 20000) return; if (!paused && !introOn && uiReady()) showIntro(intro[2]); else setTimeout(tryShow, 120); }; setTimeout(tryShow, 600); }   // the first-time pop-up comes last: it waits until the LEVEL words, the bubble, the whole UI and the lids of the target tanks are done
 
 }
 
@@ -2927,16 +2927,19 @@ function pickNextType() {
 function assignTarget(i, initial) {
   const type = pickNextType();
   if (type == null) { G.targets[i] = null; updateBox(i); return; }
-  const t = { type, count: 0, shown: 0, done: false, res: [] }; G.targets[i] = t; tankFx.revive(i);
+  const t = { type, count: 0, shown: 0, done: false, res: [], born: performance.now() }; G.targets[i] = t; tankFx.revive(i);
   const b = boxEls[i]; b.root.className = 'target'; updateBox(i); void b.root.offsetWidth;
   b.root.classList.add('pop'); b.root.style.animationDelay = initial ? `${i * .12}s` : '0s'; setTimeout(() => b.root.classList.remove('pop'), 900);
   const gi = gid; setTimeout(() => { if (gi === gid) pullFromBackup(i); }, initial ? 0 : 500);
 }
-function pullFromBackup(i) {
+function pullFromBackup(i, tries = 0) {
   const t = G.targets[i]; if (!t || t.done || G.status !== 'play') return;
   const need = perOf(t.type) - t.count; if (need <= 0) return;
   const idxs = []; G.backup.forEach((it, k) => { if (!it.junk && it.landed && it.res && it.type === t.type && idxs.length < need) idxs.push(k); });
   if (!idxs.length) return;
+  /* a fish waiting in the Backup flies into its target tank only after that tank has finished showing itself: it popped in (1 s), its lid is fully open, and a short beat has passed (before, it flew in while the tank was still shut or popping) */
+  { const lid = window.__lid ? window.__lid[i] : 1, now = performance.now(); if (lid >= .98 && now - (t.born || 0) > 1000) t.rdy = t.rdy || now; else t.rdy = 0;
+    if ((!t.rdy || now - t.rdy < 350) && tries < 100) { const gi = gid; setTimeout(() => { if (gi === gid && G && G.targets[i] === t) pullFromBackup(i, tries + 1); }, 120); return; } }
   const slots = [...$('backup').querySelectorAll('.slot')]; const info = idxs.map(k => ({ r: slots[k].getBoundingClientRect(), sp: G.backup[k].res }));
   G.backup = G.backup.filter((_, k) => !idxs.includes(k)); renderBackup();
   info.forEach((n, j) => giveToTarget(i, { x: n.r.left + n.r.width / 2, y: n.r.top + n.r.height / 2 }, j * 140, n.r.width * .9, n.sp));
@@ -3074,7 +3077,7 @@ function completeTarget(i) {
   if (G.completed + 1 >= G.cfg.goal) winStopEvents();
   G.completed++; const gc = gid;   /* (the gauge is not touched yet: it fills and bounces when the bubble of this tank reaches it) */   /* the lid shuts first (it starts closing as the last fish lands), then the tank whirls, shrinks into a bubble and flies up into the progress gauge */
   setTimeout(() => { if (gc !== gid || !G) return; Snd.play('tankdone'); boxEls[i].root.classList.add('done'); tankFx.startClear(i); kick(2.5); }, 900);
-  if (G.completed >= G.cfg.goal) { G.status = 'won'; winPrep(); clearBackup(true); const gw = gid; setTimeout(() => { if (gw === gid && G && !G.celebrated) { G.celebrated = true; celebrate(); } }, 3500); return; }   // (the celebration starts when the last bubble reaches the gauge)
+  if (G.completed >= G.cfg.goal) { G.status = 'won'; winPrep(); clearBackup(true); const gw = gid; setTimeout(() => celebrateWhenSettled(gw, 0), 3500); return; }   // (the celebration starts when the last bubble reaches the gauge)
   const gi = gid, old = G.targets[i]; setTimeout(() => { if (gi !== gid) return; old.res.forEach(ovRemove); old.res = []; if (G.status === 'play' && G.targets[i] === old) assignTarget(i, false); }, 1700);   /* 900 ms of lid and CLEARED! before the swirl, then the same 800 ms as before */
 }
 function updateGoal(bump) {
@@ -3644,7 +3647,7 @@ const tankFx = (() => {
       if (u > 0) { ovFx.emit(x, y, 3, 55, 0xb4ffd2); ovFx.emit(x - vx * 2, y - vy * 2, 1, 25, 0xffffff); if (Math.random() < .35) ovFx.emit(x, y, 1, 90, 0xfff3b0); }
       if (u >= 1) {
         ovFx.emit(gx, gy, 30, 210, 0xb4ffd2); ovFx.emit(gx, gy, 16, 120, 0xffffff); ovFx.emit(gx, gy, 6, 150, 0xfff3b0); ov.scene.remove(c.ball);
-        if (c.gid === gid && G) { if (G.status === 'won' && !G.celebrated) { G.celebrated = true; celebrate(); } G.goalShown = Math.min(G.cfg.goal, (G.goalShown || 0) + 1); updateGoal(true); window.__gaugePulse = performance.now(); Snd.play('gaugehit'); Snd.play('gaugefill', { at: .1 }); }
+        if (c.gid === gid && G) { if (G.status === 'won' && !G.celebrated) celebrateWhenSettled(c.gid, 0); G.goalShown = Math.min(G.cfg.goal, (G.goalShown || 0) + 1); updateGoal(true); window.__gaugePulse = performance.now(); Snd.play('gaugehit'); Snd.play('gaugefill', { at: .1 }); }
         T.back.material = T.basic; T.clear = null; T.g.visible = false; if (window.__whirl) window.__whirl[T.idx] = undefined;
       }
     }
@@ -3867,10 +3870,16 @@ function vortexUpdate(V, T, s, dt) {
   }
   V.spk.geo.attributes.position.needsUpdate = true;
 }
+function celebrateWhenSettled(gw, tries) {   /* the win sequence starts on time; only a diving octopus (it has its own dive state) is waited for, at most 8 s. Fish still diving in from the Backup join the swirl straight away (see celebrate) */
+  if (gw !== gid || !G || G.celebrated) return;
+  if (tries < 80 && G.things.some(o => o.alive && !o.gone && o.dive && o.id === 'squid')) { setTimeout(() => celebrateWhenSettled(gw, tries + 1), 100); return; }
+  G.celebrated = true; celebrate();
+}
 function celebrate() {
   window.__hudFadeT0 = performance.now(); window.__hudInT0 = undefined;   // the top UI fades away as the win sequence starts
   Snd.bgmStop(2.4); kick(2.5); const gw = gid, cr = canvas.getBoundingClientRect(); saveWin();
-  const all = shuffle(G.things.filter(o => o.alive && !o.gone && !o.vtx && ((o.kind === 'fish' && !o.big && !o.locked && !o.launch && !o.dive && !o.tubeP) || (o.kind === 'obstacle' && o.group && (o.id === 'jelly' || o.id === 'squid'))))), fish = all.slice(0, 10), watchers = all.slice(10).filter(o => o.kind === 'fish').concat(G.things.filter(o => o.alive && o.kind === 'fish' && !all.includes(o) && !o.big && !o.launch && !o.dive && !o.tubeP));   // up to 10 fish take part; the others stay in the water and watch from the glass
+  const all = shuffle(G.things.filter(o => o.alive && !o.gone && !o.vtx && ((o.kind === 'fish' && !o.big && !o.locked && !o.launch && !o.tubeP) || (o.kind === 'obstacle' && o.group && (o.id === 'jelly' || o.id === 'squid'))))), fish = all.slice(0, 10), watchers = all.slice(10).filter(o => o.kind === 'fish').concat(G.things.filter(o => o.alive && o.kind === 'fish' && !all.includes(o) && !o.big && !o.launch && !o.dive && !o.tubeP));   // up to 10 fish take part; the others stay in the water and watch from the glass
+  for (const o of all) if (o.kind === 'fish' && o.dive) { o.dive = null; o.boost = Math.max(o.boost || 0, 1); }   /* a fish still diving in from the Backup joins the win sequence at once (its dive simply ends where it is; the swirl pulls it in), so the win starts on time */
   const W = G.win = { gid: gw, t: 0, cam0: { az: orbit.az, el: orbit.el, dist: orbit.dist, ty: orbit.target.y }, fish, arrived: 0, burst: false, cover: false, gp: new THREE.Vector3(0, TANK_H + 2, 0), sx: cr.left + cr.width / 2, sy: cr.top + cr.height * .4, n: fish.length, trails: [], rings: [], bub: makeBubble(), vort: makeVortex(), rOrb: 1.6 };
   beadFx.add(); const COLS = [0xaee9ff, 0x9fdcff, 0xc9f4ff, 0xb6efe8, 0xd4ecff], byY = fish.slice().sort((p, q) => p.pos.y - q.pos.y);
   const calm = o => { o.hv = 0; o.hvT = 0; o.hinted = false; if (o.parts.setGlow) o.parts.setGlow(0); if (o.parts.glows) for (const m of o.parts.glows) m.visible = false; if (o.mark) { fishRoot.remove(o.mark); o.mark = null; } };   // no gold highlight on any fish during the sequence
@@ -4001,6 +4010,7 @@ function celUpdate(dt) {
     const bump = Math.max(0, 1 - (T - (W.pulse || -9)) / .26), rpx = W.rCur * (1 + .2 * bump * bump);
     W.rw = rpx * dpx; bubbleSet(W.bub, W.gp, W.rw, clamp((T - W.bubStart) / .18, 0, 1), .2 + .8 * bump, T); if (frac >= 1) W.full ??= T;
   } else if (!W.burst) W.rw = 12 * dpx;
+  if (!W.burst && !W.n && T >= .9) { W.burst = true; W.burstT = T - 1; }   /* no fish could join the sequence (all the rest were still diving in from the Backup): there is no bubble to pop, so go straight on to LEVEL COMPLETE and WELL DONE (before, nothing ever started and the level hung) */
   if (!W.burst && W.n && (W.full !== undefined && T - W.full > .85 || T >= WIN.burst)) {   // the bubble pops: it swells a little and thins away while drops fly out; the fish let go of the ring and swim back down
     W.burst = true; W.burstT = T; W.fish.forEach((o, i) => { if (o.vtx) o.vtx.homeAt = T + .12 + i * .05; }); Snd.play('winpop'); kick(2);
     burstFx.emit(W.gp, 0xffffff, 26, 2.4); burstFx.emit(W.gp, 0xff9ad9, 20, 3); burstFx.emit(W.gp, 0xfff3b0, 20, 3.4); burstFx.emit(W.gp, 0x9fe8ff, 20, 3); burstFx.emit(W.gp, 0xc9a8ff, 16, 2.6); for (let k2 = 0; k2 < 4; k2++) ovFx.emit(W.sx, W.sy, 22, 250 + k2 * 70, [0xff9ad9, 0xfff3b0, 0x9fe8ff, 0xc9a8ff][k2], 1.7);
@@ -4153,7 +4163,7 @@ function ovUpdate(dt, time) {
           sp.inBk = true; bx = spanX; bs = Math.min(slotSize(r, 'backup') * .8, r.height * .9) * OCT_REL; sqStretch = OCT_LEN; sqLong = 'y';   /* (no easing: it flew in at exactly this size and place, so it must not grow or slide after landing) */  rz = Math.PI / 2 + Math.sin(time * 1.1 + sp.ph) * .03; yw = Math.sin(time * .6 + sp.ph) * .15; by += Math.sin(time * 1.25 + sp.ph) * r.height * .07; if (!sp._ow || (sp.age < 8 && (sp._oc = (sp._oc || 0) + 1) % 20 === 0)) { const bb = new THREE.Box3().setFromObject(sp.holder); sp._ow = Math.max(sp._ow || 0, bb.max.x - bb.min.x); } bx += Math.sin(time * .85 + sp.ph * 1.7) * clamp((spanW - sp._ow) / 2 + 1, 2, 9); }   /* it sways left and right by exactly the room it has: its widest point (arms included) just reaches the glass of the two outer cells */   /* it drifts gently up and down inside the strip */   /* the octopus lies on its side (it flew in that way), its arms drawn together behind it, as long as the three cells it takes (the ink fills the outer two) */
       }
       const fp = tankFx.fishPos(idx, bx, by, bs);
-      if (fp) { spPlace(sp, fp[0], fp[1], fp[2], fp[3] + (sp.built.oct ? Math.PI / 2 : 0), Math.sin(time * 3 + sp.ph) * .6); if (sp.built.oct) sp.holder.scale.y *= OCT_LEN; spAnimate(sp, time, dt, 3); }   /* (the lose animation: the octopus keeps its long, slim, lying shape) */ else { spPlace(sp, bx, by, bs, sp.built.kind === 'jelly' ? 0 : rz, sp.built.kind === 'jelly' ? 0 : yw); if (sqStretch > 1.001) sp.holder.scale[sqLong] *= sqStretch; spAnimate(sp, time, dt, .6); } spFade(sp, (window.__bkA ?? 1) ** 2.2);   /* the animals fade a little faster than the cage: while the camera moves they must not stay solid in front of bars that are already thin */ });
+      if (fp) { spPlace(sp, fp[0], fp[1], fp[2], fp[3] + (sp.built.oct ? Math.PI / 2 : 0), Math.sin(time * 3 + sp.ph) * .6); if (sp.built.oct) sp.holder.scale.y *= OCT_LEN; spAnimate(sp, time, dt, 3); }   /* (the lose animation: the octopus keeps its long, slim, lying shape) */ else { spPlace(sp, bx, by, bs, sp.built.kind === 'jelly' ? 0 : rz, sp.built.kind === 'jelly' ? 0 : yw); if (sqStretch > 1.001) sp.holder.scale[sqLong] *= sqStretch; spAnimate(sp, time, dt, .6); } spFade(sp, ((window.__bkA ?? 1) * hudAl()) ** 2.2);   /* (the fish in the Backup appear and fade together with the Backup tank itself, e.g. the two fish a level starts with) */   /* the animals fade a little faster than the cage: while the camera moves they must not stay solid in front of bars that are already thin */ });
   }
   if (!PROF.off.ov) ov.renderer.render(ov.scene, ov.cam);
 }
@@ -4261,6 +4271,15 @@ function octScreenSize(o) {   /* how big the octopus really looks on screen righ
   o.group.updateMatrixWorld(true); const bx = new THREE.Box3().setFromObject(o.parts.root || o.group), c = [], pts = [];
   for (let i = 0; i < 8; i++) pts.push(projectToClient(new THREE.Vector3(i & 1 ? bx.max.x : bx.min.x, i & 2 ? bx.max.y : bx.min.y, i & 4 ? bx.max.z : bx.min.z)));
   const xs = pts.map(q => q.x), ys = pts.map(q => q.y); void c; return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+}
+function seedBackup(n) {   /* Level 9 (Clear Backup is introduced): the level STARTS with two wrong fish already sitting in the Backup (no flight, not a mistake), so the booster has something to clear. They are species that are no target of this level at all (neither now nor later), so nothing ever pulls them out of the Backup */
+  const pick = G.things.filter(o => o.kind === 'fish' && o.alive && !o.big && !o.locked && !o.launch && !o.dive && !o.tubeP && !G.remaining.includes(o.type) && !G.targets.some(t => t && t.type === o.type)).slice(0, n);
+  for (const o of pick) {
+    o.alive = false; o.gone = true; fishRoot.remove(o.group);
+    const sp = makeSprite('fish', o.id, o.type, o.hue); spTop(sp, false); sp.age = 9; sp.yaw = Math.PI;
+    G.backup.push({ id: o.id, type: o.type, junk: false, landed: true, res: sp });
+  }
+  renderBackup();
 }
 function pickThing(o, booster = false) {   // booster: the Clear Tank booster catches the fish for the player (no combo, no tap sound)
   if (guide.on && !booster && o.kind === 'fish' && --guide.left <= 0) { guide.on = false; save.g1 = 1; persist(); }   // the "Tap a fish" guide ends after the first two taps on a fish
@@ -4430,7 +4449,7 @@ const INTRO = {
   goal: { spot: '#targets', title: '', text: () => 'Fill the tanks with the fish shown above' },
   hint: { spot: '#bHint', pic: 'ui/bf/ic_hint.png', booster: true, title: 'Hint', text: () => 'Show the fish you need' },
   tank: { spot: '#bTank', pic: 'ui/bf/ic_net.png', booster: true, title: 'Clear Tank', text: () => 'Fill the target tank' },
-  clear: { spot: '#bClear', pic: 'ui/bf/ic_clear.png', booster: true, title: 'Clear Backup', text: () => 'Send Backup fish back' },
+  clear: { spot: '#bClear', spot2: '#backup', pic: 'ui/bf/ic_clear.png', booster: true, title: 'Clear Backup', text: () => 'Send Backup fish back' },
   feed: { rib: 'NEW EVENT', tag: 'EVENT', ev: true, img: 'hand', title: 'Feeding Time', text: () => 'Food drops in and the fish crowd the surface. Wait for them to spread out.' },
   swarm: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', school: true, fv: 'swarm', title: 'Fish Swarm', text: () => 'A huge school covers the fish.\nWait for it to pass!' },
   squid: { rib: 'NEW OBSTACLE', tag: 'OBSTACLE', img: 'squid', fv: 'squid', title: 'Octopus', text: () => 'It sprays ink over the fish.\nTapping it fills 3 Backup slots!' },
@@ -4441,7 +4460,7 @@ function showSpot(d) {   // no separate pop-up: dim the screen and light up the 
   const rs = [...document.querySelectorAll(d.spot)].map(e => e.getBoundingClientRect()), r = { left: Math.min(...rs.map(q => q.left)), top: Math.min(...rs.map(q => q.top)), right: Math.max(...rs.map(q => q.right)), bottom: Math.max(...rs.map(q => q.bottom)) }; r.width = r.right - r.left; r.height = r.bottom - r.top; const pad = 6, box = $('spotBox'), tip = $('spotTip');
   box.style.left = (r.left - pad) + 'px'; box.style.top = (r.top - pad) + 'px'; box.style.width = (r.width + pad * 2) + 'px'; box.style.height = (r.height + pad * 2) + 'px';
   box.style.borderRadius = Math.min(26, r.height / 2 + pad) + 'px';
-  $('spotT').textContent = d.title; $('spotP').textContent = d.text(); $('spotOv').dataset.kind = d.booster ? 'booster' : 'board'; $('spotOv').dataset.sel = d.spot; $('spotPic').src = d.pic ? new URL(d.pic, document.baseURI).href : ''; $('spotOv').classList.add('show');
+  $('spotT').textContent = d.title; $('spotP').textContent = d.text(); $('spotOv').dataset.kind = d.booster ? 'booster' : 'board'; $('spotOv').dataset.sel = d.spot; $('spotOv').dataset.sel2 = d.spot2 || ''; $('spotPic').src = d.pic ? new URL(d.pic, document.baseURI).href : ''; $('spotOv').classList.add('show');
   const A = $('app').getBoundingClientRect(), tw = Math.min(270, A.width - 20); tip.style.width = tw + 'px'; tip.style.left = Math.max(A.left + 10, Math.min(A.right - tw - 10, r.left + r.width / 2 - tw / 2)) + 'px';   // the tip stays inside the game column
   tip.style.top = (r.bottom + pad + 16) + 'px'; tip.classList.toggle('arrR', r.left + r.width / 2 > A.left + A.width * .8);
   const cx = r.left + r.width / 2 - parseFloat(tip.style.left); tip.style.setProperty('--ax', Math.max(18, Math.min(tw - 18, cx)) + 'px');
@@ -4781,7 +4800,7 @@ window.addEventListener('keydown', e => {
   
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && G.status === 'play' && tutI < 0 && !introOn) openPause(); });
-document.addEventListener('pointerdown', e => { if (popupOn || introOn) return; for (const id of ['bHint', 'bTank', 'bClear']) { const el = $(id); if (!el || !el.dataset.lockLv) continue; const r = el.getBoundingClientRect(); if (r.width > 10 && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) { Snd.play('ui'); return; } } }, { passive: true });   /* a grey locked booster slot: the button click */
+document.addEventListener('pointerdown', e => { if (popupOn || introOn) return; for (const id of ['bHint', 'bTank', 'bClear']) { const el = $(id); if (!el || !el.dataset.lockLv) continue; const r = el.getBoundingClientRect(); if (r.width > 10 && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) { Snd.play('ui'); window.__boostShake = { kind: { bHint: 'hint', bTank: 'tank', bClear: 'clear' }[id], t0: performance.now() }; return; } } }, { passive: true });   /* a grey locked booster slot: the button click */
 document.addEventListener('click', e => { if (e.target.closest && e.target.closest('.btn,.tool,.lvb')) Snd.play('ui'); }, true);
 
 
@@ -5142,7 +5161,7 @@ window.__qa = {   /* automatic checks (see docs/qa.md): each returns a report wi
 };
 window.__rvLeft = rvLeft; window.__poFree = () => !save.poFreeUsed;
 window.__sfx = k => Snd.play(k);   /* the Phaser UI plays a game sound by its short name */
-window.__ff = { get G() { return G; }, get feed() { return feed; }, modelVariant, sprayInk, showLose: () => { if (!G) return; G.status = 'lost'; paused = true; showLose(); }, showPlayOn: () => { if (!G) return; G.status = 'playon'; paused = true; setPoFish(); showOnly('ovPlayOn'); }, evFreeIn: () => G.evFree - (U.uTime.value - G.t0), newLevel, clamCapture, ripples, orbit, coin: { COIN, wellOpen, wellClaim, wellProgress, addCoins, boostRefresh, giftBoost, boostUse, openBuy, closeBuy, watchAd, boostLeft }, uiReady, guide, lvTitle: () => CHEER.lv && { gy: +CHEER.lv.g.position.y.toFixed(1), meshY: +CHEER.lv.mesh.position.y.toFixed(1), h: +CHEER.lv.mesh.geometry.parameters.height.toFixed(1), tier: window.__lvTier | 0, screenY: +(ov.H / 2 - CHEER.lv.g.position.y).toFixed(1) }, why: () => ({ paused, introOn, tutI, camIntro: !!camIntro, lvShown: window.__lvShown, lid: (window.__lid || []).map(v => +v.toFixed(2)), hud: performance.now() - (window.__hudInT0 || 0), status: G.status, tgtAlive: !!(guide.tgt && guide.tgt.alive), locked: !!(guide.tgt && guide.tgt.locked) }), clam: { loadClam, buildClam, CLAM }, ovScene: () => { const out = []; ov.scene.traverse(m => { if (m.isMesh && m.visible) { let go = 0, q = m.parent; const chain = []; while (q && q !== ov.scene) { chain.push(q.renderOrder); q = q.parent; } out.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' chain=[' + chain.join(',') + '] tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' z=' + +m.getWorldPosition(new THREE.Vector3()).z.toFixed(0) + ' ' + (m.material && m.material.type)); } }); return out; }, ovInfo: () => [...ov.sprites].map(sp => { const r = []; sp.holder.traverse(m => { if (m.isMesh) r.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' op=' + (m.material && +m.material.opacity.toFixed(2))); }); return { id: sp.id, zTop: sp.zTop, z: sp.holder.position.z, px: Math.round(sp.holder.position.x + ov.W / 2), py: Math.round(ov.H / 2 - sp.holder.position.y), meshes: r }; }), U, buildJelly, loadJelly, tapThing: id => { const o = G.things.find(x => x.id === id && x.alive); if (o) pickThing(o); return !!o; }, evInfo: () => { const e = EVT.cur; if (!e) return null; return { kind: e.kind, t: +e.t.toFixed(1), d: +e.d.toFixed(1), n: e.m.length, pinned: e.m.filter(o => o.evPin).length, fish: G.things.filter(o => o.kind === 'fish' && o.alive && !o.big).length, p: e.m.slice(0, 4).map(o => [+o.pos.x.toFixed(1), +o.pos.y.toFixed(1), +o.pos.z.toFixed(1), !!o.evPin]) }; }, devEvents: ['conga', 'waltz', 'swirl', 'squabble', 'drop', 'feed', 'startle', 'swarm', 'octo ink', 'octo floor', 'octo swim', 'pump'], devEvent: (n) => {   /* developer tool (Settings): start one event now, to test it */
+window.__ff = { get G() { return G; }, get save() { return save; }, pick: o => pickThing(o), state: () => ({ paused, introOn, popupOn, ready: uiReady() }), get feed() { return feed; }, modelVariant, sprayInk, showLose: () => { if (!G) return; G.status = 'lost'; paused = true; showLose(); }, showPlayOn: () => { if (!G) return; G.status = 'playon'; paused = true; setPoFish(); showOnly('ovPlayOn'); }, evFreeIn: () => G.evFree - (U.uTime.value - G.t0), newLevel, clamCapture, ripples, orbit, coin: { COIN, wellOpen, wellClaim, wellProgress, addCoins, boostRefresh, giftBoost, boostUse, openBuy, closeBuy, watchAd, boostLeft }, uiReady, guide, lvTitle: () => CHEER.lv && { gy: +CHEER.lv.g.position.y.toFixed(1), meshY: +CHEER.lv.mesh.position.y.toFixed(1), h: +CHEER.lv.mesh.geometry.parameters.height.toFixed(1), tier: window.__lvTier | 0, screenY: +(ov.H / 2 - CHEER.lv.g.position.y).toFixed(1) }, why: () => ({ paused, introOn, tutI, camIntro: !!camIntro, lvShown: window.__lvShown, lid: (window.__lid || []).map(v => +v.toFixed(2)), hud: performance.now() - (window.__hudInT0 || 0), status: G.status, tgtAlive: !!(guide.tgt && guide.tgt.alive), locked: !!(guide.tgt && guide.tgt.locked) }), clam: { loadClam, buildClam, CLAM }, ovScene: () => { const out = []; ov.scene.traverse(m => { if (m.isMesh && m.visible) { let go = 0, q = m.parent; const chain = []; while (q && q !== ov.scene) { chain.push(q.renderOrder); q = q.parent; } out.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' chain=[' + chain.join(',') + '] tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' z=' + +m.getWorldPosition(new THREE.Vector3()).z.toFixed(0) + ' ' + (m.material && m.material.type)); } }); return out; }, ovInfo: () => [...ov.sprites].map(sp => { const r = []; sp.holder.traverse(m => { if (m.isMesh) r.push((m.isSkinnedMesh ? 'S' : 'm') + ' ro=' + m.renderOrder + ' tr=' + (m.material && m.material.transparent) + ' dw=' + (m.material && m.material.depthWrite) + ' dt=' + (m.material && m.material.depthTest) + ' op=' + (m.material && +m.material.opacity.toFixed(2))); }); return { id: sp.id, zTop: sp.zTop, z: sp.holder.position.z, px: Math.round(sp.holder.position.x + ov.W / 2), py: Math.round(ov.H / 2 - sp.holder.position.y), meshes: r }; }), U, buildJelly, loadJelly, tapThing: id => { const o = G.things.find(x => x.id === id && x.alive); if (o) pickThing(o); return !!o; }, evInfo: () => { const e = EVT.cur; if (!e) return null; return { kind: e.kind, t: +e.t.toFixed(1), d: +e.d.toFixed(1), n: e.m.length, pinned: e.m.filter(o => o.evPin).length, fish: G.things.filter(o => o.kind === 'fish' && o.alive && !o.big).length, p: e.m.slice(0, 4).map(o => [+o.pos.x.toFixed(1), +o.pos.y.toFixed(1), +o.pos.z.toFixed(1), !!o.evPin]) }; }, devEvents: ['conga', 'waltz', 'swirl', 'squabble', 'drop', 'feed', 'startle', 'swarm', 'octo ink', 'octo floor', 'octo swim', 'pump'], devEvent: (n) => {   /* developer tool (Settings): start one event now, to test it */
   if (!G || G.status !== 'play') return; hideOverlays(); paused = false;
   if (EVT.cur) { for (const o of EVT.cur.m) { o.evOn = false; o.evTight = false; o.evPin = null; } EVT.cur = null; }
   if (n === 'conga' || n === 'waltz' || n === 'swirl' || n === 'squabble' || n === 'drop') evStart(n);

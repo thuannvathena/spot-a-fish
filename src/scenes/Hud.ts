@@ -27,7 +27,8 @@ export class Hud extends Phaser.Scene {
     private zBase!: Zones; private zOv!: Zones; private zSpot!: Zones;
     private prog = 0;
     private hits: R[] = [];
-    private modal = false;
+    private modal = false; private maskKey = '';
+    private clearMask(st: CSSStyleDeclaration) { if (this.maskKey) { this.maskKey = ''; st.removeProperty('-webkit-mask-image'); st.removeProperty('mask-image'); } }
     private left = 0;
     private top = 0;
     private ovCanvas: HTMLCanvasElement | null = null;
@@ -100,13 +101,22 @@ export class Hud extends Phaser.Scene {
         if (this.ovCanvas) {
             const st = this.ovCanvas.style, spot = document.getElementById('spotOv'), hole = document.getElementById('spotBox');
             const ww = window as unknown as { __popA?: number }, pa = ww.__popA ?? 0; ww.__popA = 0;   // how solid the pop-up is right now (1 when fully shown; it pops in and out)
-            if (pa < 0.001 && !this.modal) { st.opacity = ''; st.clipPath = ''; }
-            else if (spot && spot.classList.contains('show') && hole) {   // a highlight guide: the 3D picture (the Backup tank) shows at full strength inside the lit hole only
-                const r = hole.getBoundingClientRect(), rad = parseFloat(hole.style.borderRadius) || 20;
-                st.opacity = '1'; st.clipPath = `inset(${Math.max(0, r.top)}px ${Math.max(0, window.innerWidth - r.right)}px ${Math.max(0, window.innerHeight - r.bottom)}px ${Math.max(0, r.left)}px round ${rad}px)`;
+            if (pa < 0.001 && !this.modal) { st.opacity = ''; st.clipPath = ''; this.clearMask(st); }
+            else if (spot && spot.classList.contains('show') && hole) {   // a highlight guide: the 3D picture (target tanks, the Backup tank and its fish) stays visible but dimmed like the rest of the screen, and shows at full strength inside the lit hole(s)
+                const r = hole.getBoundingClientRect(), rad = parseFloat(hole.style.borderRadius) || 20, s2 = spot.dataset.sel2 ? document.querySelector(spot.dataset.sel2) : null;
+                const W = window.innerWidth, H = window.innerHeight, boxes = [{ x: r.left, y: r.top, w: r.width, h: r.height, rx: rad }];
+                if (s2) { const q = s2.getBoundingClientRect(); boxes.push({ x: q.left - 8, y: q.top - 8, w: q.width + 16, h: q.height + 16, rx: 22 }); }
+                const key = `${W}x${H}|` + boxes.map((b) => [b.x, b.y, b.w, b.h, b.rx].map((v) => Math.round(v)).join(',')).join('|');
+                if (this.maskKey !== key) {   // (rebuilt only when a rectangle moves)
+                    this.maskKey = key;
+                    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="#fff" fill-opacity="0.18"/>` + boxes.map((b) => `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${Math.min(b.rx, b.w / 2, b.h / 2)}" fill="#fff"/>`).join('') + '</svg>';
+                    const url = `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+                    st.setProperty('-webkit-mask-image', url); st.setProperty('mask-image', url); st.setProperty('-webkit-mask-repeat', 'no-repeat'); st.setProperty('mask-repeat', 'no-repeat'); st.setProperty('-webkit-mask-size', `${W}px ${H}px`); st.setProperty('mask-size', `${W}px ${H}px`);
+                }
+                st.opacity = '1'; st.clipPath = '';
             } else {   // a pop-up: the 3D overlay (target tanks, Backup) stays as a faint picture round it, and its own area is cut out so nothing shows through the pop-up
                 const pr = (window as unknown as { __popRect?: { x: number; y: number; w: number; h: number; r?: number; top?: { x: number; y: number; w: number; h: number } } | null }).__popRect;
-                st.opacity = String(1 - 0.85 * Math.min(1, pa));   // the 3D layer fades with the pop-up; it is cut out round it only when the pop-up is solid, so nothing vanishes while the pop-up is still see-through
+                this.clearMask(st); st.opacity = String(1 - 0.85 * Math.min(1, pa));   // the 3D layer fades with the pop-up; it is cut out round it only when the pop-up is solid, so nothing vanishes while the pop-up is still see-through
                 if (pr && pa > 0.97) {   // the hole follows the rounded pop-up (a plain rectangle showed as a dark box behind its corners)
                     const rr = Math.min(pr.r ?? 0, pr.w / 2, pr.h / 2), x1 = pr.x + pr.w, y1 = pr.y + pr.h, tp = pr.top;   // (a pop-up with a ribbon narrower than its body: the hole is the two shapes together)
                     const body = tp ? `M${tp.x} ${tp.y}H${tp.x + tp.w}V${pr.y}H${x1}V${y1 - rr}A${rr} ${rr} 0 0 1 ${x1 - rr} ${y1}H${pr.x + rr}A${rr} ${rr} 0 0 1 ${pr.x} ${y1 - rr}V${pr.y}H${tp.x}Z`

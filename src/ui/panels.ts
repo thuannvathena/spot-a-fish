@@ -144,16 +144,17 @@ export function paintTools(L: Layer, c: Ctx) {
         if (BG && BG.kind === kindOf) { let landedN = 0; for (let i = 0; i < BG.n; i++) { const a = nowP - BG.t0 - landAt(i); if (a >= 0) { landedN++; const u = a / 360; if (u < 1) kb = Math.max(kb, 1 + 0.32 * Math.sin(Math.PI * u) * (1 - 0.35 * u)); } } pend = BG.n - landedN; }
         const lockLv = (el as HTMLElement).dataset.lockLv;
         if (lockLv && getComputedStyle(el).display !== 'none') {   // not unlocked yet: a grey button with a padlock and the level that opens it, nothing to tap
-            const rl = rectOf(el, c.o); if (!rl || rl.w < 4) continue; const lx = rl.x + rl.w / 2, ly = rl.y + rl.h / 2, lr = rl.w / 2;
+            const rl = rectOf(el, c.o); if (!rl || rl.w < 4) continue; const BS0 = (window as unknown as { __boostShake?: { kind: string; t0: number } }).__boostShake, sk0 = BS0 && BS0.kind === kindOf ? (performance.now() - BS0.t0) / 480 : 2, shk0 = sk0 < 1 ? Math.sin(sk0 * Math.PI * 7) * (1 - sk0) * (rl.w / 2) * 0.17 : 0;   // a tap on a locked slot: the whole button (padlock and label too) shakes
+            const lx = rl.x + rl.w / 2 + shk0, ly = rl.y + rl.h / 2, lr = rl.w / 2;
             if (L.pic('bt' + id, 'nw_btn_round_grey', { x: lx - lr, y: ly - lr, w: lr * 2, h: lr * 2 }, { alpha: fade })) {
-                const lz = lr * 0.9; L.pic('bi' + id, 'nw_lock', { x: lx - lz * 0.4, y: ly - lz * 0.5, w: lz * 0.8, h: lz }, { alpha: fade });
+                const lz = lr * 0.6; L.pic('bi' + id, 'nw_lock', { x: lx - lz * 0.4, y: ly - lr * 0.56, w: lz * 0.8, h: lz }, { alpha: fade });   // a smaller padlock, higher up in the round button
             }
-            L.text('lk' + id, lx, ly + lr + 16, `Level ${lockLv}`, { size: 19, color: '#ffffff', stroke: '#0c3a6e', sw: 5, alpha: fade });
+            L.text('lk' + id, lx, ly + lr * 0.34, `Lv. ${lockLv}`, { size: Math.max(9, lr * 0.38), color: '#eeeeee', stroke: '#2b2b2b', sw: Math.max(1.5, lr * 0.07), alpha: fade });   // "Lv. X" inside the circle, under the padlock
             c.hits.push(rl); continue;
         }
         const r = rectOf(el, c.o); if (!r || r.w < 4 || !shown(el)) continue;
         const BSK = (window as unknown as { __boostShake?: { kind: string; t0: number } }).__boostShake, skU = BSK && BSK.kind === kindOf ? (performance.now() - BSK.t0) / 480 : 2, shakeX = skU < 1 ? Math.sin(skU * Math.PI * 7) * (1 - skU) * (r.w / 2) * 0.17 : 0;   // a refused tap: the button shakes sideways a little and settles
-        const cx = r.x + r.w / 2 + shakeX, cy = r.y + r.h / 2, rad = (r.w / 2) * kb, press = c.zones.pressed === id, dy = press ? 3 : 0, off = el.classList.contains('off');
+        const cx = r.x + r.w / 2 + shakeX, cy = r.y + r.h / 2, rad = (r.w / 2) * kb, press = c.zones.pressed === id, dy = press ? 3 : 0, off = el.classList.contains('off') && !el.classList.contains('spotlit');   // (while the booster tip is up the button shows at full strength; the grey comes back when the tip closes)
         const IC: Record<string, string> = { bHint: 'nw_ic_hint', bTank: 'nw_ic_net', bClear: 'nw_ic_back' }, shade = off ? 0.55 : 1;
         if (L.pic('bt' + id, 'nw_btn_round', { x: cx - rad, y: cy + dy - rad, w: rad * 2, h: rad * 2 }, { alpha: fade * shade })) {   // the painted round button and its icon (public/ui/new); drawn as before when the pictures are missing
             const isz = rad * 2 * 0.54; L.pic('bi' + id, IC[id], { x: cx - isz / 2, y: cy + dy - isz / 2, w: isz, h: isz }, { alpha: fade * shade });

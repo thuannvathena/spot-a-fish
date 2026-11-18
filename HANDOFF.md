@@ -83,7 +83,7 @@ docs/guide/             ← hướng dẫn editor, deploy, asset workflow
 - **Booster:** `boostUse` (miễn phí lần đầu, rồi đếm, hết thì mở pop-up mua), `hint`, `clearTank`, `clearBackup`, `boostNo` (không dùng được: thông báo + nút lắc).
 - **Âm thanh:** `Snd`, `SFX_MAP`, `SAMPLES` (xem `docs/gdd/sounds.md`).
 - **Nước:** `glassWater`, `surfU` / `VORT`, `scatter` (gợn sóng chỉ khi bấm ở/ gần mặt nước), lens.
-- **Hook kiểm tra:** `window.__qa` (`decorFit`, `fishClip`, `overlapAudit`, `jitter`, `octRelease`, `fishRelease`; xem `docs/qa.md`) và `window.__ff` (`newLevel`, `devWin`, `devEvent`, `showPlayOn`, `showLose`, `sprayInk`, `modelVariant`, `feed`, `THUMB`, `SPECIES`, `G`, `orbit`, ...).
+- **Hook kiểm tra:** `window.__qa` (`decorFit`, `fishClip`, `overlapAudit`, `jitter`, `octRelease`, `fishRelease`; xem `docs/qa.md`) và `window.__ff` (`newLevel`, `save`, `state()`, `pick(o)`, `devWin`, `devEvent`, `showPlayOn`, `showLose`, `sprayInk`, `modelVariant`, `feed`, `THUMB`, `SPECIES`, `G`, `orbit`, ...).
 
 ## 6. Số liệu và quyết định thiết kế cần nhớ
 
@@ -105,6 +105,9 @@ docs/guide/             ← hướng dẫn editor, deploy, asset workflow
 5. Cache trình duyệt: thêm `?v=N` vào URL.
 6. **Hộp va chạm của một vật nhiều phần có thể phình rất to** (tàu đắm với cột buồm nghiêng từng thành một hộp 3 × 2,3 × 2,4 giữa bể nhỏ và làm cá giật). Với vật mới, kiểm ở hình bể nhỏ nhất.
 7. Một hàm vẽ trung gian làm rơi mất tham số (`__ff.cageCanvas` từng bỏ `t` và canvas đích, nên nước trong pop-up đứng im). Khi bọc một hàm, truyền đủ tham số.
+8. Xoá asset: trước khi xoá bất kỳ file nào, tìm tên file trong toàn bộ code. Ngày 18/11 đã xoá nhầm `public/ui/level_complete.png`, `nice|great|super|wow.png` (code vẫn tải lười), làm mất chữ LEVEL COMPLETE và chữ combo; đã khôi phục. Sau khi dọn phải chơi thử một ván thắng và một chuỗi combo.
+9. Màn thắng: cá thả từ Backup (đang `dive`) phải được đưa vào chuỗi thắng ngay (`celebrate` đặt `o.dive = null`); chờ chúng lặn xong làm win trễ ~1,1 s. Nếu không có cá nào tham gia thì bỏ bóng và đi thẳng tới WELL DONE (không bao giờ treo).
+10. FTUE: lớp 3D (bể target, Backup, cá) được làm mờ bằng mask 18% ngoài ô sáng (`Hud.ts`), không cắt bỏ. Test FTUE bằng `newLevel(9)`, chờ, `delete __ff.save.iClear`, `newLevel(9)` lần nữa (hook `newLevel` khởi động level hai lần).
 8. Lỗi "Page build failed" của Pages thỉnh thoảng thoáng qua: chạy lại bản build bằng `gh api -X POST repos/thuannvathena/spot-a-fish/pages/builds`.
 
 ## 8. Trạng thái còn lại / chưa kiểm chứng

@@ -546,11 +546,22 @@ export function paintSpotBF(L: Layer, c: Ctx) {
     const btn = booster && sel ? rel(document.querySelector(sel)) : null;
     if (btn) { const d = Math.max(btn.w, btn.h) * 1.32, dy = btn.h * 0.12; box = { x: btn.x + btn.w / 2 - d / 2, y: btn.y + btn.h / 2 - d / 2 + dy, w: d, h: d }; hole = d / 2; }   // a circle round the button, a little larger and lower so the Free tag / the count badge under it are inside the light
     g.fillStyle(0x040c1c, 0.82 * A);
-    if (box) {
-        g.fillRect(0, 0, c.w, Math.max(0, box.y)).fillRect(0, box.y + box.h, c.w, Math.max(0, c.h - box.y - box.h)).fillRect(0, box.y, Math.max(0, box.x), box.h).fillRect(box.x + box.w, box.y, Math.max(0, c.w - box.x - box.w), box.h);
-        for (const [cx0, cy0, ox, oy, a0, a1] of [[box.x + hole, box.y + hole, box.x, box.y, -Math.PI / 2, -Math.PI], [box.x + box.w - hole, box.y + hole, box.x + box.w, box.y, 0, -Math.PI / 2], [box.x + box.w - hole, box.y + box.h - hole, box.x + box.w, box.y + box.h, Math.PI / 2, 0], [box.x + hole, box.y + box.h - hole, box.x, box.y + box.h, Math.PI, Math.PI / 2]] as [number, number, number, number, number, number][]) {
-            g.beginPath(); g.moveTo(ox, oy); g.lineTo(cx0 + Math.cos(a0) * hole, cy0 + Math.sin(a0) * hole); g.arc(cx0, cy0, hole, a0, a1, true); g.closePath(); g.fillPath();
+    const holes: { b: { x: number; y: number; w: number; h: number }; r: number }[] = [];   // the lit places: the real control, and (Clear Backup) the Backup strip too; they never overlap in height, the strip is at the top and the button at the bottom
+    if (box) holes.push({ b: box, r: hole });
+    const sel2 = sp.dataset.sel2 ?? '', b2 = sel2 ? rel(document.querySelector(sel2)) : null;
+    if (b2) holes.push({ b: { x: b2.x - 8, y: b2.y - 8, w: b2.w + 16, h: b2.h + 16 }, r: 22 });
+    holes.sort((p, q) => p.b.y - q.b.y);
+    if (holes.length) {
+        let yy = 0;
+        for (const { b: bx0, r: hr0 } of holes) {
+            const hr = Math.min(hr0, bx0.w / 2, bx0.h / 2);
+            g.fillRect(0, yy, c.w, Math.max(0, bx0.y - yy)).fillRect(0, bx0.y, Math.max(0, bx0.x), bx0.h).fillRect(bx0.x + bx0.w, bx0.y, Math.max(0, c.w - bx0.x - bx0.w), bx0.h);
+            for (const [cx0, cy0, ox, oy, a0, a1] of [[bx0.x + hr, bx0.y + hr, bx0.x, bx0.y, -Math.PI / 2, -Math.PI], [bx0.x + bx0.w - hr, bx0.y + hr, bx0.x + bx0.w, bx0.y, 0, -Math.PI / 2], [bx0.x + bx0.w - hr, bx0.y + bx0.h - hr, bx0.x + bx0.w, bx0.y + bx0.h, Math.PI / 2, 0], [bx0.x + hr, bx0.y + bx0.h - hr, bx0.x, bx0.y + bx0.h, Math.PI, Math.PI / 2]] as [number, number, number, number, number, number][]) {
+                g.beginPath(); g.moveTo(ox, oy); g.lineTo(cx0 + Math.cos(a0) * hr, cy0 + Math.sin(a0) * hr); g.arc(cx0, cy0, hr, a0, a1, true); g.closePath(); g.fillPath();
+            }
+            yy = bx0.y + bx0.h;
         }
+        g.fillRect(0, yy, c.w, Math.max(0, c.h - yy));
     } else g.fillRect(0, 0, c.w, c.h);
     const body = txt('spotP'), cxm = box ? box.x + box.w / 2 : c.w / 2, cym = box ? box.y + box.h / 2 : c.h / 2;
     const tapText = (str: string, y: number, w: number, st: Style) => L.text('sbK', 540 * s, (y + rise) * s, str, { size: fit(str, w - st.sw) * s, color: st.fill, stroke: st.stroke, sw: st.sw * s, sh: st.sh * s, alpha: A });

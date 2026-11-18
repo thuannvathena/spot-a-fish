@@ -13,7 +13,7 @@ In-page checks live in `window.__qa` (`game/src/main.js`). Procedure: `.claude/s
 
 ## Test hooks (`window.__ff`)
 
-`newLevel(n)`, `devWin()` (play the win sequence), `devEvent(name)`, `showPlayOn()`, `showLose()`, `sprayInk(...)`, `modelVariant(...)`, `evFreeIn()` (seconds of quiet left), `feed` (the food state), plus `G`, `orbit`, `THUMB`, `SPECIES`. `window.__hue` has the colour-turn helpers (`toxic`, `pick`, `turn`); `?oldhue=1` switches back to the old colour turn to compare.
+`newLevel(n)`, `save` (the saved progress object, e.g. delete `save.iClear` to see an introduction again), `state()` (paused, introOn, popupOn, ready), `pick(fish)` (a tap on that fish), `devWin()` (play the win sequence), `devEvent(name)`, `showPlayOn()`, `showLose()`, `sprayInk(...)`, `modelVariant(...)`, `evFreeIn()` (seconds of quiet left), `feed` (the food state), plus `G`, `orbit`, `THUMB`, `SPECIES`. `window.__hue` has the colour-turn helpers (`toxic`, `pick`, `turn`); `?oldhue=1` switches back to the old colour turn to compare.
 
 ## Habits that found real bugs
 
@@ -21,5 +21,8 @@ In-page checks live in `window.__qa` (`game/src/main.js`). Procedure: `.claude/s
 - Test at a **small tank shape** (heart, bowl) and at a crowded level (55-60) as well as an easy one.
 - After a change to fish movement, run `jitter` and `fishClip`; after a change to decor, run `decorFit` and `overlapAudit`.
 - Test pop-ups by stretching the closing delay (so a change of buttons while closing becomes visible), and hide the tab to test the paused game.
+
+- After deleting or renaming any asset, search the code for its name, then play a win (LEVEL COMPLETE shows) and a combo (NICE / GREAT show): some pictures load lazily, so a missing file does not show as a failed request at start.
+- Win with fish in the Backup: put fish in the Backup, remove the rest from the tank, `devWin()`; the win must start at about 2.2 s, all Backup fish must join, WELL DONE must open.
 
 Add a check here every time a new class of defect is found.
